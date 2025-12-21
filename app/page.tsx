@@ -6,6 +6,7 @@ import { useUser } from "@/app/context/UserContext";
 import DateNavigator from "@/components/DateNavigator";
 import Calendar from "@/components/Calendar";
 import DayView from "@/components/DayView";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import InstallPrompt from "@/components/InstallPrompt";
 import BackupRestore from "@/components/BackupRestore";
 import OfflineIndicator from "@/components/OfflineIndicator";
@@ -20,6 +21,7 @@ export default function Home() {
   const { currentUser } = useUser();
   const userId = currentUser?.id || "default";
   const [showCalendar, setShowCalendar] = useState(false);
+  const [currentView, setCurrentView] = useState<'daily' | 'analytics'>('daily');
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,6 +54,29 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-3">
+            {/* View Switcher */}
+            <div className="flex bg-secondary rounded-lg p-1">
+              <button
+                onClick={() => setCurrentView('daily')}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  currentView === 'daily'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Daily
+              </button>
+              <button
+                onClick={() => setCurrentView('analytics')}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  currentView === 'analytics'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Analytics
+              </button>
+            </div>
             <ThemeToggle />
             <SyncButtonEnhanced />
             <UserSwitcher />
@@ -70,21 +95,27 @@ export default function Home() {
         </div>
       </details>
 
-      <DateNavigator
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-        onOpenCalendar={() => setShowCalendar(true)}
-        userId={userId}
-      />
+      {currentView === 'daily' ? (
+        <>
+          <DateNavigator
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            onOpenCalendar={() => setShowCalendar(true)}
+            userId={userId}
+          />
 
-      <DayView date={currentDate} />
+          <DayView date={currentDate} />
 
-      {showCalendar && (
-        <Calendar
-          currentDate={currentDate}
-          onDateSelect={setCurrentDate}
-          onClose={() => setShowCalendar(false)}
-        />
+          {showCalendar && (
+            <Calendar
+              currentDate={currentDate}
+              onDateSelect={setCurrentDate}
+              onClose={() => setShowCalendar(false)}
+            />
+          )}
+        </>
+      ) : (
+        <AnalyticsDashboard />
       )}
 
       <InstallPrompt />
