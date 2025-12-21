@@ -18,7 +18,7 @@ export default function UserSwitcher() {
 
   if (isLoading) {
     return (
-      <div className="px-3 py-2 bg-gray-100 rounded text-sm text-gray-600">
+      <div className="px-3 py-2 bg-muted rounded text-sm text-muted-foreground">
         Loading...
       </div>
     );
@@ -28,10 +28,10 @@ export default function UserSwitcher() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+        className="flex items-center gap-3 px-4 py-2 bg-card border border-border rounded-lg hover:bg-accent/10 transition-colors shadow-sm"
       >
         <svg
-          className="w-5 h-5 text-gray-600"
+          className="w-5 h-5 text-muted-foreground"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -44,13 +44,13 @@ export default function UserSwitcher() {
           />
         </svg>
         <div className="text-left">
-          <div className="text-sm font-medium text-gray-900">
+          <div className="text-sm font-medium text-foreground">
             {currentUser?.name || "Select User"}
           </div>
-          <div className="text-xs text-gray-500">Switch user</div>
+          <div className="text-xs text-muted-foreground">Switch user</div>
         </div>
         <svg
-          className={`w-4 h-4 text-gray-400 transition-transform ${
+          className={`w-4 h-4 text-muted-foreground transition-transform ${
             isOpen ? "rotate-180" : ""
           }`}
           fill="none"
@@ -75,9 +75,9 @@ export default function UserSwitcher() {
           />
 
           {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+          <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border z-20">
             <div className="p-3">
-              <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Switch User
               </div>
               <div className="space-y-1 mt-2">
@@ -87,8 +87,8 @@ export default function UserSwitcher() {
                     onClick={() => handleSwitchUser(user.id)}
                     className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
                       currentUser?.id === user.id
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-700 hover:bg-gray-50"
+                        ? "bg-accent/20 text-accent-foreground border border-accent"
+                        : "text-foreground hover:bg-muted"
                     }`}
                   >
                     <div className="flex items-center justify-between">

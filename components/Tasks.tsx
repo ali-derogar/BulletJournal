@@ -148,11 +148,11 @@ export default function Tasks({ date, userId }: TasksProps) {
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
       case "todo":
-        return "bg-gray-200 text-gray-800";
+        return "bg-muted text-muted-foreground";
       case "in-progress":
-        return "bg-blue-200 text-blue-800";
+        return "bg-blue-200 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300";
       case "done":
-        return "bg-green-200 text-green-800";
+        return "bg-green-200 text-green-800 dark:bg-green-900/20 dark:text-green-300";
     }
   };
 
@@ -385,7 +385,7 @@ export default function Tasks({ date, userId }: TasksProps) {
             {usefulTimeMinutes === 0 &&
               notUsefulTimeMinutes === 0 &&
               uncategorizedTimeMinutes === 0 && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   No time tracked yet
                 </span>
               )}
@@ -399,8 +399,8 @@ export default function Tasks({ date, userId }: TasksProps) {
             key={task.id}
             className={`p-3 border-2 rounded-lg transition-all ${
               task.timerRunning
-                ? "border-green-400 bg-green-50 shadow-md"
-                : "border-gray-200 bg-white hover:bg-gray-50"
+                ? "border-accent bg-accent/10 shadow-md"
+                : "border-border bg-card hover:bg-muted"
             }`}
           >
             {editingId === task.id ? (
@@ -409,12 +409,12 @@ export default function Tasks({ date, userId }: TasksProps) {
                   type="text"
                   value={editingTitle}
                   onChange={(e) => setEditingTitle(e.target.value)}
-                  className="flex-1 px-2 py-1 border rounded"
+                  className="flex-1 px-2 py-1 border border-input rounded focus:outline-none focus:ring-2 focus:ring-ring"
                   autoFocus
                 />
                 <button
                   onClick={() => handleSaveEdit(task.id)}
-                  className="px-2 py-1 bg-green-500 text-white rounded text-sm"
+                  className="px-2 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
                 >
                   Save
                 </button>
@@ -443,10 +443,10 @@ export default function Tasks({ date, userId }: TasksProps) {
                   <span
                     className={`flex-1 font-medium ${
                       task.status === "done"
-                        ? "line-through text-gray-500"
+                        ? "line-through text-muted-foreground"
                         : task.timerRunning
-                          ? "text-green-900"
-                          : "text-gray-900"
+                          ? "text-green-400"
+                          : "text-foreground"
                     }`}
                   >
                     {task.title}
@@ -482,11 +482,11 @@ export default function Tasks({ date, userId }: TasksProps) {
           onChange={(e) => setNewTaskTitle(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleAddTask()}
           placeholder="Add a new task..."
-          className="flex-1 px-3 py-2 border rounded"
+          className="flex-1 px-3 py-2 border border-input rounded focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <button
           onClick={handleAddTask}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
         >
           Add Task
         </button>

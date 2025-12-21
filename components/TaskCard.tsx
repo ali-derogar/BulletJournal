@@ -212,7 +212,7 @@ export default function TaskCard({
         <div className="grid grid-cols-2 gap-4">
           {/* Estimated Time */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
               Estimated
             </label>
             {isEditingEstimate ? (
@@ -222,7 +222,7 @@ export default function TaskCard({
                   value={estimateInput}
                   onChange={(e) => setEstimateInput(e.target.value)}
                   placeholder="min"
-                  className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-16 px-2 py-1 text-sm border border-input rounded focus:outline-none focus:ring-2 focus:ring-ring"
                   autoFocus
                   onKeyPress={(e) => e.key === "Enter" && handleEstimateSave()}
                 />
@@ -230,7 +230,7 @@ export default function TaskCard({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleEstimateSave}
-                  className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                  className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded hover:bg-primary/90"
                 >
                   ✓
                 </motion.button>
@@ -241,14 +241,14 @@ export default function TaskCard({
                     setIsEditingEstimate(false);
                     setEstimateInput("");
                   }}
-                  className="px-2 py-1 bg-gray-400 text-white text-xs rounded hover:bg-gray-500"
+                  className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded hover:bg-muted/80"
                 >
                   ✕
                 </motion.button>
               </div>
             ) : (
               <div
-                className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
+                className="text-lg font-semibold text-foreground cursor-pointer hover:text-primary"
                 onClick={() => {
                   setEstimateInput(task.estimatedTime?.toString() || "");
                   setIsEditingEstimate(true);
@@ -261,7 +261,7 @@ export default function TaskCard({
 
           {/* Actual Time */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
               {task.timerRunning ? "Current" : "Actual"}
             </label>
             <motion.div
@@ -271,10 +271,10 @@ export default function TaskCard({
               className={`
                 text-lg font-semibold
                 ${task.timerRunning
-                  ? "text-green-600"
+                  ? "text-green-400"
                   : isOverEstimate
-                    ? "text-red-600"
-                    : "text-gray-900"
+                    ? "text-destructive"
+                    : "text-foreground"
                 }
               `}
             >
@@ -301,7 +301,7 @@ export default function TaskCard({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onStartTimer(task)}
-                className="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors"
+                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
               >
                 ▶ Start
               </motion.button>
@@ -319,7 +319,7 @@ export default function TaskCard({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onStartTimer(task)}
-                  className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
+                  className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
                 >
                   ▶ Resume
                 </motion.button>
@@ -327,7 +327,7 @@ export default function TaskCard({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onStopTimer(task)}
-                  className="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 bg-muted text-muted-foreground text-sm font-medium rounded-lg hover:bg-muted/80 transition-colors"
                 >
                   ⏹ Reset
                 </motion.button>
@@ -346,7 +346,7 @@ export default function TaskCard({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onPauseTimer(task)}
-                  className="px-4 py-2 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition-colors"
+                  className="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition-colors"
                 >
                   ⏸ Pause
                 </motion.button>
@@ -354,7 +354,7 @@ export default function TaskCard({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onStopTimer(task)}
-                  className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
+                  className="px-4 py-2 bg-destructive text-destructive-foreground text-sm font-medium rounded-lg hover:bg-destructive/90 transition-colors"
                 >
                   ⏹ Stop
                 </motion.button>
@@ -378,7 +378,7 @@ export default function TaskCard({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onUsefulnessChange(task, true)}
-                  className="px-3 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors"
+                  className="px-3 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-900/30"
                 >
                   👍
                 </motion.button>
@@ -386,7 +386,7 @@ export default function TaskCard({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onUsefulnessChange(task, false)}
-                  className="px-3 py-2 bg-orange-100 text-orange-700 text-sm font-medium rounded-lg hover:bg-orange-200 transition-colors"
+                  className="px-3 py-2 bg-orange-100 text-orange-700 text-sm font-medium rounded-lg hover:bg-orange-200 transition-colors dark:bg-orange-900/20 dark:text-orange-300 dark:hover:bg-orange-900/30"
                 >
                   👎
                 </motion.button>
@@ -402,7 +402,7 @@ export default function TaskCard({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onUsefulnessChange(task, null)}
-                className="px-3 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-3 py-2 bg-muted text-muted-foreground text-sm font-medium rounded-lg hover:bg-muted/80 transition-colors"
               >
                 Clear
               </motion.button>

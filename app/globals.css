@@ -6,54 +6,54 @@
 
 @layer base {
   :root {
-    /* Light Mode Colors - Eye-friendly, low contrast */
-    --background: 250 250 250;    /* #fafafa - very soft warm white */
-    --foreground: 23 23 23;       /* #171717 - soft dark text */
-    --card: 255 255 255;          /* #ffffff - pure white cards */
-    --card-foreground: 23 23 23;  /* #171717 - soft dark text on cards */
-    --popover: 255 255 255;
-    --popover-foreground: 23 23 23;
-    --primary: 34 197 94;         /* #22c55e - soft green */
-    --primary-foreground: 255 255 255;
-    --secondary: 245 245 245;     /* #f5f5f5 - very light gray */
-    --secondary-foreground: 82 82 82; /* #525252 - muted gray text */
-    --muted: 245 245 245;         /* #f5f5f5 - very light muted */
-    --muted-foreground: 115 115 115; /* #737373 - soft muted text */
-    --accent: 34 197 94;          /* #22c55e - soft green accent */
-    --accent-foreground: 255 255 255;
-    --destructive: 239 68 68;     /* #ef4444 - soft red */
-    --destructive-foreground: 255 255 255;
-    --warning: 245 158 11;        /* #f59e0b - soft amber */
-    --warning-foreground: 23 23 23;
-    --border: 229 229 229;        /* #e5e5e5 - very soft borders */
-    --input: 229 229 229;         /* #e5e5e5 - soft input borders */
-    --ring: 34 197 94;            /* #22c55e - soft green focus */
+    /* Light Mode Colors - Professional and Modern */
+    --background: 220 14% 98%;     /* #F7F8FA - soft off-white background */
+    --foreground: 222 84% 5%;     /* #0f172a - near-black primary text */
+    --card: 0 0% 100%;            /* #ffffff - pure white cards with shadows */
+    --card-foreground: 222 84% 5%; /* #0f172a - near-black text on cards */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 84% 5%;
+    --primary: 221 83% 53%;       /* #3b82f6 - professional blue accent */
+    --primary-foreground: 0 0% 100%; /* #ffffff - white text on primary */
+    --secondary: 220 13% 91%;     /* #e2e8f0 - very light gray secondary */
+    --secondary-foreground: 215 16% 47%; /* #64748b - muted dark gray secondary text */
+    --muted: 220 13% 91%;         /* #e2e8f0 - very light muted backgrounds */
+    --muted-foreground: 215 16% 47%; /* #64748b - muted dark gray muted text */
+    --accent: 221 83% 53%;        /* #3b82f6 - subtle blue accent */
+    --accent-foreground: 0 0% 100%; /* #ffffff - white text on accent */
+    --destructive: 0 84% 60%;     /* #dc2626 - professional red for destructive */
+    --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;        /* #f59e0b - professional amber warning */
+    --warning-foreground: 222 84% 5%; /* #0f172a - dark text on warning */
+    --border: 220 13% 91%;        /* #e2e8f0 - very light gray borders */
+    --input: 220 13% 91%;         /* #e2e8f0 - soft input borders */
+    --ring: 221 83% 53%;          /* #3b82f6 - blue focus ring */
     --radius: 0.5rem;
   }
 
   .dark {
-    /* Dark Mode Colors - Attractive & Modern */
-    --background: 10 15 25;         /* #0a0f19 - Deep navy blue */
-    --foreground: 248 250 252;     /* #f8fafc - Soft white text */
-    --card: 20 25 35;              /* #141923 - Rich blue-gray cards */
-    --card-foreground: 248 250 252; /* #f8fafc - Soft white text on cards */
-    --popover: 20 25 35;
-    --popover-foreground: 248 250 252;
-    --primary: 6 182 212;          /* #06b6d4 - Vibrant cyan */
-    --primary-foreground: 10 15 25; /* #0a0f19 - Dark text on buttons */
-    --secondary: 30 35 45;         /* #1e232d - Medium blue-gray */
-    --secondary-foreground: 209 213 219; /* #d1d5db - Light gray secondary text */
-    --muted: 30 35 45;             /* #1e232d - Muted backgrounds */
-    --muted-foreground: 156 163 175; /* #9ca3af - Soft muted text */
-    --accent: 139 92 246;          /* #8b5cf6 - Beautiful purple accent */
-    --accent-foreground: 10 15 25; /* #0a0f19 - Dark text on accents */
-    --destructive: 239 68 68;      /* #ef4444 - Clean red */
-    --destructive-foreground: 10 15 25; /* #0a0f19 - Dark text on errors */
-    --warning: 251 191 36;         /* #fbbf24 - Warm yellow */
-    --warning-foreground: 10 15 25; /* #0a0f19 - Dark text on warnings */
-    --border: 45 50 60;            /* #2d323c - Subtle blue-gray borders */
-    --input: 45 50 60;             /* #2d323c - Input borders */
-    --ring: 6 182 212;             /* #06b6d4 - Cyan focus ring */
+    /* Dark Mode Colors - Professional, Modern, and Comfortable */
+    --background: 0 0% 6%;         /* #0f0f0f - deep dark gray background */
+    --foreground: 0 0% 89%;        /* #e5e7eb - light gray primary text */
+    --card: 0 0% 11%;              /* #1c1c1c - slightly lighter dark cards */
+    --card-foreground: 0 0% 89%;   /* #e5e7eb - light gray text on cards */
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 89%;
+    --primary: 217 91% 60%;        /* #2563eb - refined professional blue */
+    --primary-foreground: 0 0% 100%; /* #ffffff - white text on primary */
+    --secondary: 0 0% 16%;         /* #292929 - medium dark secondary */
+    --secondary-foreground: 0 0% 65%; /* #a5a5a5 - softer gray secondary text */
+    --muted: 0 0% 16%;             /* #292929 - muted backgrounds */
+    --muted-foreground: 0 0% 65%; /* #a5a5a5 - softer gray muted text */
+    --accent: 217 91% 60%;         /* #2563eb - refined blue accent */
+    --accent-foreground: 0 0% 100%; /* #ffffff - white text on accent */
+    --destructive: 0 84% 60%;      /* #dc2626 - professional red */
+    --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;         /* #f59e0b - professional amber */
+    --warning-foreground: 0 0% 6%; /* #0f0f0f - dark text on warning */
+    --border: 0 0% 20%;            /* #333333 - visible dark gray borders */
+    --input: 0 0% 20%;             /* #333333 - input borders */
+    --ring: 217 91% 60%;           /* #2563eb - blue focus ring */
   }
 
   * {
@@ -105,6 +105,46 @@
 
   input, textarea, select {
     @apply font-normal;
+  }
+
+  /* Professional card styling with soft shadows for separation */
+  .card {
+    @apply bg-card border border-border shadow-sm;
+  }
+
+  /* Input styling with subtle background separation */
+  input, textarea, select {
+    @apply bg-background border border-input;
+  }
+
+  /* Ensure buttons have clear states */
+  button {
+    @apply transition-all duration-200;
+  }
+
+  button:hover:not(:disabled) {
+    @apply shadow-md transform scale-[1.02];
+  }
+
+  button:active:not(:disabled) {
+    @apply transform scale-[0.98];
+  }
+
+  button:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* Dark mode specific styling for better visual separation */
+  .dark .card {
+    @apply bg-card border border-border shadow-sm;
+  }
+
+  .dark input, .dark textarea, .dark select {
+    @apply bg-background border border-input;
+  }
+
+  .dark button:hover:not(:disabled) {
+    @apply shadow-lg;
   }
 }
 

@@ -504,17 +504,17 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
           </div>
 
           {/* Productivity Breakdown */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-card p-4 rounded-xl shadow-sm border border-border">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">💡</span>
-              <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Productivity
               </span>
             </div>
             <div className="space-y-2">
               {usefulTimeMinutes > 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">👍 Useful:</span>
+                  <span className="text-sm text-muted-foreground">👍 Useful:</span>
                   <span className="font-semibold text-green-600">
                     {formatTime(usefulTimeMinutes)}
                   </span>
@@ -543,16 +543,16 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
           </div>
 
           {/* Daily Expenses */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-card p-4 rounded-xl shadow-sm border border-border">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">💰</span>
-              <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Expenses
               </span>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Total:</span>
+                <span className="text-sm text-muted-foreground">Total:</span>
                 <span className="text-xl font-bold text-red-600">
                   ${totalExpenses.toFixed(2)}
                 </span>
@@ -564,10 +564,10 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
           </div>
 
           {/* Running Timers */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-card p-4 rounded-xl shadow-sm border border-border">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">⏱️</span>
-              <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Active Timers
               </span>
             </div>
@@ -587,11 +587,11 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+          className="bg-card rounded-xl shadow-sm border border-border p-6"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
-            <div className="text-sm text-gray-500">
+            <h2 className="text-xl font-semibold text-foreground">Tasks</h2>
+            <div className="text-sm text-muted-foreground">
               {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
             </div>
           </div>
@@ -604,8 +604,8 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
               className="text-center py-12"
             >
               <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
-              <p className="text-gray-600">Add your first task to get started tracking your time!</p>
+              <h3 className="text-lg font-medium text-foreground mb-2">No tasks yet</h3>
+              <p className="text-muted-foreground">Add your first task to get started tracking your time!</p>
             </motion.div>
           ) : (
             <motion.div
@@ -636,9 +636,9 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="mt-8 pt-6 border-t border-gray-100"
+            className="mt-8 pt-6 border-t border-border"
           >
-            <h3 className="text-lg font-semibold mb-4 text-gray-900">Add New Task</h3>
+            <h3 className="text-lg font-semibold mb-4 text-foreground">Add New Task</h3>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
@@ -646,7 +646,7 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleAddTask()}
                 placeholder="Enter task title..."
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               />
               <motion.button
                 whileHover={{ scale: 1.02 }}
