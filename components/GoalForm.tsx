@@ -42,11 +42,12 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
   const isEditing = !!goal;
 
   useEffect(() => {
-    if (formData.type) {
-      const currentPeriod = getCurrentPeriod(formData.type);
+    // Only set default values if they haven't been set yet
+    if (!formData.year) {
+      const currentPeriod = getCurrentPeriod(formData.type || "monthly");
       setFormData(prev => ({ ...prev, ...currentPeriod }));
     }
-  }, [formData.type]);
+  }, []); // Only run once on mount
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,11 +96,13 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
   };
 
   const handleTypeChange = (type: GoalType) => {
-    const currentPeriod = getCurrentPeriod(type);
     setFormData(prev => ({
       ...prev,
       type,
-      ...currentPeriod,
+      // Clear period-specific fields when changing type
+      quarter: type === "quarterly" ? prev.quarter : undefined,
+      month: type === "monthly" ? prev.month : undefined,
+      week: type === "weekly" ? prev.week : undefined,
     }));
   };
 
@@ -198,17 +201,100 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
             </div>
           </div>
 
-          {/* Period Display */}
-          <div className="p-3 bg-secondary/50 rounded-lg border border-border/50 backdrop-blur-sm">
-            <div className="text-sm text-secondary-foreground">Period:</div>
-            <div className="font-medium text-card-foreground">
-              {formatPeriodLabel(
-                formData.type!,
-                formData.year!,
-                formData.quarter,
-                formData.month,
-                formData.week
+          {/* Period Selection */}
+          <div>
+            <label className="block text-sm font-medium text-card-foreground mb-2">
+              Period *
+            </label>
+            <div className="space-y-3">
+              {/* Year Selection - Always shown */}
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Year</label>
+                <select
+                  value={formData.year || new Date().getFullYear()}
+                  onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
+                >
+                  {Array.from({ length: 10 }, (_, i) => {
+                    const year = new Date().getFullYear() + i - 1;
+                    return (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* Month Selection - For monthly goals */}
+              {formData.type === "monthly" && (
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Month</label>
+                  <select
+                    value={formData.month || new Date().getMonth() + 1}
+                    onChange={(e) => setFormData(prev => ({ ...prev, month: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
+                  >
+                    {[
+                      "January", "February", "March", "April", "May", "June",
+                      "July", "August", "September", "October", "November", "December"
+                    ].map((monthName, index) => (
+                      <option key={index + 1} value={index + 1}>
+                        {monthName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
+
+              {/* Quarter Selection - For quarterly goals */}
+              {formData.type === "quarterly" && (
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Quarter</label>
+                  <select
+                    value={formData.quarter || Math.ceil((new Date().getMonth() + 1) / 3)}
+                    onChange={(e) => setFormData(prev => ({ ...prev, quarter: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
+                  >
+                    <option value={1}>Q1 (Jan-Mar)</option>
+                    <option value={2}>Q2 (Apr-Jun)</option>
+                    <option value={3}>Q3 (Jul-Sep)</option>
+                    <option value={4}>Q4 (Oct-Dec)</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Week Selection - For weekly goals */}
+              {formData.type === "weekly" && (
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Week Number</label>
+                  <select
+                    value={formData.week || 1}
+                    onChange={(e) => setFormData(prev => ({ ...prev, week: parseInt(e.target.value) }))}
+                    className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
+                  >
+                    {Array.from({ length: 52 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        Week {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Period Preview */}
+            <div className="mt-3 p-3 bg-secondary/50 rounded-lg border border-border/50">
+              <div className="text-xs text-muted-foreground mb-1">Selected Period:</div>
+              <div className="font-medium text-card-foreground">
+                {formatPeriodLabel(
+                  formData.type!,
+                  formData.year || new Date().getFullYear(),
+                  formData.quarter,
+                  formData.month,
+                  formData.week
+                )}
+              </div>
             </div>
           </div>
 
