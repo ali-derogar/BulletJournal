@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode Colors - Eye-friendly, low contrast */
+    --background: 250 250 250;    /* #fafafa - very soft warm white */
+    --foreground: 23 23 23;       /* #171717 - soft dark text */
+    --card: 255 255 255;          /* #ffffff - pure white cards */
+    --card-foreground: 23 23 23;  /* #171717 - soft dark text on cards */
+    --popover: 255 255 255;
+    --popover-foreground: 23 23 23;
+    --primary: 34 197 94;         /* #22c55e - soft green */
+    --primary-foreground: 255 255 255;
+    --secondary: 245 245 245;     /* #f5f5f5 - very light gray */
+    --secondary-foreground: 82 82 82; /* #525252 - muted gray text */
+    --muted: 245 245 245;         /* #f5f5f5 - very light muted */
+    --muted-foreground: 115 115 115; /* #737373 - soft muted text */
+    --accent: 34 197 94;          /* #22c55e - soft green accent */
+    --accent-foreground: 255 255 255;
+    --destructive: 239 68 68;     /* #ef4444 - soft red */
+    --destructive-foreground: 255 255 255;
+    --warning: 245 158 11;        /* #f59e0b - soft amber */
+    --warning-foreground: 23 23 23;
+    --border: 229 229 229;        /* #e5e5e5 - very soft borders */
+    --input: 229 229 229;         /* #e5e5e5 - soft input borders */
+    --ring: 34 197 94;            /* #22c55e - soft green focus */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark Mode Colors - Attractive & Modern */
+    --background: 10 15 25;         /* #0a0f19 - Deep navy blue */
+    --foreground: 248 250 252;     /* #f8fafc - Soft white text */
+    --card: 20 25 35;              /* #141923 - Rich blue-gray cards */
+    --card-foreground: 248 250 252; /* #f8fafc - Soft white text on cards */
+    --popover: 20 25 35;
+    --popover-foreground: 248 250 252;
+    --primary: 6 182 212;          /* #06b6d4 - Vibrant cyan */
+    --primary-foreground: 10 15 25; /* #0a0f19 - Dark text on buttons */
+    --secondary: 30 35 45;         /* #1e232d - Medium blue-gray */
+    --secondary-foreground: 209 213 219; /* #d1d5db - Light gray secondary text */
+    --muted: 30 35 45;             /* #1e232d - Muted backgrounds */
+    --muted-foreground: 156 163 175; /* #9ca3af - Soft muted text */
+    --accent: 139 92 246;          /* #8b5cf6 - Beautiful purple accent */
+    --accent-foreground: 10 15 25; /* #0a0f19 - Dark text on accents */
+    --destructive: 239 68 68;      /* #ef4444 - Clean red */
+    --destructive-foreground: 10 15 25; /* #0a0f19 - Dark text on errors */
+    --warning: 251 191 36;         /* #fbbf24 - Warm yellow */
+    --warning-foreground: 10 15 25; /* #0a0f19 - Dark text on warnings */
+    --border: 45 50 60;            /* #2d323c - Subtle blue-gray borders */
+    --input: 45 50 60;             /* #2d323c - Input borders */
+    --ring: 6 182 212;             /* #06b6d4 - Cyan focus ring */
+  }
+
+  * {
+    @apply transition-colors duration-200 ease-out;
+  }
+
+  html {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+  }
+
+  h1 { @apply text-2xl md:text-3xl; font-weight: 700; }
+  h2 { @apply text-xl md:text-2xl; font-weight: 600; }
+  h3 { @apply text-lg md:text-xl; font-weight: 600; }
+  h4 { @apply text-base md:text-lg; font-weight: 500; }
+  h5 { @apply text-sm md:text-base; font-weight: 500; }
+  h6 { @apply text-sm; font-weight: 500; }
+
+  p, span, div, li {
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+
+  button, a, input, textarea, select {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+  }
+
+  button {
+    @apply font-medium;
+  }
+
+  input, textarea, select {
+    @apply font-normal;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
