@@ -15,6 +15,7 @@ export default function Tasks({ date, userId }: TasksProps) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -123,6 +124,18 @@ export default function Tasks({ date, userId }: TasksProps) {
     setEditingTitle("");
   };
 
+  const toggleTaskExpansion = (taskId: string) => {
+    setExpandedTasks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
+  };
+
   const handleDeleteTask = async (taskId: string) => {
     try {
       await deleteTask(taskId);
@@ -192,41 +205,6 @@ export default function Tasks({ date, userId }: TasksProps) {
     return total + (task.estimatedTime || 0);
   }, 0);
 
-  /**
-   * Calculate time spent on useful vs not useful tasks
-   */
-  const usefulTimeMinutes = tasks.reduce((total, task) => {
-    if (task.isUseful !== true) return total;
-    let taskTime = task.spentTime;
-    if (task.timerRunning && task.timerStart) {
-      const startTime = new Date(task.timerStart).getTime();
-      const elapsedMinutes = (Date.now() - startTime) / 1000 / 60;
-      taskTime += elapsedMinutes;
-    }
-    return total + taskTime;
-  }, 0);
-
-  const notUsefulTimeMinutes = tasks.reduce((total, task) => {
-    if (task.isUseful !== false) return total;
-    let taskTime = task.spentTime;
-    if (task.timerRunning && task.timerStart) {
-      const startTime = new Date(task.timerStart).getTime();
-      const elapsedMinutes = (Date.now() - startTime) / 1000 / 60;
-      taskTime += elapsedMinutes;
-    }
-    return total + taskTime;
-  }, 0);
-
-  const uncategorizedTimeMinutes = tasks.reduce((total, task) => {
-    if (task.isUseful !== null) return total;
-    let taskTime = task.spentTime;
-    if (task.timerRunning && task.timerStart) {
-      const startTime = new Date(task.timerStart).getTime();
-      const elapsedMinutes = (Date.now() - startTime) / 1000 / 60;
-      taskTime += elapsedMinutes;
-    }
-    return total + taskTime;
-  }, 0);
 
   /**
    * Format minutes to human-readable string
@@ -313,171 +291,164 @@ export default function Tasks({ date, userId }: TasksProps) {
       </div>
 
       {/* Time Tracking Aggregations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 p-2 sm:p-3 bg-muted rounded-lg">
+      <div className="mb-4 p-2 sm:p-3 bg-muted rounded-lg">
         {/* Estimated vs Actual */}
-        <div className="border-r border-border pr-3">
-          <div className="text-xs font-semibold text-muted-foreground mb-2">
-            Estimated vs Actual
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground">Estimated:</span>
-              <span className="text-sm font-bold text-primary">
-                {totalEstimatedMinutes > 0
-                  ? formatTime(totalEstimatedMinutes)
-                  : "Not set"}
-              </span>
-            </div>
-            <div className="text-muted-foreground">→</div>
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground">Actual:</span>
-              <span className="text-sm font-bold text-card-foreground">
-                {formatTime(totalTimeMinutes)}
-              </span>
-            </div>
-            {totalEstimatedMinutes > 0 && totalTimeMinutes > 0 && (
-              <div className="flex flex-col ml-2">
-                <span className="text-xs text-muted-foreground">Diff:</span>
-                <span
-                  className={`text-sm font-bold ${
-                    totalTimeMinutes > totalEstimatedMinutes
-                      ? "text-destructive"
-                      : "text-green-600"
-                  }`}
-                >
-                  {totalTimeMinutes > totalEstimatedMinutes ? "+" : ""}
-                  {formatTime(totalTimeMinutes - totalEstimatedMinutes)}
-                </span>
-              </div>
-            )}
-          </div>
+        <div className="text-xs font-semibold text-muted-foreground mb-2">
+          Estimated vs Actual
         </div>
-
-        {/* Useful vs Not Useful Time */}
-        <div className="pl-3">
-          <div className="text-xs font-semibold text-muted-foreground mb-2">
-            Time by Usefulness
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground">Estimated:</span>
+            <span className="text-sm font-bold text-primary">
+              {totalEstimatedMinutes > 0
+                ? formatTime(totalEstimatedMinutes)
+                : "Not set"}
+            </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {usefulTimeMinutes > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">👍 Useful:</span>
-                <span className="text-sm font-bold text-green-700">
-                  {formatTime(usefulTimeMinutes)}
-                </span>
-              </div>
-            )}
-            {notUsefulTimeMinutes > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">👎 Not Useful:</span>
-                <span className="text-sm font-bold text-orange-700">
-                  {formatTime(notUsefulTimeMinutes)}
-                </span>
-              </div>
-            )}
-            {uncategorizedTimeMinutes > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">Uncategorized:</span>
-                <span className="text-sm font-bold text-muted-foreground">
-                  {formatTime(uncategorizedTimeMinutes)}
-                </span>
-              </div>
-            )}
-            {usefulTimeMinutes === 0 &&
-              notUsefulTimeMinutes === 0 &&
-              uncategorizedTimeMinutes === 0 && (
-                <span className="text-xs text-muted-foreground">
-                  No time tracked yet
-                </span>
-              )}
+          <div className="text-muted-foreground">→</div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground">Actual:</span>
+            <span className="text-sm font-bold text-card-foreground">
+              {formatTime(totalTimeMinutes)}
+            </span>
           </div>
+          {totalEstimatedMinutes > 0 && totalTimeMinutes > 0 && (
+            <div className="flex flex-col ml-2">
+              <span className="text-xs text-muted-foreground">Diff:</span>
+              <span
+                className={`text-sm font-bold ${
+                  totalTimeMinutes > totalEstimatedMinutes
+                    ? "text-destructive"
+                    : "text-green-600"
+                }`}
+              >
+                {totalTimeMinutes > totalEstimatedMinutes ? "+" : ""}
+                {formatTime(totalTimeMinutes - totalEstimatedMinutes)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="space-y-3 mb-4">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className={`p-2 sm:p-3 border-2 rounded-lg transition-all ${
-              task.timerRunning
-                ? "border-accent bg-accent/10 shadow-md"
-                : "border-border bg-card hover:bg-muted"
-            }`}
-          >
-            {editingId === task.id ? (
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <input
-                  type="text"
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                  className="flex-1 px-2 py-1 border border-input rounded focus:outline-none focus:ring-2 focus:ring-ring"
-                  autoFocus
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleSaveEdit(task.id)}
-                    className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 flex-1 sm:flex-none"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={handleCancelEdit}
-                    className="px-3 py-1 bg-gray-400 text-white rounded text-sm flex-1 sm:flex-none"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Task info row */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                  <select
-                    value={task.status}
-                    onChange={(e) =>
-                      handleStatusChange(task.id, e.target.value as TaskStatus)
-                    }
-                    className={`px-2 py-1 rounded text-xs sm:text-sm font-medium ${getStatusColor(task.status)} w-full sm:w-auto`}
-                  >
-                    <option value="todo">To Do</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="done">Done</option>
-                  </select>
-                  <span
-                    className={`flex-1 font-medium text-sm sm:text-base ${
-                      task.status === "done"
-                        ? "line-through text-muted-foreground"
-                        : task.timerRunning
-                          ? "text-green-400"
-                          : "text-foreground"
-                    }`}
-                  >
-                    {task.title}
-                  </span>
-                  <div className="flex gap-1 sm:gap-2">
+        {tasks.map((task) => {
+          const isExpanded = expandedTasks.has(task.id);
+          return (
+            <div
+              key={task.id}
+              className={`p-2 sm:p-3 border-2 rounded-lg transition-all cursor-pointer ${
+                task.timerRunning
+                  ? "border-accent bg-accent/10 shadow-md"
+                  : "border-border bg-card hover:bg-muted"
+              }`}
+            >
+              {editingId === task.id ? (
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    className="flex-1 px-2 py-1 border border-input rounded focus:outline-none focus:ring-2 focus:ring-ring"
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => handleStartEdit(task)}
+                      onClick={() => handleSaveEdit(task.id)}
+                      className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 flex-1 sm:flex-none"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="px-3 py-1 bg-gray-400 text-white rounded text-sm flex-1 sm:flex-none"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Collapsed view - clickable to expand */}
+                  <div
+                    className="flex items-center gap-2"
+                    onClick={() => toggleTaskExpansion(task.id)}
+                  >
+                    <select
+                      value={task.status}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleStatusChange(task.id, e.target.value as TaskStatus);
+                      }}
+                      className={`px-2 py-1 rounded text-xs sm:text-sm font-medium ${getStatusColor(task.status)}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <option value="todo">To Do</option>
+                      <option value="in-progress">In Progress</option>
+                      <option value="done">Done</option>
+                    </select>
+                    <span
+                      className={`flex-1 font-medium text-sm sm:text-base ${
+                        task.status === "done"
+                          ? "line-through text-muted-foreground"
+                          : task.timerRunning
+                            ? "text-green-400"
+                            : "text-foreground"
+                      }`}
+                    >
+                      {task.title}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {task.timerRunning && (
+                        <div className="text-xs text-green-600 font-medium animate-pulse">
+                          ⏱️ Running
+                        </div>
+                      )}
+                      <svg
+                        className={`w-4 h-4 text-muted-foreground transition-transform ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Action buttons - always visible */}
+                  <div className="flex gap-1 sm:gap-2 mt-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartEdit(task);
+                      }}
                       className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs sm:text-sm"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDeleteTask(task.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTask(task.id);
+                      }}
                       className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-xs sm:text-sm"
                     >
                       Delete
                     </button>
                   </div>
-                </div>
 
-                {/* Timer controls row */}
-                <div className="flex items-center justify-end">
-                  <TaskTimer task={task} onUpdate={handleTaskTimerUpdate} />
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+                  {/* Expanded view - timer controls */}
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <TaskTimer task={task} onUpdate={handleTaskTimerUpdate} />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">

@@ -149,7 +149,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <MetricCard
           title="Total Time"
           value={formatTime(analytics.time.totalTimeSpent)}
@@ -159,11 +159,6 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           title="Tasks Completed"
           value={analytics.tasks.totalTasksCompleted.toString()}
           subtitle={`${analytics.tasks.taskCompletionRate.toFixed(1)}% completion rate`}
-        />
-        <MetricCard
-          title="Goals Achieved"
-          value={analytics.goals.goalsAchieved.toString()}
-          subtitle={`${analytics.goals.goalSuccessRate.toFixed(1)}% success rate`}
         />
         <MetricCard
           title="Active Days"
@@ -176,7 +171,6 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <TimeAnalyticsCard analytics={analytics} />
         <TaskAnalyticsCard analytics={analytics} />
-        <GoalAnalyticsCard analytics={analytics} />
         <TrendAnalyticsCard analytics={analytics} />
       </div>
 
@@ -332,33 +326,6 @@ function TaskAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
   );
 }
 
-function GoalAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
-  return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Goal Analytics</h3>
-      <div className="space-y-3">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Total Goals:</span>
-          <span className="font-medium text-foreground">{analytics.goals.totalGoals}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Achieved:</span>
-          <span className="font-medium text-foreground">{analytics.goals.goalsAchieved}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Success Rate:</span>
-          <span className="font-medium text-foreground">{analytics.goals.goalSuccessRate.toFixed(1)}%</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Progress vs Expected:</span>
-          <span className={`font-medium ${analytics.goals.progressVsExpected >= 100 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-            {analytics.goals.progressVsExpected.toFixed(1)}%
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function TrendAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
   return (

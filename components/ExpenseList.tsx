@@ -137,10 +137,10 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
         {expenses.map((expense) => (
           <div
             key={expense.id}
-            className="flex items-center gap-2 p-2 border border-border rounded hover:bg-muted"
+            className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 border border-border rounded hover:bg-muted"
           >
             {editingId === expense.id ? (
-              <>
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
                 <input
                   type="text"
                   value={editingTitle}
@@ -153,49 +153,55 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                   type="number"
                   value={editingAmount}
                   onChange={(e) => setEditingAmount(e.target.value)}
-                  className="w-24 px-2 py-1 border rounded"
+                  className="flex-1 sm:w-24 px-2 py-1 border rounded"
                   placeholder="Amount"
                   step="0.01"
                   min="0"
                 />
-                <button
-                  onClick={() => handleSaveEdit(expense.id)}
-                  className="px-2 py-1 bg-green-500 text-white rounded text-sm"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={handleCancelEdit}
-                  className="px-2 py-1 bg-gray-400 text-white rounded text-sm"
-                >
-                  Cancel
-                </button>
-              </>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSaveEdit(expense.id)}
+                    className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             ) : (
-              <>
-                <span className="flex-1">{expense.title}</span>
-                <span className="font-semibold text-red-600 w-24 text-right">
-                  ${expense.amount.toFixed(2)}
-                </span>
-                <button
-                  onClick={() => handleStartEdit(expense)}
-                  className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteExpense(expense.id)}
-                  className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                >
-                  Delete
-                </button>
-              </>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
+                <span className="flex-1 font-medium">{expense.title}</span>
+                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                  <span className="font-semibold text-red-600">
+                    ${expense.amount.toFixed(2)}
+                  </span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleStartEdit(expense)}
+                      className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteExpense(expense.id)}
+                      className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         ))}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="text"
           value={newTitle}
@@ -203,22 +209,24 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
           placeholder="Expense title..."
           className="flex-1 px-3 py-2 border rounded"
         />
-        <input
-          type="number"
-          value={newAmount}
-          onChange={(e) => setNewAmount(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleAddExpense()}
-          placeholder="Amount"
-          className="w-32 px-3 py-2 border rounded"
-          step="0.01"
-          min="0"
-        />
-        <button
-          onClick={handleAddExpense}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Add
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            value={newAmount}
+            onChange={(e) => setNewAmount(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleAddExpense()}
+            placeholder="Amount"
+            className="flex-1 sm:w-32 px-3 py-2 border rounded"
+            step="0.01"
+            min="0"
+          />
+          <button
+            onClick={handleAddExpense}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap"
+          >
+            Add
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import { formatDate, addDays, parseDate } from "@/utils/date";
-import ExportButton from "./ExportButton";
 
 interface DateNavigatorProps {
   currentDate: string;
@@ -74,10 +73,6 @@ export default function DateNavigator({
         >
           Next →
         </button>
-      </div>
-
-      <div className="px-4 pb-4">
-        <ExportButton date={currentDate} userId={userId} />
       </div>
     </div>
   );

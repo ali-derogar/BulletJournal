@@ -6,7 +6,6 @@ import Tasks from "./Tasks";
 import TaskDashboard from "./TaskDashboard";
 import ExpenseList from "./ExpenseList";
 import Reflection from "./Reflection";
-import GoalDashboard from "./GoalDashboard";
 import { useUser } from "@/app/context/UserContext";
 
 interface DayViewProps {
@@ -17,7 +16,6 @@ export default function DayView({ date }: DayViewProps) {
   const { currentUser } = useUser();
   const userId = currentUser?.id || "default";
   const [useDashboard, setUseDashboard] = useState(false);
-  const [goalProgress, setGoalProgress] = useState(0.5); // 0-1, defaults to neutral
 
   return (
     <div className="space-y-4">
@@ -68,12 +66,11 @@ export default function DayView({ date }: DayViewProps) {
 
       {/* Conditional Task View */}
       {useDashboard ? (
-        <TaskDashboard date={date} userId={userId} goalProgress={goalProgress} />
+        <TaskDashboard date={date} userId={userId} />
       ) : (
         <Tasks date={date} userId={userId} />
       )}
 
-      <GoalDashboard onGoalProgressUpdate={setGoalProgress} />
       <ExpenseList date={date} userId={userId} />
       <DailyInputs date={date} userId={userId} />
       <Reflection date={date} userId={userId} />
