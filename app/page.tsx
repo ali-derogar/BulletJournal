@@ -8,6 +8,7 @@ import Calendar from "@/components/Calendar";
 import DayView from "@/components/DayView";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import GoalDashboard from "@/components/GoalDashboard";
+import PersianCalendar from "@/components/PersianCalendar";
 import InstallPrompt from "@/components/InstallPrompt";
 import BackupRestore from "@/components/BackupRestore";
 import OfflineIndicator from "@/components/OfflineIndicator";
@@ -20,7 +21,7 @@ export default function Home() {
   const { currentUser } = useUser();
   const userId = currentUser?.id || "default";
   const [showCalendar, setShowCalendar] = useState(false);
-  const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals'>('daily');
+  const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar'>('daily');
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,8 +83,10 @@ export default function Home() {
         </>
       ) : currentView === 'analytics' ? (
         <AnalyticsDashboard />
-      ) : (
+      ) : currentView === 'goals' ? (
         <GoalDashboard />
+      ) : (
+        <PersianCalendar userId={userId} />
       )}
 
       <InstallPrompt />
@@ -131,6 +134,19 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="text-xs font-medium">Goals</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('calendar')}
+              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-0 flex-1 ${
+                currentView === 'calendar'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-xs font-medium">Calendar</span>
             </button>
           </div>
         </div>

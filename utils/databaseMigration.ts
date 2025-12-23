@@ -3,9 +3,9 @@
 // Database migration helper for goals feature
 export async function checkDatabaseMigration(): Promise<boolean> {
   try {
-    // Force database upgrade by opening with version 2
+    // Force database upgrade by opening with version 3
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("BulletJournalDB", 2);
+      const request = indexedDB.open("BulletJournalDB", 3);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
@@ -30,7 +30,7 @@ export async function checkDatabaseMigration(): Promise<boolean> {
 
 async function forceDatabaseUpgrade(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("BulletJournalDB", 2);
+    const request = indexedDB.open("BulletJournalDB", 3);
     request.onsuccess = () => {
       console.log("Database upgrade completed successfully");
       request.result.close();
@@ -73,7 +73,7 @@ export async function migrateDatabase(): Promise<void> {
 
   // Force database upgrade by opening with new version
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("BulletJournalDB", 2);
+    const request = indexedDB.open("BulletJournalDB", 3);
     request.onsuccess = () => {
       console.log("Database migration successful");
       request.result.close();
@@ -99,6 +99,16 @@ export async function migrateDatabase(): Promise<void> {
         goalStore.createIndex("quarter", ["year", "quarter"], { unique: false });
         goalStore.createIndex("month", ["year", "month"], { unique: false });
         goalStore.createIndex("week", ["year", "week"], { unique: false });
+      }
+
+      // Create calendar notes store if it doesn't exist
+      if (!db.objectStoreNames.contains("calendarNotes")) {
+        console.log("Creating calendarNotes store during migration");
+        const calendarStore = db.createObjectStore("calendarNotes", {
+          keyPath: "id",
+        });
+        calendarStore.createIndex("userId", "userId", { unique: false });
+        calendarStore.createIndex("date", "date", { unique: false });
       }
     };
   });

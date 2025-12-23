@@ -1,5 +1,5 @@
 const DB_NAME = "BulletJournalDB";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export const STORES = {
   DAILY_JOURNALS: "dailyJournals",
@@ -9,14 +9,15 @@ export const STORES = {
   MOOD: "mood",
   USERS: "users",
   GOALS: "goals",
+  CALENDAR_NOTES: "calendarNotes",
 } as const;
 
 let dbInstance: IDBDatabase | null = null;
 
 export async function initDB(): Promise<IDBDatabase> {
   // Reset instance if we need to force a reconnect
-  if (dbInstance && !dbInstance.objectStoreNames.contains(STORES.GOALS)) {
-    console.log("Database instance exists but missing goals store, resetting...");
+  if (dbInstance && (!dbInstance.objectStoreNames.contains(STORES.GOALS) || !dbInstance.objectStoreNames.contains(STORES.CALENDAR_NOTES))) {
+    console.log("Database instance exists but missing stores, resetting...");
     dbInstance.close();
     dbInstance = null;
   }
@@ -98,6 +99,14 @@ export async function initDB(): Promise<IDBDatabase> {
         db.createObjectStore(STORES.USERS, {
           keyPath: "id",
         });
+      }
+
+      if (!db.objectStoreNames.contains(STORES.CALENDAR_NOTES)) {
+        const calendarStore = db.createObjectStore(STORES.CALENDAR_NOTES, {
+          keyPath: "id",
+        });
+        calendarStore.createIndex("userId", "userId", { unique: false });
+        calendarStore.createIndex("date", "date", { unique: false });
       }
     };
   });
