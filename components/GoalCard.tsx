@@ -55,16 +55,16 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow"
+      className="bg-card rounded-xl shadow-sm border border-border p-4 hover:shadow-md transition-shadow"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 text-lg leading-tight">
+          <h3 className="font-semibold text-card-foreground text-lg leading-tight">
             {goal.title}
           </h3>
           {goal.description && (
-            <p className="text-sm text-gray-600 mt-1">{goal.description}</p>
+            <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
           )}
         </div>
         <div className="flex items-center gap-2 ml-3">
@@ -74,7 +74,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => onEdit(goal)}
-              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
               title="Edit goal"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +85,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => onDelete(goal.id)}
-              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
               title="Delete goal"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,14 +99,14 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
       {/* Progress Bar */}
       <div className="mb-3">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-muted-foreground">
             {goal.currentValue} / {goal.targetValue} {goal.unit}
           </span>
-          <span className="text-sm font-semibold text-gray-900">
+          <span className="text-sm font-semibold text-card-foreground">
             {Math.round(progress)}%
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className="w-full bg-muted rounded-full h-2.5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
@@ -130,7 +130,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
               whileTap={{ scale: 0.95 }}
               onClick={handleDecrement}
               disabled={goal.currentValue <= 0 || isUpdating}
-              className="px-3 py-1 bg-gray-100 text-gray-700 rounded font-medium hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1 bg-secondary text-secondary-foreground rounded font-medium hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               −
             </motion.button>
@@ -142,7 +142,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
               whileTap={{ scale: 0.95 }}
               onClick={handleIncrement}
               disabled={isUpdating}
-              className="px-3 py-1 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1 bg-primary text-primary-foreground rounded font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               +
             </motion.button>
@@ -165,12 +165,12 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
 
       {/* Task-linked indicator */}
       {goal.progressType === "task-linked" && (
-        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-3 p-2 bg-primary/10 border border-primary/20 rounded-lg">
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="text-sm text-blue-700 font-medium">
+            <span className="text-sm text-primary font-medium">
               Linked to {goal.linkedTaskIds.length} task{goal.linkedTaskIds.length !== 1 ? "s" : ""}
             </span>
           </div>

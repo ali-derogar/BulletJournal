@@ -8,7 +8,7 @@ import { useUser } from "@/app/context/UserContext";
 import GoalCalendar from "./GoalCalendar";
 import GoalCard from "./GoalCard";
 import GoalForm from "./GoalForm";
-import { formatPeriodLabel } from "@/utils/goalUtils";
+import { formatPeriodLabel, getCurrentPeriod } from "@/utils/goalUtils";
 import { checkDatabaseMigration, migrateDatabase } from "@/utils/databaseMigration";
 
 interface GoalDashboardProps {
@@ -21,13 +21,23 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
 
   console.log("GoalDashboard mounted/rendered, userId:", userId);
 
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goalsByPeriod, setGoalsByPeriod] = useState<{
+    yearly: Goal[];
+    quarterly: Goal[];
+    monthly: Goal[];
+    weekly: Goal[];
+  }>({
+    yearly: [],
+    quarterly: [],
+    monthly: [],
+    weekly: [],
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>();
-  const [currentPeriod, setCurrentPeriod] = useState<{
+  const [selectedPeriod, setSelectedPeriod] = useState<{
     type: GoalType;
     year: number;
     quarter?: number;
@@ -53,58 +63,57 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
     checkMigration();
   }, []);
 
-  const loadGoals = useCallback(async () => {
-    if (!currentPeriod) {
-      console.log("loadGoals: No currentPeriod, skipping");
-      return;
-    }
-
-    console.log("loadGoals: Starting to load goals for period:", currentPeriod);
+  const loadAllGoals = useCallback(async () => {
+    console.log("loadAllGoals: Starting to load goals for all periods");
     setLoading(true);
     setError(null);
     try {
-      const fetchedGoals = await getGoals(
-        userId,
-        currentPeriod.type,
-        currentPeriod.year,
-        currentPeriod.quarter,
-        currentPeriod.month,
-        currentPeriod.week
-      );
-      console.log("loadGoals: Fetched goals:", fetchedGoals);
-      setGoals(fetchedGoals);
+      const periods = {
+        yearly: getCurrentPeriod("yearly"),
+        quarterly: getCurrentPeriod("quarterly"),
+        monthly: getCurrentPeriod("monthly"),
+        weekly: getCurrentPeriod("weekly"),
+      };
+
+      const [yearlyGoals, quarterlyGoals, monthlyGoals, weeklyGoals] = await Promise.all([
+        getGoals(userId, "yearly", periods.yearly.year),
+        getGoals(userId, "quarterly", periods.quarterly.year, periods.quarterly.quarter),
+        getGoals(userId, "monthly", periods.monthly.year, undefined, periods.monthly.month),
+        getGoals(userId, "weekly", periods.weekly.year, undefined, undefined, periods.weekly.week),
+      ]);
+
+      setGoalsByPeriod({
+        yearly: yearlyGoals,
+        quarterly: quarterlyGoals,
+        monthly: monthlyGoals,
+        weekly: weeklyGoals,
+      });
 
       // Calculate overall progress for mood integration
-      if (onGoalProgressUpdate && fetchedGoals.length > 0) {
-        const totalProgress = fetchedGoals.reduce((sum, goal) => {
+      const allGoals = [...yearlyGoals, ...quarterlyGoals, ...monthlyGoals, ...weeklyGoals];
+      if (onGoalProgressUpdate && allGoals.length > 0) {
+        const totalProgress = allGoals.reduce((sum, goal) => {
           const progress = goal.targetValue > 0 ? (goal.currentValue / goal.targetValue) * 100 : 0;
           return sum + progress;
-        }, 0) / fetchedGoals.length;
+        }, 0) / allGoals.length;
         onGoalProgressUpdate(totalProgress);
       }
     } catch (error) {
       console.error("Error loading goals:", error);
       setError(error instanceof Error ? error.message : "Failed to load goals");
     } finally {
-      console.log("loadGoals: Setting loading to false");
       setLoading(false);
     }
-  }, [currentPeriod, userId, onGoalProgressUpdate]);
+  }, [userId, onGoalProgressUpdate]);
 
-  // Load goals when period changes
+  // Load all goals on mount
   useEffect(() => {
-    if (currentPeriod) {
-      loadGoals();
-    } else {
-      // Reset state when no period is selected
-      setLoading(false);
-      setGoals([]);
-    }
-  }, [currentPeriod, loadGoals]);
+    loadAllGoals();
+  }, [loadAllGoals]);
 
   const handlePeriodSelect = (type: GoalType, year: number, quarter?: number, month?: number, week?: number) => {
     console.log("handlePeriodSelect called with:", { type, year, quarter, month, week });
-    setCurrentPeriod({ type, year, quarter, month, week });
+    setSelectedPeriod({ type, year, quarter, month, week });
     setShowCalendar(false);
   };
 
@@ -116,7 +125,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
       console.log("GoalDashboard: saveGoal completed successfully");
 
       console.log("GoalDashboard: Reloading goals...");
-      await loadGoals();
+      await loadAllGoals();
       console.log("GoalDashboard: Goals reloaded");
 
       setShowForm(false);
@@ -132,7 +141,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
     if (confirm("Are you sure you want to delete this goal?")) {
       try {
         await deleteGoal(goalId);
-        await loadGoals();
+        await loadAllGoals();
       } catch (error) {
         console.error("Error deleting goal:", error);
         setError(error instanceof Error ? error.message : "Failed to delete goal");
@@ -146,7 +155,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
   };
 
   const handleAddGoal = () => {
-    console.log("handleAddGoal called, currentPeriod:", currentPeriod);
+    console.log("handleAddGoal called, selectedPeriod:", selectedPeriod);
     setEditingGoal(undefined);
     setShowForm(true);
     console.log("showForm set to true");
@@ -157,35 +166,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
     setEditingGoal(undefined);
   };
 
-  if (!currentPeriod) {
-    return (
-      <div className="bg-card rounded-lg p-6 shadow border border-border">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🎯</div>
-          <h2 className="text-xl font-semibold text-card-foreground mb-2">Goal Setting</h2>
-          <p className="text-muted-foreground mb-6">
-            Set and track your goals across different time periods
-          </p>
-          <button
-            onClick={() => {
-              console.log("Get Started button clicked");
-              setShowCalendar(true);
-            }}
-            className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            Get Started
-          </button>
-        </div>
-
-        {showCalendar && (
-          <GoalCalendar
-            onPeriodSelect={handlePeriodSelect}
-            onClose={() => setShowCalendar(false)}
-          />
-        )}
-      </div>
-    );
-  }
+  // Always show the dashboard
 
   return (
     <div className="bg-card rounded-lg shadow border border-border">
@@ -194,16 +175,10 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-card-foreground">
-              {formatPeriodLabel(
-                currentPeriod.type,
-                currentPeriod.year,
-                currentPeriod.quarter,
-                currentPeriod.month,
-                currentPeriod.week
-              )} Goals
+              All Goals
             </h2>
             <p className="text-sm text-muted-foreground">
-              {goals.length} goal{goals.length !== 1 ? "s" : ""}
+              {Object.values(goalsByPeriod).flat().length} goal{Object.values(goalsByPeriod).flat().length !== 1 ? "s" : ""}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -211,7 +186,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
               onClick={() => setShowCalendar(true)}
               className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
             >
-              📅 Change Period
+              📅 Select Period
             </button>
             <button
               onClick={() => {
@@ -270,36 +245,50 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
             <p className="text-sm text-muted-foreground">Loading Goals...</p>
           </div>
-        ) : goals.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-4">🎯</div>
-            <h3 className="text-lg font-medium text-card-foreground mb-2">No goals yet</h3>
-            <p className="text-muted-foreground mb-6">
-              Set your first goal for this period to start tracking progress
-            </p>
-            <button
-              onClick={() => {
-                console.log("Add Your First Goal button clicked (empty state)");
-                handleAddGoal();
-              }}
-              className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              Add Your First Goal
-            </button>
-          </div>
         ) : (
-          <div className="space-y-4">
-            <AnimatePresence>
-              {goals.map((goal) => (
-                <GoalCard
-                  key={goal.id}
-                  goal={goal}
-                  onUpdate={handleSaveGoal}
-                  onDelete={handleDeleteGoal}
-                  onEdit={handleEditGoal}
-                />
-              ))}
-            </AnimatePresence>
+          <div className="space-y-6">
+            {Object.entries(goalsByPeriod).map(([periodType, goals]) => (
+              <div key={periodType}>
+                <h3 className="text-md font-semibold text-card-foreground mb-3 capitalize">
+                  {periodType} Goals
+                </h3>
+                {goals.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No {periodType} goals set</p>
+                ) : (
+                  <div className="space-y-3">
+                    <AnimatePresence>
+                      {goals.map((goal) => (
+                        <GoalCard
+                          key={goal.id}
+                          goal={goal}
+                          onUpdate={handleSaveGoal}
+                          onDelete={handleDeleteGoal}
+                          onEdit={handleEditGoal}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            ))}
+            {Object.values(goalsByPeriod).every(goals => goals.length === 0) && (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-4">🎯</div>
+                <h3 className="text-lg font-medium text-card-foreground mb-2">No goals yet</h3>
+                <p className="text-muted-foreground mb-6">
+                  Set your first goal to start tracking progress
+                </p>
+                <button
+                  onClick={() => {
+                    console.log("Add Your First Goal button clicked (empty state)");
+                    handleAddGoal();
+                  }}
+                  className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Add Your First Goal
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -318,7 +307,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
           onSave={handleSaveGoal}
           onCancel={handleCloseForm}
           userId={userId}
-          currentPeriod={currentPeriod || undefined}
+          currentPeriod={selectedPeriod || undefined}
         />
       )}
     </div>
