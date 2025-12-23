@@ -88,22 +88,26 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
     return (
       <div className="p-6">
         <div className={`border rounded-lg p-4 ${isAuthError ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'}`}>
-          <p className={isAuthError ? 'text-yellow-800' : 'text-red-800'}>
-            {isAuthError
-              ? 'Analytics requires authentication. Please log in to view your productivity data.'
-              : error.includes('Network error') || error.includes('fetch')
-              ? 'Unable to load analytics data. Please ensure the backend server is running and try again.'
-              : error
-            }
-          </p>
-          {!isAuthError && (
-            <button
-              onClick={loadAnalytics}
-              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Retry
-            </button>
-          )}
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className={isAuthError ? 'text-yellow-800' : 'text-red-800'}>
+                {isAuthError
+                  ? 'Analytics requires authentication. Please log in to view your productivity data.'
+                  : error.includes('Network error') || error.includes('fetch')
+                  ? 'Unable to load analytics data. Please ensure the backend server is running and try again.'
+                  : error
+                }
+              </p>
+            </div>
+            {!isAuthError && (
+              <button
+                onClick={loadAnalytics}
+                className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Retry
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -177,13 +181,42 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       {/* Insights */}
       <InsightsCard insights={analytics.insights} />
 
+      {/* Demo Data Notice */}
+      {analytics.isDemo && (
+        <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-blue-800 dark:text-blue-200 text-sm">
+                <strong>Demo Data:</strong> You&apos;re viewing sample analytics data. Connect to the backend server for real data.
+              </p>
+            </div>
+            <button
+              onClick={loadAnalytics}
+              className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Data Quality Notice */}
-      {!analytics.dataQuality.isComplete && (
+      {!analytics.dataQuality.isComplete && !analytics.isDemo && (
         <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> This period has incomplete data ({analytics.dataQuality.missingDays} missing days).
-            Analytics may not be fully representative.
-          </p>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                <strong>Note:</strong> This period has incomplete data ({analytics.dataQuality.missingDays} missing days).
+                Analytics may not be fully representative.
+              </p>
+            </div>
+            <button
+              onClick={loadAnalytics}
+              className="ml-4 px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       )}
     </div>

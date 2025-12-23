@@ -56,7 +56,7 @@ async def get_task_analytics(
         # Use raw SQL to avoid column name issues
         from sqlalchemy import text
         query = text("""
-            SELECT id, user_id, date, title, status, created_at, accumulated_time, timer_running, timer_start, estimated_time, is_useful
+            SELECT id, user_id, date, title, status, created_at, spentTime, timer_running, timer_start, estimated_time, is_useful
             FROM tasks
             WHERE user_id = :user_id
             AND date >= :start_date

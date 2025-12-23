@@ -6,7 +6,7 @@ class DailyJournal(Base):
     __tablename__ = "daily_journals"
 
     id = Column(String, primary_key=True, index=True)
-    userId = Column(String, nullable=False, index=True)
+    userId = Column(String, name='user_id', nullable=False, index=True)
     date = Column(String, nullable=False, index=True)
     tasks = Column(Text, nullable=False, default="[]")  # JSON array of task IDs
     expenses = Column(Text, nullable=False, default="[]")  # JSON array of expense IDs

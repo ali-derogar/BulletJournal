@@ -6,7 +6,7 @@ class MoodInfo(Base):
     __tablename__ = "mood"
 
     id = Column(String, primary_key=True, index=True)
-    userId = Column(String, nullable=False, index=True)
+    userId = Column(String, name='user_id', nullable=False, index=True)
     date = Column(String, nullable=False, index=True)
     rating = Column(Float, nullable=False)  # Mood rating
     day_score = Column(Float, nullable=False)  # Overall day score

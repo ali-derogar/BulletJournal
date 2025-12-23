@@ -284,7 +284,8 @@ function getDemoAnalytics(period: Period): AnalyticsData {
       isComplete: activeDays >= totalDays * 0.7, // At least 70% of days have activity
       missingDays: totalDays - activeDays,
       totalDays
-    }
+    },
+    isDemo: true
   };
 }
 
@@ -330,6 +331,7 @@ function getEmptyAnalytics(period: Period): AnalyticsData {
       isComplete: false,
       missingDays: getPeriodDates(period).days.length,
       totalDays: getPeriodDates(period).days.length
-    }
+    },
+    isDemo: false
   };
 }

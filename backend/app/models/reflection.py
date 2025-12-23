@@ -6,7 +6,7 @@ class Reflection(Base):
     __tablename__ = "reflections"
 
     id = Column(String, primary_key=True, index=True)
-    userId = Column(String, nullable=False, index=True)
+    userId = Column(String, name='user_id', nullable=False, index=True)
     date = Column(String, nullable=False, index=True)
     notes = Column(Text, nullable=False, default="")
     water_intake = Column(Integer, nullable=False, default=0)  # Glasses of water

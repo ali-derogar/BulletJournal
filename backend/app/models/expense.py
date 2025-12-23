@@ -6,7 +6,7 @@ class Expense(Base):
     __tablename__ = "expenses"
 
     id = Column(String, primary_key=True, index=True)
-    userId = Column(String, nullable=False, index=True)
+    userId = Column(String, name='user_id', nullable=False, index=True)
     date = Column(String, nullable=False, index=True)
     title = Column(String, nullable=False)
     amount = Column(Float, nullable=False)

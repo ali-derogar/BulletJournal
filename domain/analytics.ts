@@ -63,6 +63,7 @@ export interface AnalyticsData {
     missingDays: number;
     totalDays: number;
   };
+  isDemo?: boolean; // Indicates if this is demo/sample data
 }
 
 export interface AnalyticsRequest {

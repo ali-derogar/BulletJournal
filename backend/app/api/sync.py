@@ -333,10 +333,42 @@ async def download_data(
     """Download all user data from server."""
     try:
         # Fetch all data for the current user
-        tasks = db.query(Task).filter(Task.userId == current_user.id).all()
-        expenses = db.query(Expense).filter(Expense.userId == current_user.id).all()
-        journals = db.query(DailyJournal).filter(DailyJournal.userId == current_user.id).all()
-        reflections = db.query(Reflection).filter(Reflection.userId == current_user.id).all()
+        # Handle potential column issues gracefully
+        try:
+            tasks = db.query(Task).filter(Task.userId == current_user.id).all()
+        except Exception as e:
+            if "no such column" in str(e).lower():
+                logger.warning(f"Task table missing columns for user {current_user.id}, returning empty")
+                tasks = []
+            else:
+                raise
+
+        try:
+            expenses = db.query(Expense).filter(Expense.userId == current_user.id).all()
+        except Exception as e:
+            if "no such column" in str(e).lower():
+                logger.warning(f"Expense table missing columns for user {current_user.id}, returning empty")
+                expenses = []
+            else:
+                raise
+
+        try:
+            journals = db.query(DailyJournal).filter(DailyJournal.userId == current_user.id).all()
+        except Exception as e:
+            if "no such column" in str(e).lower():
+                logger.warning(f"Journal table missing columns for user {current_user.id}, returning empty")
+                journals = []
+            else:
+                raise
+
+        try:
+            reflections = db.query(Reflection).filter(Reflection.userId == current_user.id).all()
+        except Exception as e:
+            if "no such column" in str(e).lower():
+                logger.warning(f"Reflection table missing columns for user {current_user.id}, returning empty")
+                reflections = []
+            else:
+                raise
 
         logger.info(
             f"User {current_user.id} downloaded data: "
