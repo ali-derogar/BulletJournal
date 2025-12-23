@@ -322,3 +322,40 @@ async def sync_data(
             status_code=500,
             detail=f"Sync failed: {str(e)}"
         )
+
+@router.post("/sync/download", response_model=SyncResponse)
+@limiter.limit("30/minute")  # Rate limit: 30 downloads per minute per user
+async def download_data(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Download all user data from server."""
+    try:
+        # Fetch all data for the current user
+        tasks = db.query(Task).filter(Task.userId == current_user.id).all()
+        expenses = db.query(Expense).filter(Expense.userId == current_user.id).all()
+        journals = db.query(DailyJournal).filter(DailyJournal.userId == current_user.id).all()
+        reflections = db.query(Reflection).filter(Reflection.userId == current_user.id).all()
+
+        logger.info(
+            f"User {current_user.id} downloaded data: "
+            f"tasks={len(tasks)}, expenses={len(expenses)}, "
+            f"journals={len(journals)}, reflections={len(reflections)}"
+        )
+
+        # Return counts (frontend will handle actual data separately)
+        return SyncResponse(
+            synced_tasks=len(tasks),
+            synced_expenses=len(expenses),
+            synced_journals=len(journals),
+            synced_reflections=len(reflections),
+            conflicts_resolved=0
+        )
+
+    except Exception as e:
+        logger.error(f"Download failed for user {current_user.id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Download failed: {str(e)}"
+        )

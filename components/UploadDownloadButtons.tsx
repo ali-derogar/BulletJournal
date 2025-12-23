@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { performSync, canSync, formatSyncStats } from '@/services/sync';
+import { performSync, performDownload, canSync, formatSyncStats } from '@/services/sync';
 import { logout } from '@/services/auth';
 import type { SyncResult, SyncPhase } from '@/services/sync';
 import SyncStatus from './SyncStatus';
 
-export default function SyncButtonEnhanced() {
+export default function UploadDownloadButtons() {
   const { user, isOnline, isAuthenticated } = useAuth();
-  const [syncPhase, setSyncPhase] = useState<SyncPhase>('idle');
+  const [uploadPhase, setUploadPhase] = useState<SyncPhase>('idle');
+  const [downloadPhase, setDownloadPhase] = useState<SyncPhase>('idle');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [lastSyncError, setLastSyncError] = useState<string | null>(null);
   const [showNotification, setShowNotification] = useState(false);
@@ -17,57 +18,99 @@ export default function SyncButtonEnhanced() {
   // Check if sync is allowed
   const syncCheck = canSync(isOnline, isAuthenticated);
 
-  const handleSync = async () => {
+  const handleUpload = async () => {
     if (!syncCheck.allowed || !user) {
       return;
     }
 
-    setSyncPhase('loading');
+    setUploadPhase('loading');
     setSyncResult(null);
     setShowNotification(false);
     setLastSyncError(null);
 
     try {
       const result = await performSync(user.id, (progress) => {
-        console.log('Sync Progress:', progress); // Debug log
-        setSyncPhase(progress.phase);
+        console.log('Upload Progress:', progress);
+        setUploadPhase(progress.phase);
       });
 
       setSyncResult(result);
       setShowNotification(true);
 
       if (result.success) {
-        // Clear any previous errors
         setLastSyncError(null);
-        // Auto-hide success message after 5 seconds
         setTimeout(() => {
           setShowNotification(false);
         }, 5000);
       } else {
-        // Handle token expiration by logging out
         if (result.tokenExpired) {
-          console.warn('Token expired during sync, logging out...');
+          console.warn('Token expired during upload, logging out...');
           logout();
-          // Auth context will automatically update and trigger re-render
-          return; // Exit early, don't show error notification
+          return;
         }
-
-        // Keep error visible for other errors
         setLastSyncError(result.error || result.message);
       }
     } catch (error) {
-      console.error('Sync error:', error);
+      console.error('Upload error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setLastSyncError(errorMessage);
       setSyncResult({
         success: false,
-        message: 'Sync failed',
+        message: 'Upload failed',
         error: errorMessage,
-        retryable: true, // Unknown errors should be retryable
+        retryable: true,
       });
       setShowNotification(true);
     } finally {
-      setSyncPhase('idle');
+      setUploadPhase('idle');
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!syncCheck.allowed || !user) {
+      return;
+    }
+
+    setDownloadPhase('loading');
+    setSyncResult(null);
+    setShowNotification(false);
+    setLastSyncError(null);
+
+    try {
+      const result = await performDownload(user.id, (progress) => {
+        console.log('Download Progress:', progress);
+        setDownloadPhase(progress.phase);
+      });
+
+      setSyncResult(result);
+      setShowNotification(true);
+
+      if (result.success) {
+        setLastSyncError(null);
+        setTimeout(() => {
+          setShowNotification(false);
+        }, 5000);
+      } else {
+        if (result.tokenExpired) {
+          console.warn('Token expired during download, logging out...');
+          logout();
+          return;
+        }
+        setLastSyncError(result.error || result.message);
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setLastSyncError(errorMessage);
+      setSyncResult({
+        success: false,
+        message: 'Download failed',
+        error: errorMessage,
+        retryable: true,
+      });
+      setShowNotification(true);
+    } finally {
+      setDownloadPhase('idle');
     }
   };
 
@@ -76,35 +119,37 @@ export default function SyncButtonEnhanced() {
     return null;
   }
 
-  const isSyncing = syncPhase !== 'idle';
+  const isUploading = uploadPhase !== 'idle';
+  const isDownloading = downloadPhase !== 'idle';
+  const currentPhase = isUploading ? uploadPhase : isDownloading ? downloadPhase : 'idle';
 
   return (
     <div className="flex items-center gap-2">
       {/* Sync Status Indicator */}
-      <SyncStatus syncPhase={syncPhase} lastSyncError={lastSyncError} compact />
+      <SyncStatus syncPhase={currentPhase} lastSyncError={lastSyncError} compact />
 
-      {/* Sync Button */}
+      {/* Upload Button */}
       <div className="relative">
         <button
-          onClick={handleSync}
-          disabled={!syncCheck.allowed || isSyncing}
+          onClick={handleUpload}
+          disabled={!syncCheck.allowed || isUploading || isDownloading}
           className={`
-            px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2
+            px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2
             ${
-              syncPhase === 'loading'
+              uploadPhase === 'loading'
                 ? 'bg-blue-600 text-white cursor-wait'
-                : syncPhase === 'saving'
+                : uploadPhase === 'saving'
                 ? 'bg-purple-600 text-white cursor-wait'
-                : syncCheck.allowed
+                : syncCheck.allowed && !isDownloading
                 ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }
           `}
-          title={syncCheck.reason || 'Sync your data with the server'}
+          title={syncCheck.reason || 'Upload data to server'}
         >
-          {/* Sync Icon */}
-          {syncPhase === 'loading' ? (
-            <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Upload Icon */}
+          {uploadPhase === 'loading' ? (
+            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -112,8 +157,8 @@ export default function SyncButtonEnhanced() {
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
               />
             </svg>
-          ) : syncPhase === 'saving' ? (
-            <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ) : uploadPhase === 'saving' ? (
+            <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -122,23 +167,71 @@ export default function SyncButtonEnhanced() {
               />
             </svg>
           ) : (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
               />
             </svg>
           )}
+          <span className="text-sm hidden sm:inline">
+            {uploadPhase === 'loading' ? 'Loading...' : uploadPhase === 'saving' ? 'Uploading...' : 'Upload'}
+          </span>
+        </button>
+      </div>
 
-          <span className="hidden sm:inline">
-            {syncPhase === 'loading' ? 'Loading...' : syncPhase === 'saving' ? 'Saving...' : 'Sync Now'}
+      {/* Download Button */}
+      <div className="relative">
+        <button
+          onClick={handleDownload}
+          disabled={!syncCheck.allowed || isUploading || isDownloading}
+          className={`
+            px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2
+            ${
+              downloadPhase === 'loading'
+                ? 'bg-blue-600 text-white cursor-wait'
+                : downloadPhase === 'saving'
+                ? 'bg-purple-600 text-white cursor-wait'
+                : syncCheck.allowed && !isUploading
+                ? 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }
+          `}
+          title={syncCheck.reason || 'Download data from server'}
+        >
+          {/* Download Icon */}
+          {downloadPhase === 'loading' ? (
+            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+          ) : downloadPhase === 'saving' ? (
+            <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+              />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+          )}
+          <span className="text-sm hidden sm:inline">
+            {downloadPhase === 'loading' ? 'Downloading...' : downloadPhase === 'saving' ? 'Saving...' : 'Download'}
           </span>
         </button>
 

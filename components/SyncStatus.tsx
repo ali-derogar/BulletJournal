@@ -4,15 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { getLastSyncAt } from '@/storage/syncMeta';
 
-export type SyncStatusType = 'offline' | 'not-logged-in' | 'synced' | 'error' | 'syncing' | 'ready';
+export type SyncStatusType = 'offline' | 'not-logged-in' | 'synced' | 'error' | 'loading' | 'saving' | 'ready';
 
 interface SyncStatusProps {
-  isSyncing?: boolean;
+  syncPhase?: 'loading' | 'saving' | 'idle';
   lastSyncError?: string | null;
   compact?: boolean;
 }
 
-export default function SyncStatus({ isSyncing = false, lastSyncError = null, compact = false }: SyncStatusProps) {
+export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, compact = false }: SyncStatusProps) {
   const { user, isOnline, isAuthenticated } = useAuth();
   const [currentTime, setCurrentTime] = useState(Date.now());
 
@@ -27,12 +27,12 @@ export default function SyncStatus({ isSyncing = false, lastSyncError = null, co
 
   // Determine sync status
   const getStatus = (): { type: SyncStatusType; message: string; color: string; icon: React.ReactElement } => {
-    // Priority order: syncing > offline > not-logged-in > error > synced > ready
+    // Priority order: loading/saving > offline > not-logged-in > error > synced > ready
 
-    if (isSyncing) {
+    if (syncPhase === 'loading') {
       return {
-        type: 'syncing',
-        message: 'Syncing...',
+        type: 'loading',
+        message: 'Loading...',
         color: 'text-blue-600 bg-blue-50 border-blue-200',
         icon: (
           <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,25 @@ export default function SyncStatus({ isSyncing = false, lastSyncError = null, co
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+        ),
+      };
+    }
+
+    if (syncPhase === 'saving') {
+      return {
+        type: 'saving',
+        message: 'Saving...',
+        color: 'text-purple-600 bg-purple-50 border-purple-200',
+        icon: (
+          <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
             />
           </svg>
         ),

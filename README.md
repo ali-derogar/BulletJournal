@@ -1,10 +1,11 @@
 # Bullet Journal - Offline PWA
 
-**Version 1.0.0** | Offline-first Progressive Web Application built with Next.js, TypeScript, and TailwindCSS for personal daily journaling, task management, expense tracking, and habit formation.
+**Version 1.1.0** | Offline-first Progressive Web Application built with Next.js, TypeScript, and TailwindCSS for personal daily journaling, task management, expense tracking, and habit formation.
 
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success)](https://web.dev/progressive-web-apps/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Build Size](https://img.shields.io/badge/Build-1.7MB-informational)](package.json)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
 
 ## Project Structure
 
@@ -15,22 +16,113 @@
 /storage      - Data storage and persistence layer
 /services     - Service layer and API interactions
 /utils        - Utility functions and helpers
+/backend      - FastAPI backend server
 ```
 
 ## Prerequisites
 
+### Docker Setup (Recommended)
+- Docker 20.10 or higher
+- Docker Compose 2.0 or higher
+
+### Manual Setup
 - Node.js 20.9.0 or higher
+- Python 3.11 or higher
 - npm or yarn
 
 ## Getting Started
 
-### 1. Install Dependencies
+### Option 1: Docker Setup (Recommended)
+
+The easiest way to run the entire application is using Docker. This automatically handles all dependencies and environment setup.
+
+#### 1. Create Environment File
+
+```bash
+cp .env.example .env
+```
+
+Edit [.env](.env) if needed to customize configuration.
+
+#### 2. Build and Run
+
+```bash
+# Build and start both frontend and backend
+docker-compose up --build
+
+# Or run in detached mode (background)
+docker-compose up -d --build
+```
+
+#### 3. Access the Application
+
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend API: [http://localhost:8000](http://localhost:8000)
+- API Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+#### 4. Stop the Application
+
+```bash
+# Stop containers
+docker-compose down
+
+# Stop and remove volumes (delete database)
+docker-compose down -v
+```
+
+#### Docker Commands
+
+```bash
+# View logs
+docker-compose logs -f
+
+# View backend logs only
+docker-compose logs -f backend
+
+# View frontend logs only
+docker-compose logs -f frontend
+
+# Rebuild after code changes
+docker-compose up --build
+
+# Run backend migrations
+docker-compose exec backend alembic upgrade head
+```
+
+### Option 2: Manual Setup
+
+#### 1. Install Frontend Dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Run Development Server
+#### 2. Install Backend Dependencies
+
+```bash
+cd backend
+pip install -r requirements.txt
+cd ..
+```
+
+#### 3. Setup Environment Variables
+
+```bash
+cp .env.example .env.local
+```
+
+Edit [.env.local](.env.local) to set your API URL and other configuration.
+
+#### 4. Run Backend
+
+```bash
+cd backend
+python run.py
+# Or using uvicorn directly:
+# uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### 5. Run Frontend (in a new terminal)
 
 ```bash
 npm run dev
@@ -38,7 +130,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 3. Build for Production
+#### 6. Build for Production
 
 ```bash
 npm run build
@@ -144,3 +236,5 @@ The app uses IndexedDB for local data storage and a service worker for offline c
 - Works completely offline after first visit
 - No backend or database server required
 - Data persists across sessions
+
+docker compose up --build

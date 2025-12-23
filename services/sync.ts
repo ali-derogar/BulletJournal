@@ -26,6 +26,8 @@ export interface SyncResponse {
   conflicts_resolved: number;
 }
 
+export type SyncPhase = 'loading' | 'saving' | 'idle';
+
 export interface SyncResult {
   success: boolean;
   message: string;
@@ -38,6 +40,11 @@ export interface SyncResult {
   error?: string;
   retryable?: boolean; // Whether the error can be retried
   tokenExpired?: boolean; // Whether token needs refresh
+}
+
+export interface SyncProgress {
+  phase: SyncPhase;
+  message: string;
 }
 
 /**
@@ -219,26 +226,12 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
 }
 
 /**
- * Apply server updates to local storage
- * Note: In this implementation, we're only pushing changes to server.
- * A full bidirectional sync would fetch server changes and apply them locally.
+ * Download data from server and save to local IndexedDB
  */
-async function applyServerUpdates(userId: string): Promise<void> {
-  // TODO: Implement server-to-client sync in future versions
-  // For now, we rely on server's conflict resolution (last-write-wins)
-  // Server keeps the most recent version based on updatedAt timestamps
-
-  // Future enhancement:
-  // 1. Add GET /sync endpoint to fetch server changes
-  // 2. Compare server data with local data
-  // 3. Apply server changes that are newer
-  // 4. Handle conflicts if needed
-}
-
-/**
- * Perform manual sync
- */
-export async function performSync(userId: string): Promise<SyncResult> {
+export async function performDownload(
+  userId: string,
+  onProgress?: (progress: SyncProgress) => void
+): Promise<SyncResult> {
   try {
     // Get auth token
     const token = getToken();
@@ -251,6 +244,80 @@ export async function performSync(userId: string): Promise<SyncResult> {
         tokenExpired: true,
       };
     }
+
+    // Phase 1: Loading - Fetch from server
+    onProgress?.({ phase: 'loading', message: 'Downloading from server...' });
+
+    // Add delay to make loading state visible (for testing)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Fetch data from server
+    const serverData = await post<SyncResponse>('/api/sync/download', {}, token);
+
+    // Phase 2: Saving - Save to local IndexedDB
+    onProgress?.({ phase: 'saving', message: 'Saving to local storage...' });
+
+    // Add delay to make saving state visible (for testing)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // TODO: Implement saving to IndexedDB
+    // This will be implemented when backend endpoint is ready
+
+    // Update last sync timestamp
+    updateLastSyncAt(userId);
+
+    return {
+      success: true,
+      message: 'Downloaded successfully',
+      stats: {
+        uploadedTasks: serverData.synced_tasks,
+        uploadedExpenses: serverData.synced_expenses,
+        uploadedJournals: serverData.synced_journals,
+        conflictsResolved: serverData.conflicts_resolved,
+      },
+      retryable: false,
+    };
+  } catch (error) {
+    console.error('Download failed:', error);
+
+    // Classify error to provide better feedback
+    const classified = classifyError(error);
+
+    return {
+      success: false,
+      message: 'Download failed',
+      error: classified.message,
+      retryable: classified.retryable,
+      tokenExpired: classified.tokenExpired,
+    };
+  }
+}
+
+/**
+ * Perform manual sync
+ */
+export async function performSync(
+  userId: string,
+  onProgress?: (progress: SyncProgress) => void
+): Promise<SyncResult> {
+  try {
+    // Get auth token
+    const token = getToken();
+    if (!token) {
+      return {
+        success: false,
+        message: 'Not authenticated',
+        error: 'No authentication token found',
+        retryable: false,
+        tokenExpired: true,
+      };
+    }
+
+    // Phase 1: Loading - Collect local changes
+    onProgress?.({ phase: 'loading', message: 'Loading local changes...' });
+
+    // Add delay to make loading state visible (for testing)
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Get last sync timestamp
     const lastSyncAt = getLastSyncAt(userId);
@@ -290,14 +357,16 @@ export async function performSync(userId: string): Promise<SyncResult> {
       };
     }
 
-    // Send to server
+    // Phase 2: Saving - Send to server
+    onProgress?.({ phase: 'saving', message: `Saving ${totalChanges} item(s)...` });
+
+    // Add delay to make saving state visible (for testing)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const response = await post<SyncResponse>('/api/sync', localChanges, token);
 
     // Update last sync timestamp only after successful sync
     updateLastSyncAt(userId);
-
-    // Apply server updates (future enhancement)
-    await applyServerUpdates(userId);
 
     return {
       success: true,

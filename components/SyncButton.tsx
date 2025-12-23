@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { performSync, canSync, formatSyncStats } from '@/services/sync';
-import type { SyncResult } from '@/services/sync';
+import type { SyncResult, SyncPhase } from '@/services/sync';
 
 export default function SyncButton() {
   const { user, isOnline, isAuthenticated } = useAuth();
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncPhase, setSyncPhase] = useState<SyncPhase>('idle');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [showResult, setShowResult] = useState(false);
 
@@ -19,12 +19,14 @@ export default function SyncButton() {
       return;
     }
 
-    setIsSyncing(true);
+    setSyncPhase('loading');
     setSyncResult(null);
     setShowResult(false);
 
     try {
-      const result = await performSync(user.id);
+      const result = await performSync(user.id, (progress) => {
+        setSyncPhase(progress.phase);
+      });
       setSyncResult(result);
       setShowResult(true);
 
@@ -43,9 +45,11 @@ export default function SyncButton() {
       });
       setShowResult(true);
     } finally {
-      setIsSyncing(false);
+      setSyncPhase('idle');
     }
   };
+
+  const isSyncing = syncPhase !== 'idle';
 
   // Don't show if not authenticated
   if (!isAuthenticated) {
@@ -61,7 +65,11 @@ export default function SyncButton() {
         className={`
           px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2
           ${
-            syncCheck.allowed && !isSyncing
+            syncPhase === 'loading'
+              ? 'bg-blue-600 text-white cursor-wait'
+              : syncPhase === 'saving'
+              ? 'bg-purple-600 text-white cursor-wait'
+              : syncCheck.allowed
               ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }
@@ -69,33 +77,37 @@ export default function SyncButton() {
         title={syncCheck.reason || 'Sync your data with the server'}
       >
         {/* Sync Icon */}
-        <svg
-          className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          {isSyncing ? (
-            // Loading spinner
+        {syncPhase === 'loading' ? (
+          <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+        ) : syncPhase === 'saving' ? (
+          <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
-          ) : (
-            // Sync icon
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          )}
-        </svg>
+          </svg>
+        )}
 
         <span className="hidden sm:inline">
-          {isSyncing ? 'Syncing...' : 'Sync Now'}
+          {syncPhase === 'loading' ? 'Loading...' : syncPhase === 'saving' ? 'Saving...' : 'Sync Now'}
         </span>
       </button>
 

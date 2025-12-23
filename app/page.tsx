@@ -13,7 +13,7 @@ import OfflineIndicator from "@/components/OfflineIndicator";
 import UserSwitcher from "@/components/UserSwitcher";
 import UserManagement from "@/components/UserManagement";
 import AuthButton from "@/components/AuthButton";
-import SyncButtonEnhanced from "@/components/SyncButtonEnhanced";
+import UploadDownloadButtons from "@/components/UploadDownloadButtons";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Home() {
@@ -78,7 +78,7 @@ export default function Home() {
               </button>
             </div>
             <ThemeToggle />
-            <SyncButtonEnhanced />
+            <UploadDownloadButtons />
             <UserSwitcher />
             <AuthButton />
           </div>
