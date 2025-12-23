@@ -43,7 +43,7 @@ app.add_middleware(
         "http://127.0.0.1:3001",
         "http://172.17.100.69:3000",
         "http://172.17.100.69:3001",
-        "https://yourdomain.com",  # Add your production domain
+        "http://45.89.244.24:3000",  # Add your production domain
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
