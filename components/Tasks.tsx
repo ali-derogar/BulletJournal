@@ -40,6 +40,7 @@ export default function Tasks({ date, userId }: TasksProps) {
         setLoading(true);
         setError(null);
         const data = await getTasks(date, userId);
+        console.log(`[DEBUG] Tasks component: Loaded ${data.length} tasks for date ${date}, userId ${userId}`);
         setTasks(data);
 
         // Update cache

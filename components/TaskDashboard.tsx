@@ -64,6 +64,7 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
         setExpenses(expensesData);
         setMoodData(moodDataResult);
         setSleepData(sleepDataResult);
+        console.log(`[DEBUG] TaskDashboard: Loaded ${tasksData.length} tasks for date ${date}, userId ${userId}`);
 
         // Load reflection data from mood
         if (moodDataResult) {
@@ -669,38 +670,6 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
           </p>
         </div>
       )}
-
-      {/* Task List */}
-      <div className="space-y-4 mb-6">
-        {tasks.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-lg mb-2">No tasks yet</p>
-            <p className="text-sm">Add your first task below to get started</p>
-          </div>
-        ) : (
-          <motion.div
-            layout
-            className="space-y-4"
-          >
-            <AnimatePresence>
-              {tasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onUpdate={handleUpdateTask}
-                  onDelete={handleDeleteTask}
-                  onStartTimer={handleStartTimer}
-                  onPauseTimer={handlePauseTimer}
-                  onStopTimer={handleStopTimer}
-                  onStatusChange={handleStatusChange}
-                  onUsefulnessChange={handleUsefulnessChange}
-                  onEstimateChange={handleEstimateChange}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
-      </div>
     </div>
   );
 }

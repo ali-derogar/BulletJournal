@@ -18,6 +18,7 @@ export async function getTasks(date: string, userId: string = "default"): Promis
 
       request.onsuccess = () => {
         const tasks = request.result || [];
+        console.log(`[DEBUG] getTasks: Retrieved ${tasks.length} raw tasks from DB for date ${date}, userId ${userId}`);
         // Filter by userId and migrate old tasks to include all new fields if they don't have them
         const migratedTasks = tasks
           .map((task: Task) => ({
@@ -31,6 +32,13 @@ export async function getTasks(date: string, userId: string = "default"): Promis
             isUseful: task.isUseful ?? null,
           }))
           .filter((task) => task.userId === userId); // Filter by userId
+        console.log(`[DEBUG] getTasks: After migration and filtering, ${migratedTasks.length} tasks for userId ${userId}`);
+        // Check for duplicates
+        const ids = migratedTasks.map(t => t.id);
+        const uniqueIds = new Set(ids);
+        if (ids.length !== uniqueIds.size) {
+          console.warn(`[DEBUG] getTasks: Found ${ids.length - uniqueIds.size} duplicate task IDs`);
+        }
         resolve(migratedTasks);
       };
 

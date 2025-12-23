@@ -1,35 +1,36 @@
-# dependencies
+# Node.js
 /node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
 
-# testing
+# Testing
 /coverage
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
+# Production
 /build
 
-# misc
+# Misc
 .DS_Store
 *.pem
 
-# debug
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# Local environment files
+.env*
 .env*.local
 
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
@@ -82,25 +83,25 @@ coverage.xml
 *.mo
 *.pot
 
-# Django stuff:
+# Django
 *.log
 local_settings.py
 db.sqlite3
 
-# Flask stuff:
+# Flask
 instance/
 .webassets-cache
 
-# Scrapy stuff:
+# Scrapy
 .scrapy
 
-# Sphinx documentation
+# Sphinx
 docs/_build/
 
 # PyBuilder
 target/
 
-# Jupyter Notebook
+# Jupyter
 .ipynb_checkpoints
 
 # IPython
@@ -110,58 +111,54 @@ ipython_config.py
 # pyenv
 .python-version
 
-# pipenv
+# Pipenv
 Pipfile.lock
 
 # PEP 582
 __pypackages__/
 
-# Celery stuff
+# Celery
 celerybeat-schedule
 celerybeat.pid
 
-# SageMath parsed files
+# SageMath
 *.sage.py
 
 # Environments
 .env
-.venv
+.venv/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# IDE / Editor
 .spyderproject
 .spyproject
-
-# Rope project settings
 .ropeproject
 
-# mkdocs documentation
+# mkdocs
 /site
 
-# mypy
+# Type checkers
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
-# Pyre type checker
 .pyre/
 
-# Database
+# Database files
 *.db
 *.sqlite
 *.sqlite3
+backend/data/bullet_journal.*
+backend/data/bullet_journal.db-wal
 
 # Alembic
 alembic/versions/*.pyc
 
-# Service Worker
+# Service Worker / PWA
 sw.js.map
-
-# PWA
 workbox-*
 
 # Backup files
