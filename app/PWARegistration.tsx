@@ -6,8 +6,7 @@ export default function PWARegistration() {
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
-      "serviceWorker" in navigator &&
-      process.env.NODE_ENV === "production"
+      "serviceWorker" in navigator
     ) {
       navigator.serviceWorker
         .register("/sw.js")

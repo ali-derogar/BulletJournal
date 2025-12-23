@@ -30,6 +30,15 @@ export async function getAnalytics(
   period: Period,
   userId: string
 ): Promise<AnalyticsData> {
+  // Check if user is online first
+  if (!navigator.onLine) {
+    console.log('🔍 Analytics Debug: Offline, returning demo analytics');
+    const demoData = getDemoAnalytics(period);
+    demoData.isDemo = false; // Don't mark as demo when offline
+    demoData.insights = ['You are currently offline. Analytics data is not available.'];
+    return demoData;
+  }
+
   // Check if user is authenticated first
   const token = getToken();
   if (!token) {
@@ -126,6 +135,12 @@ export async function getAnalytics(
     // Log more details for debugging
     if (error && typeof error === 'object' && 'message' in error) {
       console.error('🔍 Analytics Debug: Error details:', error.message);
+    }
+
+    // Check if it's a network error (offline)
+    if (error && typeof error === 'object' && 'status' in error && error.status === 0) {
+      console.log('🔍 Analytics Debug: Network error (offline), returning demo analytics');
+      return getDemoAnalytics(period);
     }
 
     // Check if it's an authentication error
