@@ -90,26 +90,24 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
 
     const startTime = new Date(task.timerStart).getTime();
     const now = Date.now();
-    const elapsedMinutes = Math.round((now - startTime) / 1000 / 60);
+    const elapsedMinutes = (now - startTime) / 1000 / 60;
 
-    if (elapsedMinutes > 0) {
-      // Create time log entry
-      const timeLogEntry = {
-        id: `timer_${Date.now()}`,
-        type: 'timer' as const,
-        minutes: elapsedMinutes,
-        createdAt: new Date().toISOString()
-      };
+    // Create time log entry even for partial minutes
+    const timeLogEntry = {
+      id: `timer_${Date.now()}`,
+      type: 'timer' as const,
+      minutes: elapsedMinutes,
+      createdAt: new Date().toISOString()
+    };
 
-      const updatedTask: Task = {
-        ...task,
-        timerRunning: false,
-        timerStart: null,
-        spentTime: task.spentTime + elapsedMinutes,
-        timeLogs: [...(task.timeLogs || []), timeLogEntry],
-      };
-      onUpdate(updatedTask);
-    }
+    const updatedTask: Task = {
+      ...task,
+      timerRunning: false,
+      timerStart: null,
+      spentTime: task.spentTime + elapsedMinutes,
+      timeLogs: [...(task.timeLogs || []), timeLogEntry],
+    };
+    onUpdate(updatedTask);
   };
 
   /**
@@ -138,7 +136,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
    * Save estimated time
    */
   const handleSaveEstimate = () => {
-    const minutes = parseInt(estimateInput);
+    const minutes = parseFloat(estimateInput);
     if (isNaN(minutes) || minutes < 0) {
       setIsEditingEstimate(false);
       setEstimateInput("");
@@ -158,7 +156,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
    * Add manual time entry
    */
   const handleAddManualTime = () => {
-    const minutes = parseInt(manualTimeInput);
+    const minutes = parseFloat(manualTimeInput);
     if (isNaN(minutes) || minutes <= 0) {
       setIsAddingTime(false);
       setManualTimeInput("");
@@ -245,9 +243,9 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
   const totalMinutes = task.spentTime + currentRunningSeconds / 60;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 w-full">
       {/* Estimated Time Section */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
         {isEditingEstimate ? (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -347,7 +345,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
         )}
 
         {/* Usefulness Selection */}
-        <div className="flex items-center">
+        <div className="flex items-center w-full sm:w-auto">
           <AnimatePresence mode="wait">
             {task.isUseful === null ? (
               <motion.div
@@ -355,13 +353,13 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="flex gap-2"
+                className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto"
               >
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleSetUsefulness(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-green-50 to-green-100 text-green-700 border border-green-200 rounded-lg text-sm font-medium hover:from-green-100 hover:to-green-200 hover:border-green-300 transition-all"
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-green-50 to-green-100 text-green-700 border border-green-200 rounded-lg text-sm font-medium hover:from-green-100 hover:to-green-200 hover:border-green-300 transition-all w-full sm:w-auto"
                   title="Mark as useful"
                 >
                   <span className="text-lg">👍</span>
@@ -371,7 +369,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleSetUsefulness(false)}
-                  className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-50 to-orange-100 text-orange-700 border border-orange-200 rounded-lg text-sm font-medium hover:from-orange-100 hover:to-orange-200 hover:border-orange-300 transition-all"
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-50 to-orange-100 text-orange-700 border border-orange-200 rounded-lg text-sm font-medium hover:from-orange-100 hover:to-orange-200 hover:border-orange-300 transition-all w-full sm:w-auto"
                   title="Mark as not useful"
                 >
                   <span className="text-lg">👎</span>
@@ -384,13 +382,13 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full sm:w-auto"
               >
                 <motion.span
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
                   className={`
-                    px-3 py-2 rounded-lg text-sm font-semibold border
+                    px-3 py-2 rounded-lg text-sm font-semibold border w-full sm:w-auto text-center sm:text-left
                     ${task.isUseful
                       ? "bg-green-100 text-green-800 border-green-300"
                       : "bg-orange-100 text-orange-800 border-orange-300"
@@ -404,7 +402,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleClearUsefulness}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                   title="Clear usefulness"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,12 +416,12 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
       </div>
 
       {/* Timer and Controls Section */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
         {/* Timer Display */}
         <motion.div
           layout
           className={`
-            relative flex flex-col items-center px-4 py-3 rounded-xl border-2 overflow-hidden
+            relative flex flex-col items-center px-3 sm:px-4 py-3 rounded-xl border-2 overflow-hidden w-full sm:w-auto
             ${task.timerRunning
               ? "bg-gradient-to-br from-green-50 to-green-100 border-green-300 shadow-lg"
               : "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"
@@ -525,7 +523,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
         </motion.div>
 
         {/* Timer Controls */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-start">
           <AnimatePresence mode="wait">
             {!task.timerRunning && task.spentTime === 0 && (
               <motion.button
@@ -536,10 +534,10 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleStart}
-                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm"
+                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm w-full sm:w-auto"
                 title="Start timer"
               >
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H13m-4 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -554,16 +552,16 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="flex gap-2"
+                className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto"
               >
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleResume}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm"
+                  className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm w-full sm:w-auto"
                   title="Resume timer"
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l.707.707A1 1 0 0012.414 11H13m-4 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -574,10 +572,10 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleStop}
-                  className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-sm font-medium rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all shadow-sm"
+                  className="px-3 sm:px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-sm font-medium rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all shadow-sm w-full sm:w-auto"
                   title="Reset timer"
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
@@ -588,42 +586,24 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
             )}
 
             {task.timerRunning && (
-              <motion.div
-                key="pause-stop"
+              <motion.button
+                key="pause"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="flex gap-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handlePause}
+                className="px-3 sm:px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white text-sm font-medium rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-sm w-full sm:w-auto"
+                title="Pause timer"
               >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handlePause}
-                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white text-sm font-medium rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-sm"
-                  title="Pause timer"
-                >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Pause
-                  </span>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleStop}
-                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-all shadow-sm"
-                  title="Stop and reset timer"
-                >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H9a1 1 0 01-1-1v-4z" />
-                    </svg>
-                    Stop
-                  </span>
-                </motion.button>
-              </motion.div>
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Pause
+                </span>
+              </motion.button>
             )}
           </AnimatePresence>
         </div>
@@ -636,7 +616,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="mt-3 overflow-hidden"
+              className="mt-3 overflow-hidden w-full"
             >
               {!isAddingTime ? (
                 <motion.button
@@ -645,7 +625,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsAddingTime(true)}
-                  className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-medium hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all"
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-medium hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all w-full sm:w-auto"
                   title="Add time manually"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -658,9 +638,9 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg w-full"
                 >
-                  <div className="flex items-center gap-2 flex-1">
+                  <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
                     <input
                       type="number"
                       min="1"
@@ -668,7 +648,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                       placeholder="30"
                       value={manualTimeInput}
                       onChange={(e) => setManualTimeInput(e.target.value)}
-                      className="w-20 px-3 py-2 text-sm border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full sm:w-20 px-3 py-2 text-sm border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       autoFocus
                       onKeyPress={(e) => {
                         if (e.key === "Enter") handleAddManualTime();
@@ -678,15 +658,15 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                         }
                       }}
                     />
-                    <span className="text-sm text-gray-600">minutes</span>
+                    <span className="text-sm text-gray-600 hidden sm:inline">minutes</span>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-start">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={handleAddManualTime}
-                      className="px-3 py-2 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-600 transition-colors"
+                      className="px-3 py-2 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-600 transition-colors flex-1 sm:flex-none"
                       title="Add time"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -700,7 +680,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
                         setIsAddingTime(false);
                         setManualTimeInput("");
                       }}
-                      className="px-3 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600 transition-colors"
+                      className="px-3 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600 transition-colors flex-1 sm:flex-none"
                       title="Cancel"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

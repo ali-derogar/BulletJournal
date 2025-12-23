@@ -28,14 +28,14 @@ export default function Home() {
       <OfflineIndicator />
 
       {/* Header with Auth */}
-      <div className="bg-card shadow-sm border-b border-border px-4 py-3">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-foreground">Bullet Journal</h1>
+      <div className="bg-card shadow-sm border-b border-border px-2 sm:px-4 py-3">
+        <div className="max-w-4xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-4 min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl font-bold text-foreground">Bullet Journal</h1>
             {currentUser && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full min-w-0">
                 <svg
-                  className="w-4 h-4 text-primary"
+                  className="w-4 h-4 text-primary flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -47,18 +47,18 @@ export default function Home() {
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-primary">
+                <span className="text-sm font-medium text-primary truncate">
                   {currentUser.name}
                 </span>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3">
             {/* View Switcher */}
             <div className="flex bg-secondary rounded-lg p-1">
               <button
                 onClick={() => setCurrentView('daily')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
                   currentView === 'daily'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -68,7 +68,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setCurrentView('analytics')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
                   currentView === 'analytics'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'

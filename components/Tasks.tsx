@@ -133,17 +133,18 @@ export default function Tasks({ date, userId }: TasksProps) {
   };
 
   /**
-   * Handle timer updates from TaskTimer component
-   * Saves updated task to storage and updates local state
-   */
-  const handleTaskTimerUpdate = async (updatedTask: Task) => {
-    try {
-      await saveTask(updatedTask);
-      setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
-    } catch (error) {
-      console.error("Failed to update task timer:", error);
-    }
-  };
+   /**
+    * Handle timer updates from TaskTimer component
+    * Saves updated task to storage and updates local state
+    */
+   const handleTaskTimerUpdate = async (updatedTask: Task) => {
+     try {
+       await saveTask(updatedTask);
+       setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+     } catch (error) {
+       console.error("Failed to update task timer:", error);
+     }
+   };
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
@@ -272,14 +273,14 @@ export default function Tasks({ date, userId }: TasksProps) {
   }
 
   return (
-    <div className="bg-card rounded-lg p-4 shadow">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-card rounded-lg p-2 sm:p-4 shadow">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <h2 className="text-lg font-semibold text-card-foreground">Tasks & Time Tracking</h2>
-        <div className="flex gap-3 items-center text-sm">
+        <div className="flex flex-wrap gap-2 sm:gap-3 items-center text-xs sm:text-sm">
           <div className="text-muted-foreground">
             {doneCount}/{totalCount} completed ({progressPercent}%)
           </div>
-          <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded font-semibold">
+          <div className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded font-semibold">
             Total: {formatTime(totalTimeMinutes)}
           </div>
           {runningTimersCount > 0 && (
@@ -312,7 +313,7 @@ export default function Tasks({ date, userId }: TasksProps) {
       </div>
 
       {/* Time Tracking Aggregations */}
-      <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-muted rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 p-2 sm:p-3 bg-muted rounded-lg">
         {/* Estimated vs Actual */}
         <div className="border-r border-border pr-3">
           <div className="text-xs font-semibold text-muted-foreground mb-2">
@@ -397,14 +398,14 @@ export default function Tasks({ date, userId }: TasksProps) {
         {tasks.map((task) => (
           <div
             key={task.id}
-            className={`p-3 border-2 rounded-lg transition-all ${
+            className={`p-2 sm:p-3 border-2 rounded-lg transition-all ${
               task.timerRunning
                 ? "border-accent bg-accent/10 shadow-md"
                 : "border-border bg-card hover:bg-muted"
             }`}
           >
             {editingId === task.id ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <input
                   type="text"
                   value={editingTitle}
@@ -412,36 +413,38 @@ export default function Tasks({ date, userId }: TasksProps) {
                   className="flex-1 px-2 py-1 border border-input rounded focus:outline-none focus:ring-2 focus:ring-ring"
                   autoFocus
                 />
-                <button
-                  onClick={() => handleSaveEdit(task.id)}
-                  className="px-2 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={handleCancelEdit}
-                  className="px-2 py-1 bg-gray-400 text-white rounded text-sm"
-                >
-                  Cancel
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSaveEdit(task.id)}
+                    className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 flex-1 sm:flex-none"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-3 py-1 bg-gray-400 text-white rounded text-sm flex-1 sm:flex-none"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             ) : (
               <>
                 {/* Task info row */}
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                   <select
                     value={task.status}
                     onChange={(e) =>
                       handleStatusChange(task.id, e.target.value as TaskStatus)
                     }
-                    className={`px-2 py-1 rounded text-sm font-medium ${getStatusColor(task.status)}`}
+                    className={`px-2 py-1 rounded text-xs sm:text-sm font-medium ${getStatusColor(task.status)} w-full sm:w-auto`}
                   >
                     <option value="todo">To Do</option>
                     <option value="in-progress">In Progress</option>
                     <option value="done">Done</option>
                   </select>
                   <span
-                    className={`flex-1 font-medium ${
+                    className={`flex-1 font-medium text-sm sm:text-base ${
                       task.status === "done"
                         ? "line-through text-muted-foreground"
                         : task.timerRunning
@@ -451,18 +454,20 @@ export default function Tasks({ date, userId }: TasksProps) {
                   >
                     {task.title}
                   </span>
-                  <button
-                    onClick={() => handleStartEdit(task)}
-                    className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteTask(task.id)}
-                    className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-1 sm:gap-2">
+                    <button
+                      onClick={() => handleStartEdit(task)}
+                      className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs sm:text-sm"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-xs sm:text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
 
                 {/* Timer controls row */}
@@ -475,7 +480,7 @@ export default function Tasks({ date, userId }: TasksProps) {
         ))}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="text"
           value={newTaskTitle}
@@ -486,7 +491,7 @@ export default function Tasks({ date, userId }: TasksProps) {
         />
         <button
           onClick={handleAddTask}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 w-full sm:w-auto"
         >
           Add Task
         </button>
