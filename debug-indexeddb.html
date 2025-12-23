@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug IndexedDB</title>
+</head>
+<body>
+    <h1>IndexedDB Debug Tool</h1>
+    <button onclick="checkAllData()">Check All Data in IndexedDB</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function checkAllData() {
+            const output = document.getElementById('output');
+            output.textContent = 'Loading...\n';
+
+            try {
+                const request = indexedDB.open('BulletJournalDB', 2);
+
+                request.onsuccess = (e) => {
+                    const db = e.target.result;
+                    let results = '=== IndexedDB Contents ===\n\n';
+
+                    // Check tasks
+                    const taskTx = db.transaction(['tasks'], 'readonly');
+                    const taskStore = taskTx.objectStore('tasks');
+                    const taskRequest = taskStore.getAll();
+
+                    taskRequest.onsuccess = () => {
+                        const tasks = taskRequest.result;
+                        results += `📋 TASKS (${tasks.length} total):\n`;
+
+                        // Group by userId
+                        const tasksByUser = {};
+                        tasks.forEach(task => {
+                            const uid = task.userId || 'NO_USER_ID';
+                            if (!tasksByUser[uid]) tasksByUser[uid] = [];
+                            tasksByUser[uid].push(task);
+                        });
+
+                        Object.entries(tasksByUser).forEach(([userId, userTasks]) => {
+                            results += `  userId="${userId}": ${userTasks.length} tasks\n`;
+                            userTasks.slice(0, 3).forEach(task => {
+                                results += `    - ${task.title} (${task.date})\n`;
+                            });
+                        });
+                        results += '\n';
+
+                        // Check expenses
+                        const expenseTx = db.transaction(['expenses'], 'readonly');
+                        const expenseStore = expenseTx.objectStore('expenses');
+                        const expenseRequest = expenseStore.getAll();
+
+                        expenseRequest.onsuccess = () => {
+                            const expenses = expenseRequest.result;
+                            results += `💰 EXPENSES (${expenses.length} total):\n`;
+
+                            const expensesByUser = {};
+                            expenses.forEach(expense => {
+                                const uid = expense.userId || 'NO_USER_ID';
+                                if (!expensesByUser[uid]) expensesByUser[uid] = [];
+                                expensesByUser[uid].push(expense);
+                            });
+
+                            Object.entries(expensesByUser).forEach(([userId, userExpenses]) => {
+                                results += `  userId="${userId}": ${userExpenses.length} expenses\n`;
+                                userExpenses.slice(0, 3).forEach(expense => {
+                                    results += `    - ${expense.title}: $${expense.amount} (${expense.date})\n`;
+                                });
+                            });
+                            results += '\n';
+
+                            // Check journals
+                            const journalTx = db.transaction(['dailyJournals'], 'readonly');
+                            const journalStore = journalTx.objectStore('dailyJournals');
+                            const journalRequest = journalStore.getAll();
+
+                            journalRequest.onsuccess = () => {
+                                const journals = journalRequest.result;
+                                results += `📖 JOURNALS (${journals.length} total):\n`;
+
+                                const journalsByUser = {};
+                                journals.forEach(journal => {
+                                    const uid = journal.userId || 'NO_USER_ID';
+                                    if (!journalsByUser[uid]) journalsByUser[uid] = [];
+                                    journalsByUser[uid].push(journal);
+                                });
+
+                                Object.entries(journalsByUser).forEach(([userId, userJournals]) => {
+                                    results += `  userId="${userId}": ${userJournals.length} journals\n`;
+                                    userJournals.slice(0, 3).forEach(journal => {
+                                        results += `    - ${journal.date}\n`;
+                                    });
+                                });
+
+                                results += '\n=== Current User ===\n';
+                                results += `auth_token: ${localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING'}\n`;
+                                results += `auth_user: ${localStorage.getItem('auth_user')}\n`;
+
+                                output.textContent = results;
+                            };
+                        };
+                    };
+                };
+
+                request.onerror = (e) => {
+                    output.textContent = 'Error opening database: ' + e.target.error;
+                };
+            } catch (error) {
+                output.textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

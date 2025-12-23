@@ -15,14 +15,14 @@ class Task(Base):
     deletedAt = Column(DateTime(timezone=True), nullable=True)
 
     # Time tracking fields
-    spentTime = Column(Integer, default=0)  # Total time spent in minutes (single source of truth)
+    spentTime = Column(Float, default=0.0)  # Total time spent in minutes (single source of truth)
     timeLogs = Column(Text, nullable=True)  # JSON array of time log entries
-    accumulated_time = Column(Integer, default=0)  # Legacy field for migration
+    accumulated_time = Column(Float, default=0.0)  # Legacy field for migration
 
     # Timer fields
     timer_running = Column(Boolean, default=False)
     timer_start = Column(DateTime(timezone=True), nullable=True)
 
     # Estimation and usefulness
-    estimated_time = Column(Integer, nullable=True)  # Time in minutes
+    estimated_time = Column(Float, nullable=True)  # Time in minutes
     is_useful = Column(Boolean, nullable=True)

@@ -68,8 +68,36 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
             )
 
         # Create new task
-        task_data["userId"] = user_id
-        new_task = Task(**task_data)
+        # Map frontend field names to database field names
+        db_task_data = task_data.copy()
+        field_mappings = {
+            'createdAt': 'created_at',
+            'updatedAt': 'updatedAt',  # Keep as is for now
+            'deletedAt': 'deletedAt',  # Keep as is for now
+            'spentTime': 'spentTime',  # Keep as is
+            'timeLogs': 'timeLogs',  # Keep as is
+            'accumulatedTime': 'accumulated_time',
+            'timerRunning': 'timer_running',
+            'timerStart': 'timer_start',
+            'estimatedTime': 'estimated_time',
+            'isUseful': 'is_useful',
+        }
+        for frontend_field, db_field in field_mappings.items():
+            if frontend_field in db_task_data:
+                db_task_data[db_field] = db_task_data.pop(frontend_field)
+
+        # Convert string datetime fields to datetime objects
+        datetime_fields = ['created_at', 'updatedAt', 'deletedAt', 'timer_start']
+        for field in datetime_fields:
+            if field in db_task_data and isinstance(db_task_data[field], str):
+                try:
+                    from dateutil import parser
+                    db_task_data[field] = parser.parse(db_task_data[field])
+                except:
+                    db_task_data[field] = None
+
+        db_task_data["userId"] = user_id
+        new_task = Task(**db_task_data)
         new_task.updatedAt = datetime.utcnow()
         db.add(new_task)
         db.commit()
@@ -119,8 +147,29 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
                 detail=f"Cannot modify expense {expense_id} belonging to another user"
             )
 
-        expense_data["userId"] = user_id
-        new_expense = Expense(**expense_data)
+        # Map frontend field names to database field names
+        db_expense_data = expense_data.copy()
+        expense_mappings = {
+            'createdAt': 'created_at',
+            'updatedAt': 'updatedAt',
+            'deletedAt': 'deletedAt',
+        }
+        for frontend_field, db_field in expense_mappings.items():
+            if frontend_field in db_expense_data:
+                db_expense_data[db_field] = db_expense_data.pop(frontend_field)
+
+        # Convert string datetime fields to datetime objects
+        datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
+        for field in datetime_fields:
+            if field in db_expense_data and isinstance(db_expense_data[field], str):
+                try:
+                    from dateutil import parser
+                    db_expense_data[field] = parser.parse(db_expense_data[field])
+                except:
+                    db_expense_data[field] = None
+
+        db_expense_data["userId"] = user_id
+        new_expense = Expense(**db_expense_data)
         new_expense.updatedAt = datetime.utcnow()
         db.add(new_expense)
         db.commit()
@@ -140,12 +189,21 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
         except:
             client_updated_at = None
 
+    # Map frontend field names to database field names
+    db_journal_data = journal_data.copy()
+    if "sleepId" in db_journal_data:
+        db_journal_data["sleep_id"] = db_journal_data.pop("sleepId")
+    if "moodId" in db_journal_data:
+        db_journal_data["mood_id"] = db_journal_data.pop("moodId")
+    if "createdAt" in db_journal_data:
+        db_journal_data["created_at"] = db_journal_data.pop("createdAt")
+
     existing_journal = db.query(DailyJournal).filter(DailyJournal.id == journal_id, DailyJournal.userId == user_id).first()
 
     if existing_journal:
         if client_updated_at and existing_journal.updatedAt:
             if client_updated_at > existing_journal.updatedAt:
-                for key, value in journal_data.items():
+                for key, value in db_journal_data.items():
                     if hasattr(existing_journal, key) and key != "id":
                         setattr(existing_journal, key, value)
                 existing_journal.updatedAt = datetime.utcnow()
@@ -154,7 +212,7 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
             else:
                 return True
         else:
-            for key, value in journal_data.items():
+            for key, value in db_journal_data.items():
                 if hasattr(existing_journal, key) and key != "id":
                     setattr(existing_journal, key, value)
             existing_journal.updatedAt = datetime.utcnow()
@@ -170,8 +228,18 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
                 detail=f"Cannot modify journal {journal_id} belonging to another user"
             )
 
-        journal_data["userId"] = user_id
-        new_journal = DailyJournal(**journal_data)
+        # Convert string datetime fields to datetime objects
+        datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
+        for field in datetime_fields:
+            if field in db_journal_data and isinstance(db_journal_data[field], str):
+                try:
+                    from dateutil import parser
+                    db_journal_data[field] = parser.parse(db_journal_data[field])
+                except:
+                    db_journal_data[field] = None
+
+        db_journal_data["userId"] = user_id
+        new_journal = DailyJournal(**db_journal_data)
         new_journal.updatedAt = datetime.utcnow()
         db.add(new_journal)
         db.commit()
@@ -221,8 +289,29 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
                 detail=f"Cannot modify reflection {reflection_id} belonging to another user"
             )
 
-        reflection_data["userId"] = user_id
-        new_reflection = Reflection(**reflection_data)
+        # Map frontend field names to database field names
+        db_reflection_data = reflection_data.copy()
+        reflection_mappings = {
+            'createdAt': 'created_at',
+            'updatedAt': 'updatedAt',
+            'deletedAt': 'deletedAt',
+        }
+        for frontend_field, db_field in reflection_mappings.items():
+            if frontend_field in db_reflection_data:
+                db_reflection_data[db_field] = db_reflection_data.pop(frontend_field)
+
+        # Convert string datetime fields to datetime objects
+        datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
+        for field in datetime_fields:
+            if field in db_reflection_data and isinstance(db_reflection_data[field], str):
+                try:
+                    from dateutil import parser
+                    db_reflection_data[field] = parser.parse(db_reflection_data[field])
+                except:
+                    db_reflection_data[field] = None
+
+        db_reflection_data["userId"] = user_id
+        new_reflection = Reflection(**db_reflection_data)
         new_reflection.updatedAt = datetime.utcnow()
         db.add(new_reflection)
         db.commit()

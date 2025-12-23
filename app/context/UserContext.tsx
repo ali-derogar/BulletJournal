@@ -76,12 +76,38 @@ export function UserProvider({ children }: UserProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isInitialized, CACHE_DURATION]);
 
   // Initialize on mount
   useEffect(() => {
     loadUsers();
-  }, []); // loadUsers is stable, no need to add it
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  // Listen for user profile updates from AuthContext
+  useEffect(() => {
+    const handleUserProfileUpdate = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const userId = customEvent.detail;
+
+      // Refresh users list
+      await loadUsers(true);
+
+      // Switch to the updated user
+      if (userId) {
+        const user = await getUserById(userId);
+        if (user) {
+          setCurrentUser(user);
+        }
+      }
+    };
+
+    window.addEventListener('userProfileUpdated', handleUserProfileUpdate);
+
+    return () => {
+      window.removeEventListener('userProfileUpdated', handleUserProfileUpdate);
+    };
+  }, [loadUsers]);
 
   // Save active user to localStorage when it changes
   useEffect(() => {
@@ -142,6 +168,12 @@ export function UserProvider({ children }: UserProviderProps) {
       if (currentUser?.id === userId) {
         setCurrentUser(updatedUser);
       }
+
+      // If this is an authenticated user, notify AuthContext to sync with server
+      // The AuthContext will pick this up if user is logged in
+      window.dispatchEvent(new CustomEvent('localUserNameUpdated', {
+        detail: { userId, name: name.trim() }
+      }));
     } catch (error) {
       console.error("Failed to update user:", error);
       throw error;

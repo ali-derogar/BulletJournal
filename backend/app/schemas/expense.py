@@ -17,9 +17,11 @@ class ExpenseUpdate(BaseModel):
     amount: Optional[float] = None
 
 class Expense(ExpenseBase):
+    createdAt: Optional[str] = None
     created_at: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
     deletedAt: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+        populate_by_name = True

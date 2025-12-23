@@ -56,7 +56,7 @@ async def get_task_analytics(
         # Use raw SQL to avoid column name issues
         from sqlalchemy import text
         query = text("""
-            SELECT id, user_id, date, title, status, created_at, spentTime, timer_running, timer_start, estimated_time, is_useful
+            SELECT id, user_id, date, title, status, created_at, spentTime, accumulated_time, timer_running, timer_start, estimated_time, is_useful
             FROM tasks
             WHERE user_id = :user_id
             AND date >= :start_date
@@ -93,19 +93,17 @@ async def get_task_analytics(
         # Calculate analytics
         total_tasks_created = len(tasks)
         total_tasks_completed = len([t for t in tasks if t.status == 'done'])
-        # Use accumulated_time since spentTime column doesn't exist yet
-        total_time_spent = sum(getattr(t, 'accumulated_time', 0) or 0 for t in tasks)
+        total_time_spent = sum(getattr(t, 'spentTime', 0) or 0 for t in tasks)
 
         # Group by day
         completed_by_day: Dict[str, int] = {}
-        time_by_day: Dict[str, int] = {}
+        time_by_day: Dict[str, float] = {}
         active_days = set()
 
         for task in tasks:
             if task.status == 'done':
                 completed_by_day[task.date] = completed_by_day.get(task.date, 0) + 1
-            # Use accumulated_time since spentTime column doesn't exist
-            time_spent = getattr(task, 'accumulated_time', 0) or 0
+            time_spent = getattr(task, 'spentTime', 0) or 0
             if time_spent > 0:
                 time_by_day[task.date] = time_by_day.get(task.date, 0) + time_spent
                 active_days.add(task.date)
@@ -118,7 +116,7 @@ async def get_task_analytics(
                 'date': task.date,
                 'status': task.status,
                 'accumulated_time': getattr(task, 'accumulated_time', 0) or 0,
-                'estimated_time': getattr(task, 'estimated_time', 0) or 0,
+                'estimated_time': getattr(task, 'estimated_time', None),
                 'is_useful': getattr(task, 'is_useful', None)
             })
 

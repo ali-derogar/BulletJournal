@@ -9,6 +9,10 @@ import SyncStatus from './SyncStatus';
 
 export default function UploadDownloadButtons() {
   const { user, isOnline, isAuthenticated } = useAuth();
+
+  // Debug: Log IMMEDIATELY when component is called
+  console.log('🟡 UploadDownloadButtons CALLED, isAuthenticated:', isAuthenticated, 'user:', user);
+
   const [uploadPhase, setUploadPhase] = useState<SyncPhase>('idle');
   const [downloadPhase, setDownloadPhase] = useState<SyncPhase>('idle');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
@@ -18,11 +22,35 @@ export default function UploadDownloadButtons() {
   // Check if sync is allowed
   const syncCheck = canSync(isOnline, isAuthenticated);
 
+  // Debug: Log component state on render
+  console.log('🟢 UploadDownloadButtons will render:', {
+    isAuthenticated,
+    isOnline,
+    hasUser: !!user,
+    userId: user?.id,
+    syncCheckAllowed: syncCheck.allowed,
+    syncCheckReason: syncCheck.reason,
+  });
+
   const handleUpload = async () => {
+    console.log('🔵 Upload button clicked!', {
+      syncCheckAllowed: syncCheck.allowed,
+      syncCheckReason: syncCheck.reason,
+      user: user,
+      isOnline,
+      isAuthenticated,
+    });
+
     if (!syncCheck.allowed || !user) {
+      console.log('❌ Upload blocked:', {
+        syncCheckAllowed: syncCheck.allowed,
+        hasUser: !!user,
+        reason: syncCheck.reason,
+      });
       return;
     }
 
+    console.log('✅ Starting upload for user:', user.id);
     setUploadPhase('loading');
     setSyncResult(null);
     setShowNotification(false);
@@ -122,6 +150,14 @@ export default function UploadDownloadButtons() {
   const isUploading = uploadPhase !== 'idle';
   const isDownloading = downloadPhase !== 'idle';
   const currentPhase = isUploading ? uploadPhase : isDownloading ? downloadPhase : 'idle';
+  const uploadDisabled = !syncCheck.allowed || isUploading || isDownloading;
+
+  console.log('🔴 Upload button state:', {
+    uploadDisabled,
+    syncCheckAllowed: syncCheck.allowed,
+    isUploading,
+    isDownloading,
+  });
 
   return (
     <div className="flex items-center gap-2">
@@ -132,7 +168,7 @@ export default function UploadDownloadButtons() {
       <div className="relative">
         <button
           onClick={handleUpload}
-          disabled={!syncCheck.allowed || isUploading || isDownloading}
+          disabled={uploadDisabled}
           className={`
             px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2
             ${

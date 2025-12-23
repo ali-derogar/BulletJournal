@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.auth import UserCreate, UserLogin, Token, TokenData
+from app.schemas.auth import UserCreate, UserLogin, Token, TokenData, UserUpdate
 from app.schemas.user import User as UserSchema
 from app.auth.auth import (
     authenticate_user,
@@ -85,6 +85,33 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 async def read_users_me(current_user: User = Depends(get_current_user)):
     """Get current user info"""
     return current_user
+
+@router.patch("/me", response_model=UserSchema)
+async def update_user_profile(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update current user profile"""
+    if user_update.name is not None:
+        # Validate name is not empty
+        if not user_update.name.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Name cannot be empty"
+            )
+        current_user.name = user_update.name.strip()
+
+    try:
+        db.commit()
+        db.refresh(current_user)
+        return current_user
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update user: {str(e)}"
+        )
 
 # Dependency to get current user
 async def get_current_active_user(current_user: User = Depends(get_current_user)):

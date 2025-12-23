@@ -5,17 +5,17 @@ class TaskDetail(BaseModel):
     id: str
     date: str
     status: str
-    accumulated_time: int
-    estimated_time: int
-    is_useful: bool
+    accumulated_time: float
+    estimated_time: Optional[float]
+    is_useful: Optional[bool]
 
 class TaskAnalyticsResponse(BaseModel):
     total_tasks_created: int
     total_tasks_completed: int
-    total_time_spent: int  # minutes
+    total_time_spent: float  # minutes
     active_days: int
     completed_tasks_by_day: Dict[str, int]  # date -> count
-    time_spent_by_day: Dict[str, int]  # date -> minutes
+    time_spent_by_day: Dict[str, float]  # date -> minutes
     tasks: List[TaskDetail]  # Individual task details for advanced analytics
 
 class AnalyticsRequest(BaseModel):

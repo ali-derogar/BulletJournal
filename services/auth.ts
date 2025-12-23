@@ -3,7 +3,7 @@
  * Handles user registration, login, token management, and user info
  */
 
-import { get, post, postForm, ApiError } from './api';
+import { get, post, postForm, patch, ApiError } from './api';
 
 export interface RegisterData {
   name: string;
@@ -220,4 +220,22 @@ export function validatePassword(password: string): {
   }
 
   return { valid: true };
+}
+
+/**
+ * Update user profile (name, etc.)
+ */
+export async function updateUserProfile(data: { name?: string }): Promise<UserInfo> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  try {
+    const user = await patch<UserInfo>('/auth/me', data, token);
+    return user;
+  } catch (error) {
+    const apiError = error as ApiError;
+    throw new Error(apiError.message || 'Failed to update profile');
+  }
 }

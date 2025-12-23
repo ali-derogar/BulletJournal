@@ -127,6 +127,26 @@ export async function postForm<T>(
 }
 
 /**
+ * PATCH request
+ */
+export async function patch<T>(
+  endpoint: string,
+  data?: unknown,
+  token?: string
+): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return apiRequest<T>(endpoint, {
+    method: 'PATCH',
+    headers,
+    body: data ? JSON.stringify(data) : undefined,
+  });
+}
+
+/**
  * Check if backend is reachable
  */
 export async function healthCheck(): Promise<boolean> {

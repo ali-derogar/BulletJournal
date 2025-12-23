@@ -133,3 +133,54 @@ export async function upsertJournal(journal: DailyJournal): Promise<void> {
     };
   });
 }
+
+/**
+ * Migrate data from "default" userId to actual userId
+ * This is needed when user logs in and we need to associate their offline data with their account
+ */
+export async function migrateDefaultDataToUser(actualUserId: string): Promise<{
+  migratedTasks: number;
+  migratedExpenses: number;
+  migratedJournals: number;
+}> {
+  console.log('🔄 Starting migration from "default" to userId:', actualUserId);
+
+  let migratedTasks = 0;
+  let migratedExpenses = 0;
+  let migratedJournals = 0;
+
+  // Migrate tasks
+  const defaultTasks = await getAllTasks('default');
+  console.log('📋 Found', defaultTasks.length, 'tasks with userId="default"');
+  for (const task of defaultTasks) {
+    const updatedTask = { ...task, userId: actualUserId };
+    await upsertTask(updatedTask);
+    migratedTasks++;
+  }
+
+  // Migrate expenses
+  const defaultExpenses = await getAllExpenses('default');
+  console.log('💰 Found', defaultExpenses.length, 'expenses with userId="default"');
+  for (const expense of defaultExpenses) {
+    const updatedExpense = { ...expense, userId: actualUserId };
+    await upsertExpense(updatedExpense);
+    migratedExpenses++;
+  }
+
+  // Migrate journals
+  const defaultJournals = await getAllJournals('default');
+  console.log('📖 Found', defaultJournals.length, 'journals with userId="default"');
+  for (const journal of defaultJournals) {
+    const updatedJournal = { ...journal, userId: actualUserId };
+    await upsertJournal(updatedJournal);
+    migratedJournals++;
+  }
+
+  console.log('✅ Migration complete:', {
+    migratedTasks,
+    migratedExpenses,
+    migratedJournals,
+  });
+
+  return { migratedTasks, migratedExpenses, migratedJournals };
+}

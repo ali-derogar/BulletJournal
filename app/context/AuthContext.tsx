@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as authService from '@/services/auth';
+import { saveUser, getUserById } from '@/storage';
+import type { UserProfile } from '@/domain';
 
 export interface AuthUser {
   id: string;
@@ -17,6 +19,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUserName: (name: string) => Promise<void>;
   error: string | null;
   clearError: () => void;
 }
@@ -25,7 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,10 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    // Set initial state
     setIsOnline(navigator.onLine);
 
-    // Listen for online/offline events
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
@@ -47,22 +48,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Sync authenticated user to local user profile
+  const syncAuthUserToLocal = useCallback(async (authUser: AuthUser) => {
+    try {
+      const existingUser = await getUserById(authUser.id);
+
+      const userProfile: UserProfile = {
+        id: authUser.id,
+        name: authUser.name,
+        createdAt: existingUser?.createdAt || new Date().toISOString(),
+      };
+
+      await saveUser(userProfile);
+      localStorage.setItem('activeUserId', authUser.id);
+      window.dispatchEvent(new CustomEvent('userProfileUpdated', { detail: authUser.id }));
+    } catch (err) {
+      console.error('Failed to sync auth user to local profile:', err);
+    }
+  }, []);
+
   // Check for stored token on mount
   useEffect(() => {
     const checkStoredAuth = async () => {
       try {
         const storedToken = authService.getStoredToken();
         if (storedToken) {
-          // Validate token by fetching user info
           const userInfo = await authService.getCurrentUser();
-          setUser({
+          const authUser = {
             id: userInfo.id,
             name: userInfo.name,
             email: userInfo.email,
-          });
+          };
+          setUser(authUser);
+          await syncAuthUserToLocal(authUser);
         }
-      } catch (error) {
-        // Token is invalid, clear it
+      } catch {
         console.log('Stored token is invalid, clearing...');
         authService.clearStoredToken();
       } finally {
@@ -71,7 +91,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkStoredAuth();
-  }, []);
+  }, [syncAuthUserToLocal]);
+
+  // Listen for local user name updates and sync to server if authenticated
+  useEffect(() => {
+    const handleLocalUserNameUpdate = async (event: Event) => {
+      const customEvent = event as CustomEvent<{ userId: string; name: string }>;
+      const { userId, name } = customEvent.detail;
+
+      // Only sync if this is the currently authenticated user
+      if (user && user.id === userId) {
+        try {
+          const updatedUser = await authService.updateUserProfile({ name });
+          setUser({
+            id: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+          });
+        } catch (err) {
+          console.error('Failed to sync name update to server:', err);
+        }
+      }
+    };
+
+    window.addEventListener('localUserNameUpdated', handleLocalUserNameUpdate);
+
+    return () => {
+      window.removeEventListener('localUserNameUpdated', handleLocalUserNameUpdate);
+    };
+  }, [user]);
 
   // Register new user
   const register = useCallback(async (name: string, email: string, password: string) => {
@@ -79,12 +127,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      // Check if online
       if (!isOnline) {
         throw new Error('You must be online to register');
       }
 
-      // Validate inputs
       if (!name.trim()) {
         throw new Error('Name is required');
       }
@@ -98,17 +144,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(passwordValidation.message);
       }
 
-      // Register user
       await authService.register({ name, email, password });
-
-      // Auto-login after registration
       const { user: userInfo } = await authService.login({ email, password });
 
-      setUser({
+      const authUser = {
         id: userInfo.id,
         name: userInfo.name,
         email: userInfo.email,
-      });
+      };
+
+      setUser(authUser);
+      await syncAuthUserToLocal(authUser);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       setError(errorMessage);
@@ -116,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isOnline]);
+  }, [isOnline, syncAuthUserToLocal]);
 
   // Login existing user
   const login = useCallback(async (email: string, password: string) => {
@@ -124,12 +170,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      // Check if online
       if (!isOnline) {
         throw new Error('You must be online to login');
       }
 
-      // Validate inputs
       if (!authService.validateEmail(email)) {
         throw new Error('Invalid email address');
       }
@@ -138,14 +182,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Password is required');
       }
 
-      // Login
       const { user: userInfo } = await authService.login({ email, password });
 
-      setUser({
+      const authUser = {
         id: userInfo.id,
         name: userInfo.name,
         email: userInfo.email,
-      });
+      };
+
+      setUser(authUser);
+      await syncAuthUserToLocal(authUser);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
@@ -153,14 +199,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isOnline]);
+  }, [isOnline, syncAuthUserToLocal]);
 
   // Logout
   const logout = useCallback(() => {
     authService.logout();
     setUser(null);
     setError(null);
+
+    // Switch back to default user
+    localStorage.setItem('activeUserId', 'default');
+    window.dispatchEvent(new CustomEvent('userProfileUpdated', { detail: 'default' }));
   }, []);
+
+  // Update user name
+  const updateUserName = useCallback(async (name: string) => {
+    setError(null);
+
+    try {
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
+      if (!name.trim()) {
+        throw new Error('Name cannot be empty');
+      }
+
+      // Update on server
+      const updatedUser = await authService.updateUserProfile({ name: name.trim() });
+
+      const authUser = {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+      };
+
+      setUser(authUser);
+
+      // Sync to local user profile
+      await syncAuthUserToLocal(authUser);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update name';
+      setError(errorMessage);
+      throw err;
+    }
+  }, [user, syncAuthUserToLocal]);
 
   // Clear error
   const clearError = useCallback(() => {
@@ -175,6 +258,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    updateUserName,
     error,
     clearError,
   };

@@ -50,6 +50,7 @@ export default function BackupRestore() {
       if (backupType === "user" && currentUser) {
         await importUserData(text, currentUser.id);
         setMessage(`✓ User data restored successfully for ${currentUser.name}`);
+        setTimeout(() => window.location.reload(), 1500);
       } else {
         await importAllData(text);
         setMessage("✓ All data restored successfully. Reloading...");

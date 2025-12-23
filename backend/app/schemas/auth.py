@@ -16,3 +16,6 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     user_id: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None

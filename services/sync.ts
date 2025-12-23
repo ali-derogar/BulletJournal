@@ -6,7 +6,7 @@
 import { post } from './api';
 import { getToken } from './auth';
 import { getLastSyncAt, updateLastSyncAt } from '@/storage/syncMeta';
-import { getAllTasks, getAllExpenses, getAllJournals } from '@/storage/helpers';
+import { getAllTasks, getAllExpenses, getAllJournals, migrateDefaultDataToUser } from '@/storage/helpers';
 import type { Task } from '@/domain/task';
 import type { Expense } from '@/domain/expense';
 import type { DailyJournal } from '@/domain/journal';
@@ -168,15 +168,24 @@ export function canSync(isOnline: boolean, isAuthenticated: boolean): {
  */
 async function getLocalChanges(userId: string, lastSyncAt: string | null): Promise<SyncRequest> {
   try {
+    console.log('📦 Getting local changes for userId:', userId, 'lastSyncAt:', lastSyncAt);
+
     // Get all data for the user
     const allTasks = await getAllTasks(userId);
+    console.log('📋 Found tasks:', allTasks.length);
+
     const allExpenses = await getAllExpenses(userId);
+    console.log('💰 Found expenses:', allExpenses.length);
+
     const allJournals = await getAllJournals(userId);
+    console.log('📖 Found journals:', allJournals.length);
 
     // Deduplicate to prevent duplicate record issues
     const uniqueTasks = deduplicateById(allTasks);
     const uniqueExpenses = deduplicateById(allExpenses);
     const uniqueJournals = deduplicateById(allJournals);
+
+    console.log('✅ After deduplication - Tasks:', uniqueTasks.length, 'Expenses:', uniqueExpenses.length, 'Journals:', uniqueJournals.length);
 
     // If no lastSyncAt, sync everything
     if (!lastSyncAt) {
@@ -300,9 +309,11 @@ export async function performSync(
   userId: string,
   onProgress?: (progress: SyncProgress) => void
 ): Promise<SyncResult> {
+  console.log('performSync called with userId:', userId);
   try {
     // Get auth token
     const token = getToken();
+    console.log('Auth token present:', !!token);
     if (!token) {
       return {
         success: false,
@@ -316,6 +327,17 @@ export async function performSync(
     // Phase 1: Loading - Collect local changes
     onProgress?.({ phase: 'loading', message: 'Loading local changes...' });
 
+    // Migrate data from "default" userId to actual userId if needed
+    console.log('🔍 Checking for data migration needs...');
+    try {
+      const migrationResult = await migrateDefaultDataToUser(userId);
+      if (migrationResult.migratedTasks > 0 || migrationResult.migratedExpenses > 0 || migrationResult.migratedJournals > 0) {
+        console.log('✅ Migrated data from "default" to user:', migrationResult);
+      }
+    } catch (migrationError) {
+      console.error('⚠️ Migration failed, continuing anyway:', migrationError);
+    }
+
     // Add delay to make loading state visible (for testing)
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -324,14 +346,22 @@ export async function performSync(
 
     // Collect local changes (already handles errors internally)
     const localChanges = await getLocalChanges(userId, lastSyncAt);
+    console.log('Local changes collected:', {
+      tasks: localChanges.tasks.length,
+      expenses: localChanges.expenses.length,
+      journals: localChanges.journals.length,
+    });
 
     const totalChanges =
       localChanges.tasks.length +
       localChanges.expenses.length +
       localChanges.journals.length;
 
+    console.log('Total changes to sync:', totalChanges);
+
     // If no changes, return early
     if (totalChanges === 0) {
+      console.log('No changes to sync, returning early');
       return {
         success: true,
         message: 'Already up to date',
@@ -363,7 +393,9 @@ export async function performSync(
     // Add delay to make saving state visible (for testing)
     await new Promise(resolve => setTimeout(resolve, 1000));
 
+    console.log('Sending sync request to /api/sync');
     const response = await post<SyncResponse>('/api/sync', localChanges, token);
+    console.log('Sync response received:', response);
 
     // Update last sync timestamp only after successful sync
     updateLastSyncAt(userId);
@@ -381,6 +413,11 @@ export async function performSync(
     };
   } catch (error) {
     console.error('Sync failed:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      status: (error as any)?.status,
+      detail: (error as any)?.detail,
+    });
 
     // Classify error to provide better feedback
     const classified = classifyError(error);
@@ -393,6 +430,17 @@ export async function performSync(
       tokenExpired: classified.tokenExpired,
     };
   }
+}
+
+/**
+ * Manually migrate data from "default" userId to actual userId
+ * Exported for debugging/manual use via browser console
+ */
+export async function manualMigrateData(actualUserId: string) {
+  console.log('🔄 Manually triggering migration to userId:', actualUserId);
+  const result = await migrateDefaultDataToUser(actualUserId);
+  console.log('✅ Migration result:', result);
+  return result;
 }
 
 /**

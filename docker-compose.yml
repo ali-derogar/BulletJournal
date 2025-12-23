@@ -12,7 +12,7 @@ services:
       - ALGORITHM=${ALGORITHM:-HS256}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
     volumes:
-      - backend-data:/app/data
+      - ./backend/data:/app/data
       - ./backend:/app
     restart: unless-stopped
     healthcheck:
@@ -45,10 +45,6 @@ services:
       start_period: 5s
     networks:
       - bulletjournal-network
-
-volumes:
-  backend-data:
-    driver: local
 
 networks:
   bulletjournal-network:
