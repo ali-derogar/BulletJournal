@@ -35,17 +35,8 @@ app = FastAPI(
 # CORS middleware - MUST be first middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://172.17.100.69:3000",
-        "http://172.17.100.69:3001",
-        "http://45.89.244.24:3000",  # Add your production domain
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     max_age=3600,  # Cache preflight requests for 1 hour
