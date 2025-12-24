@@ -16,12 +16,12 @@ const persianMonths = [
   "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
 ];
 
-const persianWeekdays = ["جمعه", "پنج‌شنبه", "چهارشنبه", "سه‌شنبه", "دوشنبه", "یکشنبه", "شنبه"];
+const persianWeekdays = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"];
 
 const getPersianWeekdayIndex = (gregorianDay: number): number => {
   // gregorianDay: 0=Sun, 1=Mon, ..., 6=Sat
-  // Persian weekdays array: 0=Fri, 1=Thu, 2=Wed, 3=Tue, 4=Mon, 5=Sun, 6=Sat
-  return gregorianDay === 6 ? 6 : 5 - gregorianDay;
+  // Persian weekdays array: 0=Sat, 1=Sun, 2=Mon, ..., 6=Fri
+  return (gregorianDay + 1) % 7;
 };
 
 interface HolidayData {
@@ -32,10 +32,8 @@ interface HolidayData {
 }
 
 export default function PersianCalendar({ userId }: PersianCalendarProps) {
-  console.log('[DEBUG] PersianCalendar: Component mounted with userId:', userId);
   const now = new Date();
   const jNow = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
-  console.log('[DEBUG] PersianCalendar: Current date - Gregorian:', now, 'Jalaali:', jNow);
   const [currentYear, setCurrentYear] = useState(jNow.jy);
   const [currentMonth, setCurrentMonth] = useState(jNow.jm);
   const [notes, setNotes] = useState<CalendarNote[]>([]);
@@ -60,10 +58,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
   };
 
   const loadHolidaysForMonth = async (year: number, month: number) => {
-    console.log(`[DEBUG] loadHolidaysForMonth: Loading holidays for ${year}/${month}`);
     const monthKey = `${year}-${month}`;
-
-    console.log(`[DEBUG] loadHolidaysForMonth: Fetching from API for ${monthKey}`);
     setLoadingHolidays(true);
     try {
       const newHolidays: { [key: string]: HolidayData } = {};
@@ -73,7 +68,6 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`[DEBUG] loadHolidaysForMonth: Received ${data.total_events} events, ${data.total_holidays} holidays`);
 
         // Process all events and store holidays
         for (const event of data.events) {
@@ -101,10 +95,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
             };
           }
         }
-
-        console.log(`[DEBUG] loadHolidaysForMonth: Processed ${Object.keys(newHolidays).length} events/holidays`);
       } else {
-        console.warn(`[DEBUG] Failed to fetch calendar events:`, response.status);
+        console.warn(`Failed to fetch calendar events:`, response.status);
       }
 
       setHolidays(prev => ({ ...prev, ...newHolidays }));
@@ -142,10 +134,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
   const getFirstDayOfMonth = (year: number, month: number): number => {
     const firstDay = jalaaliToDateObject(year, month, 1);
     const gregorianDay = firstDay.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    console.log(`[DEBUG] getFirstDayOfMonth: Gregorian day for ${year}/${month}/1:`, gregorianDay, '(', ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][gregorianDay], ')');
-    const persianDay = getPersianWeekdayIndex(gregorianDay);
-    console.log(`[DEBUG] getFirstDayOfMonth: Persian day index:`, persianDay, '(', persianWeekdays[persianDay], ')');
-    return persianDay;
+    return getPersianWeekdayIndex(gregorianDay);
   };
 
   const getGregorianDate = (jDate: JalaaliDate): Date => {
@@ -195,9 +184,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
   };
 
   const days = getDaysInPersianMonth(currentYear, currentMonth);
-  console.log(`[DEBUG] Rendering calendar for ${currentYear}/${currentMonth}, days in month:`, days.length);
   const firstDayOfWeek = getFirstDayOfMonth(currentYear, currentMonth);
-  console.log(`[DEBUG] First day of week:`, firstDayOfWeek);
 
   // Create calendar grid (6 weeks max)
   const calendarDays: (JalaaliDate | null)[] = [];
@@ -211,10 +198,9 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
   while (calendarDays.length < 42) {
     calendarDays.push(null);
   }
-  console.log(`[DEBUG] Calendar grid created with ${calendarDays.filter(d => d !== null).length} days`);
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6" dir="rtl">
       {/* Beautiful Header with Gradient */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 mb-6 shadow-lg">
         <div className="flex items-center justify-between text-white">
@@ -272,8 +258,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
             const holidayData = jDate ? isHoliday(jDate) : null;
             const gregorianDay = jDate ? getGregorianDate(jDate).getDay() : -1;
             const persianWeekdayIndex = jDate ? getPersianWeekdayIndex(gregorianDay) : -1;
-            const isFriday = jDate && (persianWeekdayIndex === 0); // 0 = Friday (جمعه) in Persian weekdays array
-            console.log(`[DEBUG] Day ${jDate?.jd}: Gregorian day:`, gregorianDay, 'Persian index:', persianWeekdayIndex, 'isFriday:', isFriday);
+            const isFriday = jDate && (persianWeekdayIndex === 6); // 6 = Friday (جمعه) in Persian weekdays array
             const isToday = jDate && jDate.jy === jNow.jy && jDate.jm === jNow.jm && jDate.jd === jNow.jd;
 
             return (
@@ -540,7 +525,7 @@ function DayDetailModal({ jDate, note, holiday, onSave, onClose }: DayDetailModa
   const [noteText, setNoteText] = useState(note?.note || "");
 
   const gregorianDate = jalaaliToDateObject(jDate.jy, jDate.jm, jDate.jd);
-  const weekday = persianWeekdays[gregorianDate.getDay()];
+  const weekday = persianWeekdays[getPersianWeekdayIndex(gregorianDate.getDay())];
 
   const handleSave = () => {
     onSave(noteText);
