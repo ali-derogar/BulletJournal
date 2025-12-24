@@ -5,6 +5,7 @@ import { toJalaali, jalaaliToDateObject, isValidJalaaliDate } from "jalaali-js";
 import type { JalaaliDate } from "jalaali-js";
 import { getCalendarNotes, saveCalendarNote, deleteCalendarNote } from "@/storage/calendar";
 import type { CalendarNote } from "@/domain";
+import type { CalendarEvent } from "@/domain/calendar-events";
 
 
 interface PersianCalendarProps {
@@ -29,21 +30,25 @@ interface HolidayData {
   title: string;
   holiday: boolean;
   description?: string;
+  date_string?: string;
+  base?: number;
 }
 
 export default function PersianCalendar({ userId }: PersianCalendarProps) {
   const now = new Date();
   const jNow = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  console.log('[PersianCalendar] Current date:', now.toISOString(), 'Jalali:', jNow);
   const [currentYear, setCurrentYear] = useState(jNow.jy);
   const [currentMonth, setCurrentMonth] = useState(jNow.jm);
   const [notes, setNotes] = useState<CalendarNote[]>([]);
-  const [holidays, setHolidays] = useState<{ [key: string]: HolidayData }>({});
+  const [holidays, setHolidays] = useState<{ [key: string]: HolidayData[] }>({});
   const [selectedDay, setSelectedDay] = useState<JalaaliDate | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [loadingHolidays, setLoadingHolidays] = useState(false);
 
   // Load notes and holidays from storage
   useEffect(() => {
+    console.log('[PersianCalendar] Loading for year:', currentYear, 'month:', currentMonth);
     loadNotes();
     loadHolidaysForMonth(currentYear, currentMonth);
   }, [userId, currentYear, currentMonth]);
@@ -61,16 +66,26 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
     const monthKey = `${year}-${month}`;
     setLoadingHolidays(true);
     try {
-      const newHolidays: { [key: string]: HolidayData } = {};
+      const newHolidays: { [key: string]: HolidayData[] } = {};
 
       // NEW: Fetch all events for the month in one API call
       const response = await fetch(`/api/calendar/${year}/${month}/events`);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('[PersianCalendar] API response:', data.total_events, 'events,', data.total_holidays, 'holidays');
 
-        // Process all events and store holidays
-        for (const event of data.events) {
+        // Filter events to only include those for the current month
+        const monthEvents = data.events.filter((event: CalendarEvent) => {
+          const dateParts = event.jalali_date.split('-');
+          const eventYear = parseInt(dateParts[0], 10);
+          const eventMonth = parseInt(dateParts[1], 10);
+          return eventYear === year && eventMonth === month;
+        });
+        console.log('[PersianCalendar] Filtered to', monthEvents.length, 'events for month', month);
+
+        // Process filtered events and store holidays
+        for (const event of monthEvents) {
           // Extract day from jalali_date (format: YYYY-MM-DD)
           const dateParts = event.jalali_date.split('-');
           const day = parseInt(dateParts[2], 10);
@@ -78,22 +93,20 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
           // Store holiday/event data
           const key = `${year}-${month}-${day}`;
 
-          if (event.is_holiday) {
-            newHolidays[key] = {
-              date: event.jalali_date,
-              title: event.title,
-              holiday: true,
-              description: event.description || ''
-            };
-          } else if (event.title) {
-            // Store non-holiday events too
-            newHolidays[key] = {
-              date: event.jalali_date,
-              title: event.title,
-              holiday: false,
-              description: event.description || ''
-            };
+          if (!newHolidays[key]) {
+            newHolidays[key] = [];
           }
+
+          const eventData: HolidayData = {
+            date: event.jalali_date,
+            title: event.title,
+            holiday: event.is_holiday,
+            description: event.description || '',
+            date_string: event.date_string,
+            base: event.base
+          };
+
+          newHolidays[key].push(eventData);
         }
       } else {
         console.warn(`Failed to fetch calendar events:`, response.status);
@@ -145,9 +158,9 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
     return `${jDate.jd} ${persianMonths[jDate.jm - 1]} ${jDate.jy}`;
   };
 
-  const isHoliday = (jDate: JalaaliDate): HolidayData | null => {
+  const isHoliday = (jDate: JalaaliDate): HolidayData[] => {
     const key = `${jDate.jy}-${jDate.jm}-${jDate.jd}`;
-    return holidays[key] || null;
+    return holidays[key] || [];
   };
 
   const hasNote = (jDate: JalaaliDate): boolean => {
@@ -255,7 +268,9 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
         {/* Beautiful Calendar grid */}
         <div className="grid grid-cols-7 gap-2">
           {calendarDays.map((jDate, index) => {
-            const holidayData = jDate ? isHoliday(jDate) : null;
+            const holidayDataArray = jDate ? isHoliday(jDate) : [];
+            const holidayData = holidayDataArray.length > 0 ? holidayDataArray[0] : null;
+            const hasMultiple = holidayDataArray.length > 1;
             const gregorianDay = jDate ? getGregorianDate(jDate).getDay() : -1;
             const persianWeekdayIndex = jDate ? getPersianWeekdayIndex(gregorianDay) : -1;
             const isFriday = jDate && (persianWeekdayIndex === 6); // 6 = Friday (جمعه) in Persian weekdays array
@@ -308,7 +323,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                         ${holidayData.holiday ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-purple-600 dark:text-purple-400 font-medium'}
                       `}>
                         {holidayData.holiday && '🎉 '}
-                        {holidayData.title}
+                        {holidayData.title}{holidayData.base !== 0 && holidayData.date_string ? ` [ ${holidayData.date_string} ]` : ''}
                       </div>
                     )}
 
@@ -339,18 +354,18 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
             <h3 className="text-xl font-bold text-foreground dark:text-foreground">تعطیلات رسمی</h3>
           </div>
           <div className="space-y-3 max-h-80 overflow-y-auto">
-            {Object.values(holidays).filter(h => h.holiday).length === 0 ? (
+            {Object.values(holidays).flat().filter(h => h.holiday).length === 0 ? (
               <p className="text-muted-foreground dark:text-muted-foreground text-center py-8">
                 تعطیلی رسمی در این ماه وجود ندارد
               </p>
             ) : (
               Object.entries(holidays)
-                .filter(([_, h]) => h.holiday)
-                .map(([key, holiday]) => {
+                .filter(([_, events]) => events.some(e => e.holiday))
+                .flatMap(([key, events]) => events.filter(e => e.holiday).map((holiday, idx) => {
                   const dayNum = key.split('-')[2];
                   return (
                     <div
-                      key={key}
+                      key={`${key}-${idx}`}
                       className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-r-4 border-red-500 p-4 rounded-lg hover:shadow-md transition-all cursor-pointer"
                       onClick={() => {
                         const day = parseInt(dayNum);
@@ -359,7 +374,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <p className="font-bold text-red-700 dark:text-red-400 text-lg">{holiday.title}</p>
+                          <p className="font-bold text-red-700 dark:text-red-400 text-lg">{holiday.title}{holiday.base !== 0 && holiday.date_string ? ` [ ${holiday.date_string} ]` : ''}</p>
                           {holiday.description && (
                             <p className="text-sm text-red-600 dark:text-red-500 mt-1">{holiday.description}</p>
                           )}
@@ -370,7 +385,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                       </div>
                     </div>
                   );
-                })
+                }))
             )}
           </div>
         </div>
@@ -384,7 +399,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
             <h3 className="text-xl font-bold text-foreground dark:text-foreground">رویدادهای ماه</h3>
           </div>
           <div className="space-y-3 max-h-80 overflow-y-auto">
-            {Object.values(holidays).length === 0 ? (
+            {Object.values(holidays).flat().length === 0 ? (
               <p className="text-muted-foreground dark:text-muted-foreground text-center py-8">
                 رویدادی در این ماه ثبت نشده است
               </p>
@@ -395,12 +410,13 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                   const dayB = parseInt(b[0].split('-')[2]);
                   return dayA - dayB;
                 })
-                .map(([key, event]) => {
+                .flatMap(([key, events]) => events.map((event, idx) => {
                   const dayNum = key.split('-')[2];
                   const isHoliday = event.holiday;
+                  console.log('[PersianCalendar] Displaying event:', event.title, 'day:', dayNum, 'holiday:', isHoliday);
                   return (
                     <div
-                      key={key}
+                      key={`${key}-${idx}`}
                       className={`${
                         isHoliday
                           ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 border-r-4 border-red-400'
@@ -419,7 +435,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                               : 'text-purple-700 dark:text-purple-400'
                           }`}>
                             {isHoliday && '🎉 '}
-                            {event.title}
+                            {event.title}{event.base !== 0 && event.date_string ? ` [ ${event.date_string} ]` : ''}
                           </p>
                           {event.description && (
                             <p className={`text-sm mt-1 ${
@@ -441,7 +457,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                       </div>
                     </div>
                   );
-                })
+                }))
             )}
           </div>
         </div>
@@ -472,7 +488,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
         <DayDetailModal
           jDate={selectedDay}
           note={getNoteForDay(selectedDay)}
-          holiday={isHoliday(selectedDay)}
+          holidays={isHoliday(selectedDay)}
           onSave={async (note) => {
             const dateStr = `${selectedDay.jy}-${String(selectedDay.jm).padStart(2, '0')}-${String(selectedDay.jd).padStart(2, '0')}`;
             const existingNote = getNoteForDay(selectedDay);
@@ -516,12 +532,12 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 interface DayDetailModalProps {
   jDate: JalaaliDate;
   note: CalendarNote | null;
-  holiday: HolidayData | null;
+  holidays: HolidayData[];
   onSave: (note: string) => void;
   onClose: () => void;
 }
 
-function DayDetailModal({ jDate, note, holiday, onSave, onClose }: DayDetailModalProps) {
+function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailModalProps) {
   const [noteText, setNoteText] = useState(note?.note || "");
 
   const gregorianDate = jalaaliToDateObject(jDate.jy, jDate.jm, jDate.jd);
@@ -577,23 +593,23 @@ function DayDetailModal({ jDate, note, holiday, onSave, onClose }: DayDetailModa
             </div>
           </div>
 
-          {/* Holiday Badge */}
-          {holiday && (
-            <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-2 border-red-200 dark:border-red-800 p-4 rounded-xl">
+          {/* Holiday Badges */}
+          {holidays.map((holiday, idx) => (
+            <div key={idx} className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-2 border-red-200 dark:border-red-800 p-4 rounded-xl">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🎉</span>
                 <div>
                   <p className="text-xs text-red-600 dark:text-red-400 font-semibold mb-0.5">
                     {holiday.holiday ? 'تعطیل رسمی' : 'رویداد'}
                   </p>
-                  <p className="font-bold text-red-700 dark:text-red-400">{holiday.title}</p>
+                  <p className="font-bold text-red-700 dark:text-red-400">{holiday.title}{holiday.base !== 0 && holiday.date_string ? ` [ ${holiday.date_string} ]` : ''}</p>
                   {holiday.description && (
                     <p className="text-sm text-red-600 dark:text-red-500 mt-1">{holiday.description}</p>
                   )}
                 </div>
               </div>
             </div>
-          )}
+          ))}
 
           {/* Note Section */}
           <div>
