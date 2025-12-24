@@ -412,7 +412,7 @@ async def sync_data(
             detail=f"Sync failed: {str(e)}"
         )
 
-@router.post("/sync/download", response_model=SyncResponse)
+@router.post("/sync/download", response_model=SyncData)
 @limiter.limit("30/minute")  # Rate limit: 30 downloads per minute per user
 async def download_data(
     request: Request,
@@ -465,13 +465,12 @@ async def download_data(
             f"journals={len(journals)}, reflections={len(reflections)}"
         )
 
-        # Return counts (frontend will handle actual data separately)
-        return SyncResponse(
-            synced_tasks=len(tasks),
-            synced_expenses=len(expenses),
-            synced_journals=len(journals),
-            synced_reflections=len(reflections),
-            conflicts_resolved=0
+        # Return actual data for frontend to save to IndexedDB
+        return SyncData(
+            tasks=tasks,
+            expenses=expenses,
+            journals=journals,
+            reflections=reflections
         )
 
     except Exception as e:

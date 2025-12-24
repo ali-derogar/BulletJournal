@@ -52,6 +52,18 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
     }
 
     loadData();
+
+    // Listen for data download events to refresh daily inputs
+    const handleDataDownloaded = () => {
+      console.log('[DEBUG] Data downloaded event received, reloading daily inputs');
+      loadData();
+    };
+
+    window.addEventListener('data-downloaded', handleDataDownloaded);
+
+    return () => {
+      window.removeEventListener('data-downloaded', handleDataDownloaded);
+    };
   }, [date, userId]);
 
   const saveSleepData = useCallback(
