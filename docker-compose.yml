@@ -32,7 +32,7 @@ services:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://45.89.244.24:8000}
     container_name: bulletjournal-frontend
     ports:
-      - "3000:80"
+    - "3000:3000"
     depends_on:
       backend:
         condition: service_healthy
