@@ -5,11 +5,11 @@ api_router = APIRouter()
 # Import and include routers here as they are created
 from app.api.sync import router as sync_router
 from app.api.analytics import router as analytics_router
-from app.api.holidays import router as holidays_router
+from app.api.calendar import router as calendar_router
 
 api_router.include_router(sync_router, tags=["sync"])
 api_router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
-api_router.include_router(holidays_router, tags=["holidays"])
+api_router.include_router(calendar_router, tags=["calendar"])
 
 # from app.api import users, tasks, expenses, sleep, mood, journals
 

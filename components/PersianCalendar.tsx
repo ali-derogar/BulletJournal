@@ -16,7 +16,13 @@ const persianMonths = [
   "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
 ];
 
-const persianWeekdays = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"];
+const persianWeekdays = ["جمعه", "پنج‌شنبه", "چهارشنبه", "سه‌شنبه", "دوشنبه", "یکشنبه", "شنبه"];
+
+const getPersianWeekdayIndex = (gregorianDay: number): number => {
+  // gregorianDay: 0=Sun, 1=Mon, ..., 6=Sat
+  // Persian weekdays array: 0=Fri, 1=Thu, 2=Wed, 3=Tue, 4=Mon, 5=Sun, 6=Sat
+  return gregorianDay === 6 ? 6 : 5 - gregorianDay;
+};
 
 interface HolidayData {
   date: string;
@@ -62,32 +68,44 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
     try {
       const newHolidays: { [key: string]: HolidayData } = {};
 
-      // Fetch holidays for each day of the month
-      const daysInMonth = getDaysInPersianMonth(year, month);
-      console.log(`[DEBUG] loadHolidaysForMonth: Days in month: ${daysInMonth.length}`);
-      console.log(`[DEBUG] loadHolidaysForMonth: About to start fetching for ${daysInMonth.length} days`);
+      // NEW: Fetch all events for the month in one API call
+      const response = await fetch(`/api/calendar/${year}/${month}/events`);
 
-      const fetchPromises = daysInMonth.map(async (jDate) => {
-        try {
-          console.log(`[DEBUG] Fetching holiday for ${jDate.jy}/${jDate.jm}/${jDate.jd}`);
-          const response = await fetch(`/api/holidays/${jDate.jy}/${jDate.jm}/${jDate.jd}`);
-          console.log(`[DEBUG] Response status for ${jDate.jy}/${jDate.jm}/${jDate.jd}:`, response.status);
-          if (response.ok) {
-            const data: HolidayData = await response.json();
-            console.log(`[DEBUG] Holiday data for ${jDate.jy}/${jDate.jm}/${jDate.jd}:`, data);
-            if (data.holiday) {
-              newHolidays[`${jDate.jy}-${jDate.jm}-${jDate.jd}`] = data;
-            }
-          } else {
-            console.warn(`[DEBUG] Bad response for ${jDate.jy}/${jDate.jm}/${jDate.jd}:`, response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[DEBUG] loadHolidaysForMonth: Received ${data.total_events} events, ${data.total_holidays} holidays`);
+
+        // Process all events and store holidays
+        for (const event of data.events) {
+          // Extract day from jalali_date (format: YYYY-MM-DD)
+          const dateParts = event.jalali_date.split('-');
+          const day = parseInt(dateParts[2], 10);
+
+          // Store holiday/event data
+          const key = `${year}-${month}-${day}`;
+
+          if (event.is_holiday) {
+            newHolidays[key] = {
+              date: event.jalali_date,
+              title: event.title,
+              holiday: true,
+              description: event.description || ''
+            };
+          } else if (event.title) {
+            // Store non-holiday events too
+            newHolidays[key] = {
+              date: event.jalali_date,
+              title: event.title,
+              holiday: false,
+              description: event.description || ''
+            };
           }
-        } catch (error) {
-          console.warn(`Failed to fetch holiday for ${jDate.jy}/${jDate.jm}/${jDate.jd}:`, error);
         }
-      });
 
-      await Promise.all(fetchPromises);
-      console.log(`[DEBUG] loadHolidaysForMonth: Fetched ${Object.keys(newHolidays).length} holidays`);
+        console.log(`[DEBUG] loadHolidaysForMonth: Processed ${Object.keys(newHolidays).length} events/holidays`);
+      } else {
+        console.warn(`[DEBUG] Failed to fetch calendar events:`, response.status);
+      }
 
       setHolidays(prev => ({ ...prev, ...newHolidays }));
     } catch (error) {
@@ -123,8 +141,11 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
   const getFirstDayOfMonth = (year: number, month: number): number => {
     const firstDay = jalaaliToDateObject(year, month, 1);
-    // 0 = Saturday in Persian calendar
-    return firstDay.getDay(); // 0=Sat, 1=Sun, etc.
+    const gregorianDay = firstDay.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    console.log(`[DEBUG] getFirstDayOfMonth: Gregorian day for ${year}/${month}/1:`, gregorianDay, '(', ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][gregorianDay], ')');
+    const persianDay = getPersianWeekdayIndex(gregorianDay);
+    console.log(`[DEBUG] getFirstDayOfMonth: Persian day index:`, persianDay, '(', persianWeekdays[persianDay], ')');
+    return persianDay;
   };
 
   const getGregorianDate = (jDate: JalaaliDate): Date => {
@@ -193,75 +214,272 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
   console.log(`[DEBUG] Calendar grid created with ${calendarDays.filter(d => d !== null).length} days`);
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={handlePrevMonth}
-          className="p-2 hover:bg-muted rounded-lg transition-colors"
-          aria-label="ماه قبل"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <h1 className="text-2xl font-bold text-foreground">
-          {persianMonths[currentMonth - 1]} {currentYear}
-        </h1>
-
-        <button
-          onClick={handleNextMonth}
-          className="p-2 hover:bg-muted rounded-lg transition-colors"
-          aria-label="ماه بعد"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {persianWeekdays.map((day) => (
-          <div
-            key={day}
-            className="p-2 text-center text-sm font-semibold text-muted-foreground"
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Beautiful Header with Gradient */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 mb-6 shadow-lg">
+        <div className="flex items-center justify-between text-white">
+          <button
+            onClick={handlePrevMonth}
+            className="p-3 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
+            aria-label="ماه قبل"
           >
-            {day}
-          </div>
-        ))}
-      </div>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {calendarDays.map((jDate, index) => (
-          <div
-            key={index}
-            className={`
-              min-h-[60px] p-2 border border-border rounded-lg relative
-              ${jDate ? 'cursor-pointer hover:bg-muted transition-colors' : ''}
-              ${jDate && isHoliday(jDate) ? 'bg-orange-50 border-orange-200' : ''}
-            `}
-            onClick={() => jDate && handleDayClick(jDate)}
-          >
-            {jDate && (
-              <>
-                <div className="text-sm font-medium text-foreground">
-                  {jDate.jd}
-                </div>
-                {hasNote(jDate) && (
-                  <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
-                )}
-                {isHoliday(jDate) && (
-                  <div className="text-xs text-red-600 mt-1 truncate">
-                    {isHoliday(jDate)?.title}
-                  </div>
-                )}
-              </>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-1">
+              {persianMonths[currentMonth - 1]}
+            </h1>
+            <p className="text-lg opacity-90">{currentYear}</p>
+            {loadingHolidays && (
+              <p className="text-sm opacity-75 mt-1">در حال بارگذاری...</p>
             )}
           </div>
-        ))}
+
+          <button
+            onClick={handleNextMonth}
+            className="p-3 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
+            aria-label="ماه بعد"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Modern Calendar Card */}
+      <div className="bg-card rounded-2xl shadow-xl p-4 border border-border">
+        {/* Weekday headers with better styling */}
+        <div className="grid grid-cols-7 gap-2 mb-3">
+          {persianWeekdays.map((day, idx) => (
+            <div
+              key={day}
+              className={`p-3 text-center text-sm font-bold rounded-lg ${
+                idx === 6 ? 'bg-red-50 text-red-600' : 'bg-muted/50 text-muted-foreground'
+              }`}
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Beautiful Calendar grid */}
+        <div className="grid grid-cols-7 gap-2">
+          {calendarDays.map((jDate, index) => {
+            const holidayData = jDate ? isHoliday(jDate) : null;
+            const gregorianDay = jDate ? getGregorianDate(jDate).getDay() : -1;
+            const persianWeekdayIndex = jDate ? getPersianWeekdayIndex(gregorianDay) : -1;
+            const isFriday = jDate && (persianWeekdayIndex === 0); // 0 = Friday (جمعه) in Persian weekdays array
+            console.log(`[DEBUG] Day ${jDate?.jd}: Gregorian day:`, gregorianDay, 'Persian index:', persianWeekdayIndex, 'isFriday:', isFriday);
+            const isToday = jDate && jDate.jy === jNow.jy && jDate.jm === jNow.jm && jDate.jd === jNow.jd;
+
+            return (
+              <div
+                key={index}
+                className={`
+                  min-h-[90px] p-3 rounded-xl relative transition-all duration-200
+                  ${jDate ? 'cursor-pointer hover:shadow-lg hover:scale-105 hover:-translate-y-1' : 'bg-transparent'}
+                  ${!jDate ? '' : holidayData?.holiday
+                    ? 'bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-2 border-red-200 dark:border-red-800 shadow-md'
+                    : isFriday
+                    ? 'bg-gradient-to-br from-red-50/50 to-pink-50/50 dark:from-red-950/20 dark:to-pink-950/20 border border-red-100 dark:border-red-900'
+                    : 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border border-border dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                  }
+                  ${isToday ? 'ring-4 ring-blue-400 dark:ring-blue-600 ring-offset-2 dark:ring-offset-gray-900' : ''}
+                `}
+                onClick={() => jDate && handleDayClick(jDate)}
+              >
+                {jDate && (
+                  <>
+                    {/* Day number with badge */}
+                    <div className="flex items-start justify-between mb-1">
+                      <div className={`
+                        text-lg font-bold
+                        ${isToday ? 'bg-blue-500 dark:bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center' : ''}
+                        ${holidayData?.holiday && !isToday ? 'text-red-600 dark:text-red-400' : ''}
+                        ${!holidayData?.holiday && !isToday ? 'text-foreground dark:text-foreground' : ''}
+                      `}>
+                        {jDate.jd}
+                      </div>
+
+                      {/* Note indicator */}
+                      {hasNote(jDate) && (
+                        <div className="relative group">
+                          <div className="w-2.5 h-2.5 bg-blue-500 dark:bg-blue-600 rounded-full animate-pulse"></div>
+                          <div className="absolute right-0 top-6 hidden group-hover:block bg-blue-600 dark:bg-blue-700 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+                            یادداشت دارد
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Holiday/Event title */}
+                    {holidayData && (
+                      <div className={`
+                        text-xs leading-tight mt-2 line-clamp-2
+                        ${holidayData.holiday ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-purple-600 dark:text-purple-400 font-medium'}
+                      `}>
+                        {holidayData.holiday && '🎉 '}
+                        {holidayData.title}
+                      </div>
+                    )}
+
+                    {/* Today badge */}
+                    {isToday && (
+                      <div className="absolute bottom-1 left-1 right-1">
+                        <div className="bg-blue-500 dark:bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full text-center font-medium">
+                          امروز
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Events List Section */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Holidays Section */}
+        <div className="bg-card dark:bg-card rounded-2xl shadow-lg border border-border dark:border-border p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center">
+              <span className="text-white text-xl">🎉</span>
+            </div>
+            <h3 className="text-xl font-bold text-foreground dark:text-foreground">تعطیلات رسمی</h3>
+          </div>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {Object.values(holidays).filter(h => h.holiday).length === 0 ? (
+              <p className="text-muted-foreground dark:text-muted-foreground text-center py-8">
+                تعطیلی رسمی در این ماه وجود ندارد
+              </p>
+            ) : (
+              Object.entries(holidays)
+                .filter(([_, h]) => h.holiday)
+                .map(([key, holiday]) => {
+                  const dayNum = key.split('-')[2];
+                  return (
+                    <div
+                      key={key}
+                      className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-r-4 border-red-500 p-4 rounded-lg hover:shadow-md transition-all cursor-pointer"
+                      onClick={() => {
+                        const day = parseInt(dayNum);
+                        handleDayClick({ jy: currentYear, jm: currentMonth, jd: day });
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="font-bold text-red-700 dark:text-red-400 text-lg">{holiday.title}</p>
+                          {holiday.description && (
+                            <p className="text-sm text-red-600 dark:text-red-500 mt-1">{holiday.description}</p>
+                          )}
+                        </div>
+                        <div className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-3 py-1 rounded-full text-sm font-bold whitespace-nowrap">
+                          {dayNum} {persianMonths[currentMonth - 1]}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+        </div>
+
+        {/* All Events Section */}
+        <div className="bg-card dark:bg-card rounded-2xl shadow-lg border border-border dark:border-border p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <span className="text-white text-xl">📅</span>
+            </div>
+            <h3 className="text-xl font-bold text-foreground dark:text-foreground">رویدادهای ماه</h3>
+          </div>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {Object.values(holidays).length === 0 ? (
+              <p className="text-muted-foreground dark:text-muted-foreground text-center py-8">
+                رویدادی در این ماه ثبت نشده است
+              </p>
+            ) : (
+              Object.entries(holidays)
+                .sort((a, b) => {
+                  const dayA = parseInt(a[0].split('-')[2]);
+                  const dayB = parseInt(b[0].split('-')[2]);
+                  return dayA - dayB;
+                })
+                .map(([key, event]) => {
+                  const dayNum = key.split('-')[2];
+                  const isHoliday = event.holiday;
+                  return (
+                    <div
+                      key={key}
+                      className={`${
+                        isHoliday
+                          ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 border-r-4 border-red-400'
+                          : 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-r-4 border-purple-400'
+                      } p-4 rounded-lg hover:shadow-md transition-all cursor-pointer`}
+                      onClick={() => {
+                        const day = parseInt(dayNum);
+                        handleDayClick({ jy: currentYear, jm: currentMonth, jd: day });
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <p className={`font-semibold text-base ${
+                            isHoliday
+                              ? 'text-red-700 dark:text-red-400'
+                              : 'text-purple-700 dark:text-purple-400'
+                          }`}>
+                            {isHoliday && '🎉 '}
+                            {event.title}
+                          </p>
+                          {event.description && (
+                            <p className={`text-sm mt-1 ${
+                              isHoliday
+                                ? 'text-red-600 dark:text-red-500'
+                                : 'text-purple-600 dark:text-purple-500'
+                            }`}>
+                              {event.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className={`${
+                          isHoliday
+                            ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'
+                            : 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300'
+                        } px-3 py-1 rounded-full text-sm font-bold whitespace-nowrap`}>
+                          {dayNum}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Holiday Legend */}
+      <div className="mt-6 flex flex-wrap gap-4 justify-center text-sm">
+        <div className="flex items-center gap-2 bg-card dark:bg-card px-4 py-2 rounded-lg border border-border dark:border-border">
+          <div className="w-4 h-4 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900 dark:to-orange-900 border-2 border-red-200 dark:border-red-700 rounded"></div>
+          <span className="text-foreground dark:text-foreground">تعطیل رسمی</span>
+        </div>
+        <div className="flex items-center gap-2 bg-card dark:bg-card px-4 py-2 rounded-lg border border-border dark:border-border">
+          <div className="w-4 h-4 bg-gradient-to-br from-red-50/50 to-pink-50/50 dark:from-red-900/30 dark:to-pink-900/30 border border-red-100 dark:border-red-800 rounded"></div>
+          <span className="text-foreground dark:text-foreground">جمعه</span>
+        </div>
+        <div className="flex items-center gap-2 bg-card dark:bg-card px-4 py-2 rounded-lg border border-border dark:border-border">
+          <div className="w-4 h-4 bg-blue-500 dark:bg-blue-600 rounded-full"></div>
+          <span className="text-foreground dark:text-foreground">امروز</span>
+        </div>
+        <div className="flex items-center gap-2 bg-card dark:bg-card px-4 py-2 rounded-lg border border-border dark:border-border">
+          <div className="w-2.5 h-2.5 bg-blue-500 dark:bg-blue-600 rounded-full"></div>
+          <span className="text-foreground dark:text-foreground">دارای یادداشت</span>
+        </div>
       </div>
 
       {/* Day Detail Modal */}
@@ -330,76 +548,100 @@ function DayDetailModal({ jDate, note, holiday, onSave, onClose }: DayDetailModa
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-card-foreground">
-              {jDate.jd} {persianMonths[jDate.jm - 1]} {jDate.jy}
-            </h2>
+    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      <div className="bg-card dark:bg-card rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto transform transition-all animate-in zoom-in-95 duration-300 border border-border dark:border-gray-700">
+        {/* Gradient Header */}
+        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-700 dark:via-purple-700 dark:to-pink-700 p-6 rounded-t-2xl">
+          <div className="flex items-start justify-between text-white">
+            <div>
+              <h2 className="text-2xl font-bold mb-1">
+                {jDate.jd} {persianMonths[jDate.jm - 1]}
+              </h2>
+              <p className="text-lg opacity-90">{jDate.jy}</p>
+            </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-muted rounded-lg"
+              className="p-2 hover:bg-white/20 dark:hover:bg-white/30 rounded-xl transition-all duration-200"
               aria-label="بستن"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">روز هفته</p>
-              <p className="font-medium">{weekday}</p>
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          {/* Info Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-semibold mb-1">روز هفته</p>
+              <p className="font-bold text-blue-900 dark:text-blue-300">{weekday}</p>
             </div>
 
-            <div>
-              <p className="text-sm text-muted-foreground">تاریخ میلادی</p>
-              <p className="font-medium">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50 p-4 rounded-xl border border-green-200 dark:border-green-800">
+              <p className="text-xs text-green-600 dark:text-green-400 font-semibold mb-1">تاریخ میلادی</p>
+              <p className="font-bold text-green-900 dark:text-green-300 text-sm">
                 {gregorianDate.toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
                 })}
               </p>
             </div>
+          </div>
 
-            {holiday && (
-              <div>
-                <p className="text-sm text-muted-foreground">تعطیلات</p>
-                <p className="font-medium text-orange-600">{holiday.title}</p>
+          {/* Holiday Badge */}
+          {holiday && (
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30 border-2 border-red-200 dark:border-red-800 p-4 rounded-xl">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎉</span>
+                <div>
+                  <p className="text-xs text-red-600 dark:text-red-400 font-semibold mb-0.5">
+                    {holiday.holiday ? 'تعطیل رسمی' : 'رویداد'}
+                  </p>
+                  <p className="font-bold text-red-700 dark:text-red-400">{holiday.title}</p>
+                  {holiday.description && (
+                    <p className="text-sm text-red-600 dark:text-red-500 mt-1">{holiday.description}</p>
+                  )}
+                </div>
               </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-card-foreground mb-2">
-                یادداشت
-              </label>
-              <textarea
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                placeholder="یادداشتی برای این روز اضافه کنید..."
-                className="w-full p-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                rows={4}
-              />
             </div>
-          </div>
+          )}
 
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={handleSave}
-              className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              ذخیره
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
-            >
-              لغو
-            </button>
+          {/* Note Section */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-bold text-foreground dark:text-foreground mb-3">
+              <svg className="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              یادداشت شخصی
+            </label>
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="یادداشتی برای این روز بنویسید..."
+              className="w-full p-4 border-2 border-border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 focus:border-blue-400 dark:focus:border-blue-600 resize-none transition-all bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 text-foreground dark:text-foreground"
+              rows={5}
+            />
           </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 p-6 pt-0">
+          <button
+            onClick={handleSave}
+            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 dark:hover:from-blue-800 dark:hover:to-purple-800 transition-all duration-200 font-bold shadow-lg hover:shadow-xl hover:scale-105 transform"
+          >
+            💾 ذخیره
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 font-bold hover:scale-105 transform"
+          >
+            ✕ لغو
+          </button>
         </div>
       </div>
     </div>
