@@ -16,16 +16,17 @@ import OfflineIndicator from "@/components/OfflineIndicator";
 import AuthButton from "@/components/AuthButton";
 import UploadDownloadButtons from "@/components/UploadDownloadButtons";
 import ThemeToggle from "@/components/ThemeToggle";
+import LoginPage from "@/components/LoginPage";
 
 export default function Home() {
   const { currentDate, setCurrentDate } = useDate();
   const { currentUser } = useUser();
   const userId = currentUser?.id || "default";
   const [showCalendar, setShowCalendar] = useState(false);
-  const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar'>('daily');
+  const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar' | 'login'>('daily');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background isolation-auto">
       <OfflineIndicator />
 
       {/* Header with Auth - Enhanced with animations */}
@@ -140,6 +141,16 @@ export default function Home() {
           >
             <GoalDashboard />
           </motion.div>
+        ) : currentView === 'login' ? (
+          <motion.div
+            key="login"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <LoginPage />
+          </motion.div>
         ) : (
           <motion.div
             key="calendar"
@@ -161,9 +172,9 @@ export default function Home() {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.5, type: "spring" }}
-        className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-card/98 via-card/95 to-card/90 backdrop-blur-xl border-t-2 border-primary/20 shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-card/98 via-card/95 to-card/90 backdrop-blur-xl border-t-2 border-primary/20 shadow-2xl z-40 pb-safe"
       >
-        <div className="max-w-4xl mx-auto px-4 py-2">
+        <div className="max-w-4xl mx-auto px-2 sm:px-4 py-2 sm:py-3">
           <div className="flex justify-around items-center relative">
             {/* Active indicator */}
             <motion.div
@@ -172,8 +183,8 @@ export default function Home() {
               style={{
                 width: '25%',
                 left: currentView === 'daily' ? '0%' :
-                      currentView === 'analytics' ? '25%' :
-                      currentView === 'goals' ? '50%' : '75%'
+                  currentView === 'analytics' ? '25%' :
+                    currentView === 'goals' ? '50%' : '75%'
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
@@ -182,14 +193,13 @@ export default function Home() {
               onClick={() => setCurrentView('daily')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
-                currentView === 'daily'
-                  ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${currentView === 'daily'
+                ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
             >
               <motion.svg
-                className="w-5 h-5 mb-1"
+                className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -198,21 +208,20 @@ export default function Home() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </motion.svg>
-              <span className="text-xs font-bold">Daily</span>
+              <span className="text-[10px] sm:text-xs font-bold">Daily</span>
             </motion.button>
 
             <motion.button
               onClick={() => setCurrentView('analytics')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
-                currentView === 'analytics'
-                  ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${currentView === 'analytics'
+                ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
             >
               <motion.svg
-                className="w-5 h-5 mb-1"
+                className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -221,21 +230,20 @@ export default function Home() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </motion.svg>
-              <span className="text-xs font-bold">Analytics</span>
+              <span className="text-[10px] sm:text-xs font-bold">Analytics</span>
             </motion.button>
 
             <motion.button
               onClick={() => setCurrentView('goals')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
-                currentView === 'goals'
-                  ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${currentView === 'goals'
+                ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
             >
               <motion.svg
-                className="w-5 h-5 mb-1"
+                className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -244,21 +252,20 @@ export default function Home() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </motion.svg>
-              <span className="text-xs font-bold">Goals</span>
+              <span className="text-[10px] sm:text-xs font-bold">Goals</span>
             </motion.button>
 
             <motion.button
               onClick={() => setCurrentView('calendar')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${
-                currentView === 'calendar'
-                  ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${currentView === 'calendar'
+                ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
             >
               <motion.svg
-                className="w-5 h-5 mb-1"
+                className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -267,7 +274,7 @@ export default function Home() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </motion.svg>
-              <span className="text-xs font-bold">Calendar</span>
+              <span className="text-[10px] sm:text-xs font-bold">Calendar</span>
             </motion.button>
           </div>
         </div>

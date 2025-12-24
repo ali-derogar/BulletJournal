@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/app/context/AuthContext';
 
 interface AuthModalProps {
@@ -31,8 +32,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
     }
   }, [isOpen, mode, clearError]);
 
-  if (!isOpen) return null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
@@ -57,16 +56,20 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
       try {
         await register(name, email, password);
+        // Only close modal if registration succeeds
         onClose();
       } catch {
         // Error is already set in AuthContext
+        // Keep modal open so user can see the error and retry
       }
     } else {
       try {
         await login(email, password);
+        // Only close modal if login succeeds
         onClose();
       } catch {
         // Error is already set in AuthContext
+        // Keep modal open so user can see the error and retry
       }
     }
   };
@@ -79,12 +82,18 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
   const displayError = localError || error;
 
-  return (
+  // Return null if not open
+  if (!isOpen) return null;
+
+  // Only render portal on client-side
+  if (typeof window === 'undefined') return null;
+
+  const modalContent = (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 py-8 overflow-y-auto"
       onClick={handleBackdropClick}
     >
-      <div className="bg-gradient-to-br from-white via-white to-gray-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-gray-200/50 dark:border-gray-700/50">
+      <div className="bg-gradient-to-br from-white via-white to-gray-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-gray-200/50 dark:border-gray-700/50">
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-4">
           <div>
@@ -247,4 +256,6 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

@@ -26,11 +26,17 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
-# Copy built application
-COPY --from=builder /app ./
+ENV NODE_ENV=production
 
-# Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
+# Copy package files for reference
+COPY package*.json ./
+
+# Copy production node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy built application from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 

@@ -253,510 +253,502 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
         }
       `}</style>
 
-      <div className="max-w-6xl mx-auto p-6" dir="rtl">
+      <div className="max-w-6xl mx-auto p-2 sm:p-4 md:p-6" dir="rtl">
         {/* Beautiful Header with Gradient */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 mb-6 shadow-lg animate-in">
-        <div className="flex items-center justify-between text-white">
-          <button
-            onClick={handleNextMonth}
-            className="p-3 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
-            aria-label="ماه بعد"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-1">
-              {persianMonths[currentMonth - 1]}
-            </h1>
-            <p className="text-lg opacity-90">{currentYear}</p>
-            {loadingHolidays && (
-              <p className="text-sm opacity-75 mt-1">در حال بارگذاری...</p>
-            )}
-          </div>
-
-          <button
-            onClick={handlePrevMonth}
-            className="p-3 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
-            aria-label="ماه قبل"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Modern Calendar Card */}
-      <div className="bg-card rounded-2xl shadow-xl p-4 border border-border">
-        {/* Weekday headers with better styling */}
-        <div className="grid grid-cols-7 gap-2 mb-3">
-          {persianWeekdays.map((day, idx) => (
-            <div
-              key={day}
-              className={`p-3 text-center text-sm font-bold rounded-lg ${
-                idx === 6 ? 'bg-red-50 text-red-600' : 'bg-muted/50 text-muted-foreground'
-              }`}
+        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-4 md:p-6 mb-4 md:mb-6 shadow-lg animate-in">
+          <div className="flex items-center justify-between text-white">
+            <button
+              onClick={handleNextMonth}
+              className="p-2 md:p-3 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
+              aria-label="ماه بعد"
             >
-              {day}
+              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            <div className="text-center">
+              <h1 className="text-xl md:text-3xl font-bold mb-1">
+                {persianMonths[currentMonth - 1]}
+              </h1>
+              <p className="text-sm md:text-lg opacity-90">{currentYear}</p>
+              {loadingHolidays && (
+                <p className="text-xs md:text-sm opacity-75 mt-1">در حال بارگذاری...</p>
+              )}
             </div>
-          ))}
+
+            <button
+              onClick={handlePrevMonth}
+              className="p-2 md:p-3 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
+              aria-label="ماه قبل"
+            >
+              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* Beautiful Calendar grid with enhanced animations */}
-        <div className="grid grid-cols-7 gap-3">
-          {calendarDays.map((jDate, index) => {
-            const holidayDataArray = jDate ? isHoliday(jDate) : [];
-            const holidayData = holidayDataArray.length > 0 ? holidayDataArray[0] : null;
-            const hasMultiple = holidayDataArray.length > 1;
-            const gregorianDay = jDate ? getGregorianDate(jDate).getDay() : -1;
-            const persianWeekdayIndex = jDate ? getPersianWeekdayIndex(gregorianDay) : -1;
-            const isFriday = jDate && (persianWeekdayIndex === 6); // 6 = Friday (جمعه) in Persian weekdays array
-            const isToday = jDate && jDate.jy === jNow.jy && jDate.jm === jNow.jm && jDate.jd === jNow.jd;
-
-            return (
+        {/* Modern Calendar Card */}
+        <div className="bg-card rounded-2xl shadow-xl p-2 md:p-4 border border-border">
+          {/* Weekday headers with better styling */}
+          <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 md:mb-3">
+            {persianWeekdays.map((day, idx) => (
               <div
-                key={index}
-                className={`
-                  group min-h-[100px] p-3 rounded-2xl relative transition-all duration-300 ease-out
-                  ${jDate ? 'cursor-pointer hover:shadow-2xl hover:scale-110 hover:-translate-y-2 hover:z-10' : 'bg-transparent'}
-                  ${!jDate ? '' : holidayData?.holiday
-                    ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-100 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/50 border-2 border-red-300 dark:border-red-700 shadow-lg hover:shadow-red-300/50 dark:hover:shadow-red-900/50'
-                    : isFriday
-                    ? 'bg-gradient-to-br from-rose-50 via-pink-50 to-red-50/70 dark:from-rose-950/30 dark:via-pink-950/30 dark:to-red-950/30 border-2 border-rose-200 dark:border-rose-800 shadow-md hover:shadow-pink-200/50 dark:hover:shadow-pink-900/30'
-                    : 'bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-md hover:shadow-blue-200/50 dark:hover:shadow-blue-900/30'
-                  }
-                  ${isToday ? 'ring-4 ring-blue-500 dark:ring-blue-600 ring-offset-4 dark:ring-offset-gray-900 shadow-xl scale-105' : ''}
-                `}
-                onClick={() => jDate && handleDayClick(jDate)}
+                key={day}
+                className={`p-1 md:p-3 text-center text-[10px] md:text-sm font-bold rounded-lg ${idx === 6 ? 'bg-red-50 text-red-600' : 'bg-muted/50 text-muted-foreground'
+                  }`}
               >
-                {jDate && (
-                  <>
-                    {/* Decorative corner accent */}
-                    {holidayData?.holiday && (
-                      <div className="absolute top-0 left-0 w-6 h-6 overflow-hidden">
-                        <div className="absolute top-0 left-0 w-8 h-8 bg-gradient-to-br from-red-400 to-orange-400 dark:from-red-600 dark:to-orange-600 rotate-45 transform -translate-x-4 -translate-y-4 shadow-lg"></div>
-                      </div>
-                    )}
+                {day.substring(0, 1)}<span className="hidden md:inline">{day.substring(1)}</span>
+              </div>
+            ))}
+          </div>
 
-                    {/* Day number with enhanced badge */}
-                    <div className="flex items-start justify-between mb-2">
-                      <div className={`
-                        text-xl font-black transition-all duration-300
+          {/* Beautiful Calendar grid with enhanced animations */}
+          <div className="grid grid-cols-7 gap-1 md:gap-3">
+            {calendarDays.map((jDate, index) => {
+              const holidayDataArray = jDate ? isHoliday(jDate) : [];
+              const holidayData = holidayDataArray.length > 0 ? holidayDataArray[0] : null;
+              const hasMultiple = holidayDataArray.length > 1;
+              const gregorianDay = jDate ? getGregorianDate(jDate).getDay() : -1;
+              const persianWeekdayIndex = jDate ? getPersianWeekdayIndex(gregorianDay) : -1;
+              const isFriday = jDate && (persianWeekdayIndex === 6); // 6 = Friday (جمعه) in Persian weekdays array
+              const isToday = jDate && jDate.jy === jNow.jy && jDate.jm === jNow.jm && jDate.jd === jNow.jd;
+
+              return (
+                <div
+                  key={index}
+                  className={`
+                  group min-h-[60px] sm:min-h-[80px] md:min-h-[100px] p-1 md:p-3 rounded-lg md:rounded-2xl relative transition-all duration-300 ease-out
+                  ${jDate ? 'cursor-pointer hover:shadow-2xl hover:scale-105 md:hover:scale-110 hover:-translate-y-1 md:hover:-translate-y-2 hover:z-10' : 'bg-transparent'}
+                  ${!jDate ? '' : holidayData?.holiday
+                      ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-100 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/50 border md:border-2 border-red-300 dark:border-red-700 shadow-sm md:shadow-lg hover:shadow-red-300/50 dark:hover:shadow-red-900/50'
+                      : isFriday
+                        ? 'bg-gradient-to-br from-rose-50 via-pink-50 to-red-50/70 dark:from-rose-950/30 dark:via-pink-950/30 dark:to-red-950/30 border md:border-2 border-rose-200 dark:border-rose-800 shadow-sm md:shadow-md hover:shadow-pink-200/50 dark:hover:shadow-pink-900/30'
+                        : 'bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900 border md:border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm md:shadow-md hover:shadow-blue-200/50 dark:hover:shadow-blue-900/30'
+                    }
+                  ${isToday ? 'ring-2 md:ring-4 ring-blue-500 dark:ring-blue-600 ring-offset-2 md:ring-offset-4 dark:ring-offset-gray-900 shadow-md md:shadow-xl scale-105' : ''}
+                `}
+                  onClick={() => jDate && handleDayClick(jDate)}
+                >
+                  {jDate && (
+                    <>
+                      {/* Decorative corner accent */}
+                      {holidayData?.holiday && (
+                        <div className="absolute top-0 left-0 w-3 h-3 md:w-6 md:h-6 overflow-hidden">
+                          <div className="absolute top-0 left-0 w-4 h-4 md:w-8 md:h-8 bg-gradient-to-br from-red-400 to-orange-400 dark:from-red-600 dark:to-orange-600 rotate-45 transform -translate-x-2 -translate-y-2 md:-translate-x-4 md:-translate-y-4 shadow-lg"></div>
+                        </div>
+                      )}
+
+                      {/* Day number with enhanced badge */}
+                      <div className="flex items-start justify-between mb-1 md:mb-2">
+                        <div className={`
+                        text-sm sm:text-lg md:text-xl font-black transition-all duration-300
                         ${isToday
-                          ? 'bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg group-hover:scale-110 animate-pulse'
-                          : ''}
+                            ? 'bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white rounded-full w-6 h-6 md:w-10 md:h-10 flex items-center justify-center shadow-lg group-hover:scale-110 animate-pulse'
+                            : ''}
                         ${holidayData?.holiday && !isToday
-                          ? 'text-red-700 dark:text-red-300 group-hover:scale-110'
-                          : ''}
+                            ? 'text-red-700 dark:text-red-300 group-hover:scale-110'
+                            : ''}
                         ${!holidayData?.holiday && !isToday
-                          ? 'text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110'
-                          : ''}
+                            ? 'text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:scale-110'
+                            : ''}
                       `}>
-                        {jDate.jd}
-                      </div>
-
-                      {/* Note indicator with enhanced animation */}
-                      {hasNote(jDate) && (
-                        <div className="relative group/note">
-                          <div className="relative">
-                            <div className="w-3 h-3 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full animate-pulse shadow-lg"></div>
-                            <div className="absolute inset-0 w-3 h-3 bg-blue-400 dark:bg-blue-500 rounded-full animate-ping"></div>
-                          </div>
-                          <div className="absolute right-0 top-7 hidden group-hover/note:block bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                            <div className="absolute -top-1 right-2 w-2 h-2 bg-blue-600 dark:bg-blue-700 rotate-45"></div>
-                            📝 یادداشت دارد
-                          </div>
+                          {jDate.jd}
                         </div>
-                      )}
 
-                      {/* Multiple events indicator */}
-                      {hasMultiple && (
-                        <div className="absolute top-2 left-2 bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                          {holidayDataArray.length}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Holiday/Event title with better styling */}
-                    {holidayData && (
-                      <div className={`
-                        text-xs leading-snug mt-2 line-clamp-2 font-semibold transition-all duration-300
-                        ${holidayData.holiday
-                          ? 'text-red-700 dark:text-red-300 group-hover:text-red-800 dark:group-hover:text-red-200'
-                          : 'text-purple-700 dark:text-purple-300 group-hover:text-purple-800 dark:group-hover:text-purple-200'}
-                      `}>
-                        {holidayData.holiday && (
-                          <span className="inline-block animate-bounce mr-1">🎉</span>
+                        {/* Note indicator with enhanced animation */}
+                        {hasNote(jDate) && (
+                          <div className="relative group/note">
+                            <div className="relative">
+                              <div className="w-2 h-2 md:w-3 md:h-3 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full animate-pulse shadow-lg"></div>
+                              <div className="absolute inset-0 w-2 h-2 md:w-3 md:h-3 bg-blue-400 dark:bg-blue-500 rounded-full animate-ping"></div>
+                            </div>
+                            <div className="absolute right-0 top-7 hidden group-hover/note:block bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                              <div className="absolute -top-1 right-2 w-2 h-2 bg-blue-600 dark:bg-blue-700 rotate-45"></div>
+                              📝 یادداشت دارد
+                            </div>
+                          </div>
                         )}
-                        {holidayData.title}
-                      </div>
-                    )}
 
-                    {/* Today badge with enhanced design */}
-                    {isToday && (
-                      <div className="absolute bottom-2 left-2 right-2">
-                        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white text-xs px-2 py-1 rounded-full text-center font-bold shadow-lg animate-pulse">
-                          ✨ امروز
+                        {/* Multiple events indicator */}
+                        {hasMultiple && (
+                          <div className="absolute top-1 left-1 md:top-2 md:left-2 bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 text-white text-[8px] md:text-xs font-bold w-3 h-3 md:w-5 md:h-5 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                            {holidayDataArray.length}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Holiday/Event title with better styling */}
+                      {holidayData && (
+                        <div className={`
+                        text-[8px] md:text-xs leading-snug mt-1 md:mt-2 line-clamp-1 md:line-clamp-2 font-semibold transition-all duration-300 hidden sm:block
+                        ${holidayData.holiday
+                            ? 'text-red-700 dark:text-red-300 group-hover:text-red-800 dark:group-hover:text-red-200'
+                            : 'text-purple-700 dark:text-purple-300 group-hover:text-purple-800 dark:group-hover:text-purple-200'}
+                      `}>
+                          {holidayData.holiday && (
+                            <span className="inline-block animate-bounce mr-1">🎉</span>
+                          )}
+                          {holidayData.title}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Hover overlay effect */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 dark:group-hover:from-blue-600/10 dark:group-hover:to-purple-600/10 rounded-2xl transition-all duration-300 pointer-events-none"></div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                      {/* Mobile Only dot for events */}
+                      {holidayData && (
+                        <div className={`sm:hidden mt-1 h-1 rounded-full w-full ${holidayData.holiday ? 'bg-red-400' : 'bg-purple-400'
+                          }`} />
+                      )}
 
-      {/* Events List Section - Enhanced Professional Design */}
-      <div className="mt-8">
-        {/* Section Header with Stats */}
-        <div className="mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-2xl p-6 shadow-xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-white">
-              <h2 className="text-3xl font-bold mb-2 flex items-center gap-3">
-                <span className="animate-bounce">📋</span>
-                رویدادهای {persianMonths[currentMonth - 1]}
-              </h2>
-              <p className="text-white/90 text-sm">
-                مجموع {Object.values(holidays).flat().length} رویداد در این ماه
-              </p>
-            </div>
+                      {/* Today badge with enhanced design */}
+                      {isToday && (
+                        <div className="absolute bottom-1 right-1 md:bottom-2 md:left-2 md:right-2">
+                          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white text-[8px] md:text-xs px-1 md:px-2 py-0.5 md:py-1 rounded-full text-center font-bold shadow-lg animate-pulse hidden md:block">
+                            ✨ امروز
+                          </div>
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full md:hidden ml-auto"></div>
+                        </div>
+                      )}
 
-            {/* Stats Cards */}
-            <div className="flex gap-3">
-              <div className="bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-white">
-                  {Object.values(holidays).flat().filter(h => h.holiday).length}
+                      {/* Hover overlay effect */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 dark:group-hover:from-blue-600/10 dark:group-hover:to-purple-600/10 rounded-lg md:rounded-2xl transition-all duration-300 pointer-events-none"></div>
+                    </>
+                  )}
                 </div>
-                <div className="text-xs text-white/80">تعطیلات</div>
-              </div>
-              <div className="bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-white">
-                  {Object.values(holidays).flat().filter(h => !h.holiday).length}
-                </div>
-                <div className="text-xs text-white/80">رویدادها</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Tabs */}
-          <div className="mt-6 flex flex-wrap gap-2">
-            <button
-              onClick={() => setEventFilter('all')}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${
-                eventFilter === 'all'
-                  ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
-                  : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
-              }`}
-            >
-              همه ({Object.values(holidays).flat().length})
-            </button>
-            <button
-              onClick={() => setEventFilter('holidays')}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${
-                eventFilter === 'holidays'
-                  ? 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-lg scale-105'
-                  : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
-              }`}
-            >
-              🎉 تعطیلات ({Object.values(holidays).flat().filter(h => h.holiday).length})
-            </button>
-            <button
-              onClick={() => setEventFilter('events')}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${
-                eventFilter === 'events'
-                  ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
-                  : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
-              }`}
-            >
-              📅 رویدادها ({Object.values(holidays).flat().filter(h => !h.holiday).length})
-            </button>
-          </div>
-
-          {/* Search Box */}
-          <div className="mt-4 relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="جستجوی رویداد..."
-              className="w-full px-5 py-3 pr-12 rounded-xl bg-white/20 dark:bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-2 border-white/30 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
-            />
-            <svg className="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+              );
+            })}
           </div>
         </div>
 
-        {/* Events Timeline */}
-        <div className="bg-card dark:bg-card rounded-2xl shadow-xl border border-border dark:border-border p-6">
-          <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-            {(() => {
-              const allEvents = Object.entries(holidays)
-                .sort((a, b) => {
-                  const dayA = parseInt(a[0].split('-')[2]);
-                  const dayB = parseInt(b[0].split('-')[2]);
-                  return dayA - dayB;
-                })
-                .flatMap(([key, events]) => events.map((event, idx) => ({
-                  key: `${key}-${idx}`,
-                  dayNum: key.split('-')[2],
-                  event,
-                })));
+        {/* Events List Section - Enhanced Professional Design */}
+        <div className="mt-8">
+          {/* Section Header with Stats */}
+          <div className="mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-2xl p-6 shadow-xl">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="text-white">
+                <h2 className="text-3xl font-bold mb-2 flex items-center gap-3">
+                  <span className="animate-bounce">📋</span>
+                  رویدادهای {persianMonths[currentMonth - 1]}
+                </h2>
+                <p className="text-white/90 text-sm">
+                  مجموع {Object.values(holidays).flat().length} رویداد در این ماه
+                </p>
+              </div>
 
-              const filteredEvents = allEvents.filter(({ event }) => {
-                const matchesFilter =
-                  eventFilter === 'all' ||
-                  (eventFilter === 'holidays' && event.holiday) ||
-                  (eventFilter === 'events' && !event.holiday);
-
-                const matchesSearch =
-                  searchQuery.trim() === '' ||
-                  event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-                return matchesFilter && matchesSearch;
-              });
-
-              if (filteredEvents.length === 0) {
-                return (
-                  <div className="text-center py-16">
-                    <div className="text-6xl mb-4 opacity-30">📭</div>
-                    <p className="text-muted-foreground dark:text-muted-foreground text-lg font-semibold">
-                      {searchQuery ? 'رویدادی یافت نشد' : 'رویدادی در این دسته وجود ندارد'}
-                    </p>
+              {/* Stats Cards */}
+              <div className="flex gap-3">
+                <div className="bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
+                  <div className="text-2xl font-bold text-white">
+                    {Object.values(holidays).flat().filter(h => h.holiday).length}
                   </div>
-                );
-              }
+                  <div className="text-xs text-white/80">تعطیلات</div>
+                </div>
+                <div className="bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
+                  <div className="text-2xl font-bold text-white">
+                    {Object.values(holidays).flat().filter(h => !h.holiday).length}
+                  </div>
+                  <div className="text-xs text-white/80">رویدادها</div>
+                </div>
+              </div>
+            </div>
 
-              return filteredEvents.map(({ key, dayNum, event }, index) => {
-                const isHoliday = event.holiday;
-                const isExpanded = expandedEvents.has(key);
-                const descriptionText = event.description ? event.description.replace(/<[^>]*>/g, '') : '';
-                const shouldTruncate = descriptionText.length > 150;
+            {/* Filter Tabs */}
+            <div className="mt-6 flex flex-wrap gap-2">
+              <button
+                onClick={() => setEventFilter('all')}
+                className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${eventFilter === 'all'
+                    ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
+                    : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
+                  }`}
+              >
+                همه ({Object.values(holidays).flat().length})
+              </button>
+              <button
+                onClick={() => setEventFilter('holidays')}
+                className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${eventFilter === 'holidays'
+                    ? 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-lg scale-105'
+                    : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
+                  }`}
+              >
+                🎉 تعطیلات ({Object.values(holidays).flat().filter(h => h.holiday).length})
+              </button>
+              <button
+                onClick={() => setEventFilter('events')}
+                className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${eventFilter === 'events'
+                    ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
+                    : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
+                  }`}
+              >
+                📅 رویدادها ({Object.values(holidays).flat().filter(h => !h.holiday).length})
+              </button>
+            </div>
 
-                return (
-                  <div
-                    key={key}
-                    className="group relative"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    {/* Timeline Line */}
-                    {index !== filteredEvents.length - 1 && (
-                      <div className="absolute right-[27px] top-14 bottom-0 w-0.5 bg-gradient-to-b from-purple-300 to-transparent dark:from-purple-700 opacity-30"></div>
-                    )}
+            {/* Search Box */}
+            <div className="mt-4 relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="جستجوی رویداد..."
+                className="w-full px-5 py-3 pr-12 rounded-xl bg-white/20 dark:bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-2 border-white/30 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+              />
+              <svg className="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
 
-                    {/* Event Card */}
+          {/* Events Timeline */}
+          <div className="bg-card dark:bg-card rounded-2xl shadow-xl border border-border dark:border-border p-6">
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {(() => {
+                const allEvents = Object.entries(holidays)
+                  .sort((a, b) => {
+                    const dayA = parseInt(a[0].split('-')[2]);
+                    const dayB = parseInt(b[0].split('-')[2]);
+                    return dayA - dayB;
+                  })
+                  .flatMap(([key, events]) => events.map((event, idx) => ({
+                    key: `${key}-${idx}`,
+                    dayNum: key.split('-')[2],
+                    event,
+                  })));
+
+                const filteredEvents = allEvents.filter(({ event }) => {
+                  const matchesFilter =
+                    eventFilter === 'all' ||
+                    (eventFilter === 'holidays' && event.holiday) ||
+                    (eventFilter === 'events' && !event.holiday);
+
+                  const matchesSearch =
+                    searchQuery.trim() === '' ||
+                    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+                  return matchesFilter && matchesSearch;
+                });
+
+                if (filteredEvents.length === 0) {
+                  return (
+                    <div className="text-center py-16">
+                      <div className="text-6xl mb-4 opacity-30">📭</div>
+                      <p className="text-muted-foreground dark:text-muted-foreground text-lg font-semibold">
+                        {searchQuery ? 'رویدادی یافت نشد' : 'رویدادی در این دسته وجود ندارد'}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return filteredEvents.map(({ key, dayNum, event }, index) => {
+                  const isHoliday = event.holiday;
+                  const isExpanded = expandedEvents.has(key);
+                  const descriptionText = event.description ? event.description.replace(/<[^>]*>/g, '') : '';
+                  const shouldTruncate = descriptionText.length > 150;
+
+                  return (
                     <div
-                      className="relative pr-16 transition-all duration-300"
+                      key={key}
+                      className="group relative"
+                      style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      {/* Timeline Dot */}
-                      <div className={`absolute right-5 top-5 w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${
-                        isHoliday
-                          ? 'bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-600 dark:to-orange-600'
-                          : 'bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600'
-                      } group-hover:scale-125 transition-transform duration-300`}>
-                        <span className="text-white text-sm font-bold">{dayNum}</span>
-                      </div>
+                      {/* Timeline Line */}
+                      {index !== filteredEvents.length - 1 && (
+                        <div className="absolute right-[27px] top-14 bottom-0 w-0.5 bg-gradient-to-b from-purple-300 to-transparent dark:from-purple-700 opacity-30"></div>
+                      )}
 
-                      {/* Event Content */}
-                      <div className={`rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${
-                        isHoliday
-                          ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-50 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/40 border-2 border-red-200 dark:border-red-800'
-                          : 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-purple-950/40 border-2 border-purple-200 dark:border-purple-800'
-                      }`}>
-                        <div className="p-5">
-                          <div className="flex items-start justify-between gap-4 mb-3">
-                            <div className="flex-1">
-                              {/* Event Type Badge */}
-                              <div className="mb-2">
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                                  isHoliday
-                                    ? 'bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300'
-                                    : 'bg-purple-200 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
-                                }`}>
-                                  {isHoliday ? '🎉 تعطیل رسمی' : '📅 رویداد'}
-                                </span>
-                              </div>
+                      {/* Event Card */}
+                      <div
+                        className="relative pr-16 transition-all duration-300"
+                      >
+                        {/* Timeline Dot */}
+                        <div className={`absolute right-5 top-5 w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${isHoliday
+                            ? 'bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-600 dark:to-orange-600'
+                            : 'bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600'
+                          } group-hover:scale-125 transition-transform duration-300`}>
+                          <span className="text-white text-sm font-bold">{dayNum}</span>
+                        </div>
 
-                              {/* Event Title */}
-                              <h3 className={`text-lg font-bold mb-1 ${
-                                isHoliday
-                                  ? 'text-red-800 dark:text-red-300'
-                                  : 'text-purple-800 dark:text-purple-300'
-                              }`}>
-                                {event.title}
-                              </h3>
-
-                              {/* Date String */}
-                              {event.base !== 0 && event.date_string && (
-                                <p className={`text-sm font-medium ${
-                                  isHoliday
-                                    ? 'text-red-600 dark:text-red-400'
-                                    : 'text-purple-600 dark:text-purple-400'
-                                }`}>
-                                  📍 {event.date_string}
-                                </p>
-                              )}
-
-                              {/* Description with Read More */}
-                              {event.description && (
-                                <div className="mt-2">
-                                  <div
-                                    className={`text-sm leading-relaxed ${
-                                      isHoliday
-                                        ? 'text-red-700 dark:text-red-400'
-                                        : 'text-purple-700 dark:text-purple-400'
-                                    } ${!isExpanded && shouldTruncate ? 'line-clamp-2' : ''}`}
-                                    dangerouslySetInnerHTML={{ __html: event.description }}
-                                  />
-                                  {shouldTruncate && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setExpandedEvents(prev => {
-                                          const newSet = new Set(prev);
-                                          if (isExpanded) {
-                                            newSet.delete(key);
-                                          } else {
-                                            newSet.add(key);
-                                          }
-                                          return newSet;
-                                        });
-                                      }}
-                                      className={`mt-1 text-xs font-bold hover:underline transition-colors ${
-                                        isHoliday
-                                          ? 'text-red-600 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200'
-                                          : 'text-purple-600 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-200'
-                                      }`}
-                                    >
-                                      {isExpanded ? '▲ کمتر بخوانید' : '▼ بیشتر بخوانید'}
-                                    </button>
-                                  )}
+                        {/* Event Content */}
+                        <div className={`rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${isHoliday
+                            ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-50 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/40 border-2 border-red-200 dark:border-red-800'
+                            : 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-purple-950/40 border-2 border-purple-200 dark:border-purple-800'
+                          }`}>
+                          <div className="p-5">
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <div className="flex-1">
+                                {/* Event Type Badge */}
+                                <div className="mb-2">
+                                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${isHoliday
+                                      ? 'bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300'
+                                      : 'bg-purple-200 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
+                                    }`}>
+                                    {isHoliday ? '🎉 تعطیل رسمی' : '📅 رویداد'}
+                                  </span>
                                 </div>
-                              )}
-                            </div>
 
-                            {/* Date Badge */}
-                            <div className={`flex-shrink-0 px-4 py-3 rounded-xl text-center shadow-md ${
-                              isHoliday
-                                ? 'bg-gradient-to-br from-red-200 to-orange-200 dark:from-red-900/70 dark:to-orange-900/70'
-                                : 'bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/70 dark:to-pink-900/70'
-                            }`}>
-                              <div className={`text-2xl font-black ${
-                                isHoliday
-                                  ? 'text-red-800 dark:text-red-200'
-                                  : 'text-purple-800 dark:text-purple-200'
-                              }`}>
-                                {dayNum}
+                                {/* Event Title */}
+                                <h3 className={`text-lg font-bold mb-1 ${isHoliday
+                                    ? 'text-red-800 dark:text-red-300'
+                                    : 'text-purple-800 dark:text-purple-300'
+                                  }`}>
+                                  {event.title}
+                                </h3>
+
+                                {/* Date String */}
+                                {event.base !== 0 && event.date_string && (
+                                  <p className={`text-sm font-medium ${isHoliday
+                                      ? 'text-red-600 dark:text-red-400'
+                                      : 'text-purple-600 dark:text-purple-400'
+                                    }`}>
+                                    📍 {event.date_string}
+                                  </p>
+                                )}
+
+                                {/* Description with Read More */}
+                                {event.description && (
+                                  <div className="mt-2">
+                                    <div
+                                      className={`text-sm leading-relaxed ${isHoliday
+                                          ? 'text-red-700 dark:text-red-400'
+                                          : 'text-purple-700 dark:text-purple-400'
+                                        } ${!isExpanded && shouldTruncate ? 'line-clamp-2' : ''}`}
+                                      dangerouslySetInnerHTML={{ __html: event.description }}
+                                    />
+                                    {shouldTruncate && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedEvents(prev => {
+                                            const newSet = new Set(prev);
+                                            if (isExpanded) {
+                                              newSet.delete(key);
+                                            } else {
+                                              newSet.add(key);
+                                            }
+                                            return newSet;
+                                          });
+                                        }}
+                                        className={`mt-1 text-xs font-bold hover:underline transition-colors ${isHoliday
+                                            ? 'text-red-600 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200'
+                                            : 'text-purple-600 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-200'
+                                          }`}
+                                      >
+                                        {isExpanded ? '▲ کمتر بخوانید' : '▼ بیشتر بخوانید'}
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              <div className={`text-xs font-bold ${
-                                isHoliday
-                                  ? 'text-red-700 dark:text-red-300'
-                                  : 'text-purple-700 dark:text-purple-300'
-                              }`}>
-                                {persianMonths[currentMonth - 1]}
+
+                              {/* Date Badge */}
+                              <div className={`flex-shrink-0 px-4 py-3 rounded-xl text-center shadow-md ${isHoliday
+                                  ? 'bg-gradient-to-br from-red-200 to-orange-200 dark:from-red-900/70 dark:to-orange-900/70'
+                                  : 'bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/70 dark:to-pink-900/70'
+                                }`}>
+                                <div className={`text-2xl font-black ${isHoliday
+                                    ? 'text-red-800 dark:text-red-200'
+                                    : 'text-purple-800 dark:text-purple-200'
+                                  }`}>
+                                  {dayNum}
+                                </div>
+                                <div className={`text-xs font-bold ${isHoliday
+                                    ? 'text-red-700 dark:text-red-300'
+                                    : 'text-purple-700 dark:text-purple-300'
+                                  }`}>
+                                  {persianMonths[currentMonth - 1]}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Hover Effect Bar */}
-                        <div className={`h-1 w-full ${
-                          isHoliday
-                            ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500'
-                            : 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500'
-                        } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                          {/* Hover Effect Bar */}
+                          <div className={`h-1 w-full ${isHoliday
+                              ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500'
+                              : 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500'
+                            } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              });
-            })()}
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Legend */}
-      <div className="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-        <h3 className="text-center text-sm font-bold text-gray-600 dark:text-gray-400 mb-4 flex items-center justify-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          راهنمای تقویم
-        </h3>
-        <div className="flex flex-wrap gap-3 justify-center">
-          <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
-            <div className="w-5 h-5 bg-gradient-to-br from-red-50 to-orange-100 dark:from-red-900 dark:to-orange-900 border-2 border-red-300 dark:border-red-700 rounded shadow-sm"></div>
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">🎉 تعطیل رسمی</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-rose-200 dark:border-rose-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
-            <div className="w-5 h-5 bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-900/50 dark:to-pink-900/50 border-2 border-rose-200 dark:border-rose-700 rounded shadow-sm"></div>
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">جمعه</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-blue-200 dark:border-blue-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
-            <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full shadow-md animate-pulse"></div>
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">✨ امروز</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-purple-200 dark:border-purple-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
-            <div className="relative">
-              <div className="w-3 h-3 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full shadow-sm"></div>
-              <div className="absolute inset-0 w-3 h-3 bg-blue-400 dark:bg-blue-500 rounded-full animate-ping"></div>
+                  );
+                });
+              })()}
             </div>
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">📝 دارای یادداشت</span>
           </div>
         </div>
-      </div>
 
-      {/* Day Detail Modal */}
-      {showModal && selectedDay && (
-        <DayDetailModal
-          jDate={selectedDay}
-          note={getNoteForDay(selectedDay)}
-          holidays={isHoliday(selectedDay)}
-          onSave={async (note) => {
-            const dateStr = `${selectedDay.jy}-${String(selectedDay.jm).padStart(2, '0')}-${String(selectedDay.jd).padStart(2, '0')}`;
-            const existingNote = getNoteForDay(selectedDay);
+        {/* Enhanced Legend */}
+        <div className="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-center text-sm font-bold text-gray-600 dark:text-gray-400 mb-4 flex items-center justify-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            راهنمای تقویم
+          </h3>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
+              <div className="w-5 h-5 bg-gradient-to-br from-red-50 to-orange-100 dark:from-red-900 dark:to-orange-900 border-2 border-red-300 dark:border-red-700 rounded shadow-sm"></div>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">🎉 تعطیل رسمی</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-rose-200 dark:border-rose-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
+              <div className="w-5 h-5 bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-900/50 dark:to-pink-900/50 border-2 border-rose-200 dark:border-rose-700 rounded shadow-sm"></div>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">جمعه</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-blue-200 dark:border-blue-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
+              <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full shadow-md animate-pulse"></div>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">✨ امروز</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-purple-200 dark:border-purple-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
+              <div className="relative">
+                <div className="w-3 h-3 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full shadow-sm"></div>
+                <div className="absolute inset-0 w-3 h-3 bg-blue-400 dark:bg-blue-500 rounded-full animate-ping"></div>
+              </div>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">📝 دارای یادداشت</span>
+            </div>
+          </div>
+        </div>
 
-            try {
-              if (existingNote) {
-                if (note.trim()) {
-                  // Update existing
-                  const updatedNote = { ...existingNote, note: note.trim(), updatedAt: new Date().toISOString() };
-                  await saveCalendarNote(updatedNote);
-                  setNotes(notes.map(n => n.id === existingNote.id ? updatedNote : n));
-                } else {
-                  // Delete if empty
-                  await deleteCalendarNote(existingNote.id);
-                  setNotes(notes.filter(n => n.id !== existingNote.id));
+        {/* Day Detail Modal */}
+        {showModal && selectedDay && (
+          <DayDetailModal
+            jDate={selectedDay}
+            note={getNoteForDay(selectedDay)}
+            holidays={isHoliday(selectedDay)}
+            onSave={async (note) => {
+              const dateStr = `${selectedDay.jy}-${String(selectedDay.jm).padStart(2, '0')}-${String(selectedDay.jd).padStart(2, '0')}`;
+              const existingNote = getNoteForDay(selectedDay);
+
+              try {
+                if (existingNote) {
+                  if (note.trim()) {
+                    // Update existing
+                    const updatedNote = { ...existingNote, note: note.trim(), updatedAt: new Date().toISOString() };
+                    await saveCalendarNote(updatedNote);
+                    setNotes(notes.map(n => n.id === existingNote.id ? updatedNote : n));
+                  } else {
+                    // Delete if empty
+                    await deleteCalendarNote(existingNote.id);
+                    setNotes(notes.filter(n => n.id !== existingNote.id));
+                  }
+                } else if (note.trim()) {
+                  // Add new
+                  const newNote: CalendarNote = {
+                    id: `note-${Date.now()}`,
+                    userId,
+                    date: dateStr,
+                    note: note.trim(),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  };
+                  await saveCalendarNote(newNote);
+                  setNotes([...notes, newNote]);
                 }
-              } else if (note.trim()) {
-                // Add new
-                const newNote: CalendarNote = {
-                  id: `note-${Date.now()}`,
-                  userId,
-                  date: dateStr,
-                  note: note.trim(),
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                };
-                await saveCalendarNote(newNote);
-                setNotes([...notes, newNote]);
+              } catch (error) {
+                console.error("Failed to save note:", error);
               }
-            } catch (error) {
-              console.error("Failed to save note:", error);
-            }
-          }}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+            }}
+            onClose={() => setShowModal(false)}
+          />
+        )}
       </div>
     </>
   );
@@ -863,51 +855,45 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
             return (
               <div
                 key={idx}
-                className={`group relative overflow-hidden rounded-2xl border-2 shadow-lg hover:shadow-xl transition-all ${
-                  holiday.holiday
+                className={`group relative overflow-hidden rounded-2xl border-2 shadow-lg hover:shadow-xl transition-all ${holiday.holiday
                     ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-100 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/50 border-red-300 dark:border-red-700'
                     : 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-purple-950/50 border-purple-300 dark:border-purple-700'
-                }`}
+                  }`}
               >
                 {/* Decorative gradient bar */}
-                <div className={`h-1.5 w-full ${
-                  holiday.holiday
+                <div className={`h-1.5 w-full ${holiday.holiday
                     ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500'
                     : 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500'
-                }`}></div>
+                  }`}></div>
 
                 <div className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-md ${
-                      holiday.holiday
+                    <div className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-md ${holiday.holiday
                         ? 'bg-gradient-to-br from-red-200 to-orange-200 dark:from-red-900/70 dark:to-orange-900/70'
                         : 'bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/70 dark:to-pink-900/70'
-                    }`}>
+                      }`}>
                       {holiday.holiday ? '🎉' : '📅'}
                     </div>
                     <div className="flex-1">
                       <div className="mb-2">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                          holiday.holiday
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${holiday.holiday
                             ? 'bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-300'
                             : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300'
-                        }`}>
+                          }`}>
                           {holiday.holiday ? 'تعطیل رسمی' : 'رویداد'}
                         </span>
                       </div>
-                      <h4 className={`font-black text-lg mb-1 ${
-                        holiday.holiday
+                      <h4 className={`font-black text-lg mb-1 ${holiday.holiday
                           ? 'text-red-800 dark:text-red-300'
                           : 'text-purple-800 dark:text-purple-300'
-                      }`}>
+                        }`}>
                         {holiday.title}
                       </h4>
                       {holiday.base !== 0 && holiday.date_string && (
-                        <p className={`text-sm font-semibold flex items-center gap-1 ${
-                          holiday.holiday
+                        <p className={`text-sm font-semibold flex items-center gap-1 ${holiday.holiday
                             ? 'text-red-700 dark:text-red-400'
                             : 'text-purple-700 dark:text-purple-400'
-                        }`}>
+                          }`}>
                           <span>📍</span>
                           {holiday.date_string}
                         </p>
@@ -915,11 +901,10 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                       {holiday.description && (
                         <div className="mt-2">
                           <div
-                            className={`text-sm leading-relaxed ${
-                              holiday.holiday
+                            className={`text-sm leading-relaxed ${holiday.holiday
                                 ? 'text-red-700 dark:text-red-400'
                                 : 'text-purple-700 dark:text-purple-400'
-                            } ${!isExpanded && shouldTruncate ? 'line-clamp-3' : ''}`}
+                              } ${!isExpanded && shouldTruncate ? 'line-clamp-3' : ''}`}
                             dangerouslySetInnerHTML={{ __html: holiday.description }}
                           />
                           {shouldTruncate && (
@@ -936,11 +921,10 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                                   return newSet;
                                 });
                               }}
-                              className={`mt-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow-md ${
-                                holiday.holiday
+                              className={`mt-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow-md ${holiday.holiday
                                   ? 'bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-300 hover:bg-red-300 dark:hover:bg-red-900/80'
                                   : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 hover:bg-purple-300 dark:hover:bg-purple-900/80'
-                              }`}
+                                }`}
                             >
                               {isExpanded ? '▲ کمتر بخوانید' : '▼ بیشتر بخوانید'}
                             </button>
