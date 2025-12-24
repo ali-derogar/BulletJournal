@@ -23,19 +23,25 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN npm run build
 
 # Production image, copy all the files and run next
-FROM nginx:alpine AS runner
+FROM base AS runner
 WORKDIR /app
 
-# Copy the built static files to nginx
-COPY --from=builder /app/out /usr/share/nginx/html
+ENV NODE_ENV=production
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy package files for reference
+COPY package*.json ./
 
-EXPOSE 80
+# Copy production node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy built application from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+
+EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:80 || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "start"]
