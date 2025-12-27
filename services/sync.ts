@@ -6,15 +6,22 @@
 import { post } from './api';
 import { getToken } from './auth';
 import { getLastSyncAt, updateLastSyncAt } from '@/storage/syncMeta';
-import { getAllTasks, getAllExpenses, getAllJournals, migrateDefaultDataToUser, upsertTask, upsertExpense, upsertJournal } from '@/storage/helpers';
+import {
+  getAllTasks, getAllExpenses, getAllJournals, getAllGoals, getAllCalendarNotes,
+  migrateDefaultDataToUser, upsertTask, upsertExpense, upsertJournal, upsertGoal, upsertCalendarNote
+} from '@/storage/helpers';
 import type { Task } from '@/domain/task';
 import type { Expense } from '@/domain/expense';
 import type { DailyJournal } from '@/domain/journal';
+import type { Goal } from '@/domain/goal';
+import type { CalendarNote } from '@/domain/calendar';
 
 export interface SyncRequest {
   tasks: Task[];
   expenses: Expense[];
   journals: DailyJournal[];
+  goals: Goal[];
+  calendarNotes: CalendarNote[];
   reflections: never[]; // Backend expects this but frontend doesn't have reflections yet
 }
 
@@ -22,6 +29,8 @@ export interface SyncResponse {
   synced_tasks: number;
   synced_expenses: number;
   synced_journals: number;
+  synced_goals: number;
+  synced_calendar_notes: number;
   synced_reflections: number;
   conflicts_resolved: number;
 }
@@ -30,6 +39,8 @@ export interface DownloadResponse {
   tasks: Task[];
   expenses: Expense[];
   journals: DailyJournal[];
+  goals: Goal[];
+  calendarNotes: CalendarNote[];
   reflections: never[];
 }
 
@@ -42,6 +53,8 @@ export interface SyncResult {
     uploadedTasks: number;
     uploadedExpenses: number;
     uploadedJournals: number;
+    uploadedGoals: number;
+    uploadedCalendarNotes: number;
     conflictsResolved: number;
   };
   error?: string;
@@ -187,12 +200,20 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
     const allJournals = await getAllJournals(userId);
     console.log('📖 Found journals:', allJournals.length);
 
+    const allGoals = await getAllGoals(userId);
+    console.log('🎯 Found goals:', allGoals.length);
+
+    const allCalendarNotes = await getAllCalendarNotes(userId);
+    console.log('📅 Found calendar notes:', allCalendarNotes.length);
+
     // Deduplicate to prevent duplicate record issues
     const uniqueTasks = deduplicateById(allTasks);
     const uniqueExpenses = deduplicateById(allExpenses);
     const uniqueJournals = deduplicateById(allJournals);
+    const uniqueGoals = deduplicateById(allGoals);
+    const uniqueCalendarNotes = deduplicateById(allCalendarNotes);
 
-    console.log('✅ After deduplication - Tasks:', uniqueTasks.length, 'Expenses:', uniqueExpenses.length, 'Journals:', uniqueJournals.length);
+    console.log('✅ After deduplication - Tasks:', uniqueTasks.length, 'Expenses:', uniqueExpenses.length, 'Journals:', uniqueJournals.length, 'Goals:', uniqueGoals.length, 'Calendar Notes:', uniqueCalendarNotes.length);
 
     // If no lastSyncAt, sync everything
     if (!lastSyncAt) {
@@ -200,6 +221,8 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
         tasks: uniqueTasks,
         expenses: uniqueExpenses,
         journals: uniqueJournals,
+        goals: uniqueGoals,
+        calendarNotes: uniqueCalendarNotes,
         reflections: [],
       };
     }
@@ -223,10 +246,22 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       return true;
     });
 
+    const changedGoals = uniqueGoals.filter((goal) => {
+      // Same for goals
+      return true;
+    });
+
+    const changedCalendarNotes = uniqueCalendarNotes.filter((note) => {
+      // Same for calendar notes
+      return true;
+    });
+
     return {
       tasks: changedTasks,
       expenses: changedExpenses,
       journals: changedJournals,
+      goals: changedGoals,
+      calendarNotes: changedCalendarNotes,
       reflections: [],
     };
   } catch (error) {
@@ -236,6 +271,8 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       tasks: [],
       expenses: [],
       journals: [],
+      goals: [],
+      calendarNotes: [],
       reflections: [],
     };
   }
@@ -273,6 +310,8 @@ export async function performDownload(
       tasks: serverData.tasks.length,
       expenses: serverData.expenses.length,
       journals: serverData.journals.length,
+      goals: serverData.goals?.length || 0,
+      calendarNotes: serverData.calendarNotes?.length || 0,
     });
 
     // Phase 2: Saving - Save to local IndexedDB
@@ -311,10 +350,34 @@ export async function performDownload(
       }
     }
 
+    // Save all goals to IndexedDB
+    let savedGoals = 0;
+    for (const goal of serverData.goals || []) {
+      try {
+        await upsertGoal(goal);
+        savedGoals++;
+      } catch (error) {
+        console.error('Failed to save goal:', goal.id, error);
+      }
+    }
+
+    // Save all calendar notes to IndexedDB
+    let savedCalendarNotes = 0;
+    for (const note of serverData.calendarNotes || []) {
+      try {
+        await upsertCalendarNote(note);
+        savedCalendarNotes++;
+      } catch (error) {
+        console.error('Failed to save calendar note:', note.id, error);
+      }
+    }
+
     console.log('💾 Saved to IndexedDB:', {
       tasks: savedTasks,
       expenses: savedExpenses,
       journals: savedJournals,
+      goals: savedGoals,
+      calendarNotes: savedCalendarNotes,
     });
 
     // Update last sync timestamp
@@ -323,7 +386,7 @@ export async function performDownload(
     // Trigger a custom event to notify components to refresh their data
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('data-downloaded', {
-        detail: { userId, tasks: savedTasks, expenses: savedExpenses, journals: savedJournals }
+        detail: { userId, tasks: savedTasks, expenses: savedExpenses, journals: savedJournals, goals: savedGoals, calendarNotes: savedCalendarNotes }
       }));
     }
 
@@ -334,6 +397,8 @@ export async function performDownload(
         uploadedTasks: savedTasks,
         uploadedExpenses: savedExpenses,
         uploadedJournals: savedJournals,
+        uploadedGoals: savedGoals,
+        uploadedCalendarNotes: savedCalendarNotes,
         conflictsResolved: 0,
       },
       retryable: false,
@@ -383,7 +448,7 @@ export async function performSync(
     console.log('🔍 Checking for data migration needs...');
     try {
       const migrationResult = await migrateDefaultDataToUser(userId);
-      if (migrationResult.migratedTasks > 0 || migrationResult.migratedExpenses > 0 || migrationResult.migratedJournals > 0) {
+      if (migrationResult.migratedTasks > 0 || migrationResult.migratedExpenses > 0 || migrationResult.migratedJournals > 0 || migrationResult.migratedGoals > 0 || migrationResult.migratedCalendarNotes > 0) {
         console.log('✅ Migrated data from "default" to user:', migrationResult);
       }
     } catch (migrationError) {
@@ -402,12 +467,16 @@ export async function performSync(
       tasks: localChanges.tasks.length,
       expenses: localChanges.expenses.length,
       journals: localChanges.journals.length,
+      goals: localChanges.goals.length,
+      calendarNotes: localChanges.calendarNotes.length,
     });
 
     const totalChanges =
       localChanges.tasks.length +
       localChanges.expenses.length +
-      localChanges.journals.length;
+      localChanges.journals.length +
+      localChanges.goals.length +
+      localChanges.calendarNotes.length;
 
     console.log('Total changes to sync:', totalChanges);
 
@@ -421,6 +490,8 @@ export async function performSync(
           uploadedTasks: 0,
           uploadedExpenses: 0,
           uploadedJournals: 0,
+          uploadedGoals: 0,
+          uploadedCalendarNotes: 0,
           conflictsResolved: 0,
         },
         retryable: false,
@@ -459,6 +530,8 @@ export async function performSync(
         uploadedTasks: response.synced_tasks,
         uploadedExpenses: response.synced_expenses,
         uploadedJournals: response.synced_journals,
+        uploadedGoals: response.synced_goals,
+        uploadedCalendarNotes: response.synced_calendar_notes,
         conflictsResolved: response.conflicts_resolved,
       },
       retryable: false,
@@ -513,6 +586,14 @@ export function formatSyncStats(stats?: SyncResult['stats']): string {
 
   if (stats.uploadedJournals > 0) {
     parts.push(`${stats.uploadedJournals} journal${stats.uploadedJournals > 1 ? 's' : ''}`);
+  }
+
+  if (stats.uploadedGoals > 0) {
+    parts.push(`${stats.uploadedGoals} goal${stats.uploadedGoals > 1 ? 's' : ''}`);
+  }
+
+  if (stats.uploadedCalendarNotes > 0) {
+    parts.push(`${stats.uploadedCalendarNotes} note${stats.uploadedCalendarNotes > 1 ? 's' : ''}`);
   }
 
   if (parts.length === 0) return 'No changes';
