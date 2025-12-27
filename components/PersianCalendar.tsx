@@ -420,87 +420,90 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
           </div>
         </div>
 
-        {/* Events List Section - Enhanced Professional Design */}
-        <div className="mt-8">
+        {/* Events List Section - Mobile Optimized */}
+        <div className="mt-4 md:mt-8">
           {/* Section Header with Stats */}
-          <div className="mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-2xl p-6 shadow-xl">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="text-white">
-                <h2 className="text-3xl font-bold mb-2 flex items-center gap-3">
-                  <span className="animate-bounce">📋</span>
-                  رویدادهای {persianMonths[currentMonth - 1]}
+          <div className="mb-4 md:mb-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-xl">
+            <div className="flex flex-col items-start gap-3 md:gap-4">
+              <div className="text-white w-full">
+                <h2 className="text-xl md:text-3xl font-bold mb-1 md:mb-2 flex items-center gap-2 md:gap-3">
+                  <span className="text-xl md:text-2xl">📋</span>
+                  <span>رویدادهای {persianMonths[currentMonth - 1]}</span>
                 </h2>
-                <p className="text-white/90 text-sm">
-                  مجموع {Object.values(holidays).flat().length} رویداد در این ماه
+                <p className="text-white/90 text-xs md:text-sm">
+                  {Object.values(holidays).flat().length} رویداد
                 </p>
               </div>
 
-              {/* Stats Cards */}
-              <div className="flex gap-3">
-                <div className="bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-                  <div className="text-2xl font-bold text-white">
+              {/* Stats Cards - Mobile Optimized */}
+              <div className="flex gap-2 md:gap-3 w-full">
+                <div className="flex-1 bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-white">
                     {Object.values(holidays).flat().filter(h => h.holiday).length}
                   </div>
-                  <div className="text-xs text-white/80">تعطیلات</div>
+                  <div className="text-[10px] md:text-xs text-white/80">تعطیلات</div>
                 </div>
-                <div className="bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-                  <div className="text-2xl font-bold text-white">
+                <div className="flex-1 bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 text-center">
+                  <div className="text-lg md:text-2xl font-bold text-white">
                     {Object.values(holidays).flat().filter(h => !h.holiday).length}
                   </div>
-                  <div className="text-xs text-white/80">رویدادها</div>
+                  <div className="text-[10px] md:text-xs text-white/80">رویدادها</div>
                 </div>
               </div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="mt-6 flex flex-wrap gap-2">
+            {/* Filter Tabs - Mobile Optimized */}
+            <div className="mt-4 md:mt-6 flex gap-1.5 md:gap-2">
               <button
                 onClick={() => setEventFilter('all')}
-                className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${eventFilter === 'all'
+                className={`flex-1 px-2 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-base font-bold transition-all duration-200 ${eventFilter === 'all'
                     ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
                     : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
-                همه ({Object.values(holidays).flat().length})
+                <span className="hidden md:inline">همه ({Object.values(holidays).flat().length})</span>
+                <span className="md:hidden">همه</span>
               </button>
               <button
                 onClick={() => setEventFilter('holidays')}
-                className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${eventFilter === 'holidays'
+                className={`flex-1 px-2 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-base font-bold transition-all duration-200 ${eventFilter === 'holidays'
                     ? 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-lg scale-105'
                     : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
-                🎉 تعطیلات ({Object.values(holidays).flat().filter(h => h.holiday).length})
+                <span className="hidden md:inline">🎉 تعطیلات ({Object.values(holidays).flat().filter(h => h.holiday).length})</span>
+                <span className="md:hidden">🎉 تعطیل</span>
               </button>
               <button
                 onClick={() => setEventFilter('events')}
-                className={`px-5 py-2.5 rounded-xl font-bold transition-all duration-200 ${eventFilter === 'events'
+                className={`flex-1 px-2 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-base font-bold transition-all duration-200 ${eventFilter === 'events'
                     ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
                     : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
-                📅 رویدادها ({Object.values(holidays).flat().filter(h => !h.holiday).length})
+                <span className="hidden md:inline">📅 رویدادها ({Object.values(holidays).flat().filter(h => !h.holiday).length})</span>
+                <span className="md:hidden">📅 رویداد</span>
               </button>
             </div>
 
-            {/* Search Box */}
-            <div className="mt-4 relative">
+            {/* Search Box - Mobile Optimized */}
+            <div className="mt-3 md:mt-4 relative">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="جستجوی رویداد..."
-                className="w-full px-5 py-3 pr-12 rounded-xl bg-white/20 dark:bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-2 border-white/30 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+                className="w-full px-4 md:px-5 py-2.5 md:py-3 pr-10 md:pr-12 rounded-lg md:rounded-xl text-sm md:text-base bg-white/20 dark:bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-2 border-white/30 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
               />
-              <svg className="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 md:w-5 md:h-5 absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
           </div>
 
-          {/* Events Timeline */}
-          <div className="bg-card dark:bg-card rounded-2xl shadow-xl border border-border dark:border-border p-6">
-            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+          {/* Events Timeline - Mobile Optimized */}
+          <div className="bg-card dark:bg-card rounded-xl md:rounded-2xl shadow-xl border border-border dark:border-border p-3 md:p-6">
+            <div className="space-y-3 md:space-y-4 max-h-[500px] md:max-h-[600px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
               {(() => {
                 const allEvents = Object.entries(holidays)
                   .sort((a, b) => {
@@ -551,17 +554,15 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                       className="group relative"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      {/* Timeline Line */}
+                      {/* Timeline Line - Hidden on mobile */}
                       {index !== filteredEvents.length - 1 && (
-                        <div className="absolute right-[27px] top-14 bottom-0 w-0.5 bg-gradient-to-b from-purple-300 to-transparent dark:from-purple-700 opacity-30"></div>
+                        <div className="hidden md:block absolute right-[27px] top-14 bottom-0 w-0.5 bg-gradient-to-b from-purple-300 to-transparent dark:from-purple-700 opacity-30"></div>
                       )}
 
-                      {/* Event Card */}
-                      <div
-                        className="relative pr-16 transition-all duration-300"
-                      >
-                        {/* Timeline Dot */}
-                        <div className={`absolute right-5 top-5 w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${isHoliday
+                      {/* Event Card - Mobile Optimized */}
+                      <div className="relative md:pr-16 transition-all duration-300">
+                        {/* Timeline Dot - Hidden on mobile */}
+                        <div className={`hidden md:flex absolute right-5 top-5 w-8 h-8 rounded-full items-center justify-center shadow-lg ${isHoliday
                             ? 'bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-600 dark:to-orange-600'
                             : 'bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600'
                           } group-hover:scale-125 transition-transform duration-300`}>
@@ -569,25 +570,25 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                         </div>
 
                         {/* Event Content */}
-                        <div className={`rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${isHoliday
+                        <div className={`rounded-lg md:rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${isHoliday
                             ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-50 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/40 border-2 border-red-200 dark:border-red-800'
                             : 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-purple-950/40 border-2 border-purple-200 dark:border-purple-800'
                           }`}>
-                          <div className="p-5">
-                            <div className="flex items-start justify-between gap-4 mb-3">
-                              <div className="flex-1">
+                          <div className="p-3 md:p-5">
+                            <div className="flex items-start justify-between gap-2 md:gap-4 mb-2 md:mb-3">
+                              <div className="flex-1 min-w-0">
                                 {/* Event Type Badge */}
-                                <div className="mb-2">
-                                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${isHoliday
+                                <div className="mb-1.5 md:mb-2">
+                                  <span className={`inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold ${isHoliday
                                       ? 'bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300'
                                       : 'bg-purple-200 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
                                     }`}>
-                                    {isHoliday ? '🎉 تعطیل رسمی' : '📅 رویداد'}
+                                    {isHoliday ? '🎉 تعطیل' : '📅 رویداد'}
                                   </span>
                                 </div>
 
                                 {/* Event Title */}
-                                <h3 className={`text-lg font-bold mb-1 ${isHoliday
+                                <h3 className={`text-sm md:text-lg font-bold mb-0.5 md:mb-1 line-clamp-2 md:line-clamp-none ${isHoliday
                                     ? 'text-red-800 dark:text-red-300'
                                     : 'text-purple-800 dark:text-purple-300'
                                   }`}>
@@ -596,7 +597,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
                                 {/* Date String */}
                                 {event.base !== 0 && event.date_string && (
-                                  <p className={`text-sm font-medium ${isHoliday
+                                  <p className={`text-[10px] md:text-sm font-medium ${isHoliday
                                       ? 'text-red-600 dark:text-red-400'
                                       : 'text-purple-600 dark:text-purple-400'
                                     }`}>
@@ -606,9 +607,9 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
                                 {/* Description with Read More */}
                                 {event.description && (
-                                  <div className="mt-2">
+                                  <div className="mt-1 md:mt-2">
                                     <div
-                                      className={`text-sm leading-relaxed ${isHoliday
+                                      className={`text-xs md:text-sm leading-relaxed ${isHoliday
                                           ? 'text-red-700 dark:text-red-400'
                                           : 'text-purple-700 dark:text-purple-400'
                                         } ${!isExpanded && shouldTruncate ? 'line-clamp-2' : ''}`}
@@ -628,30 +629,30 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                                             return newSet;
                                           });
                                         }}
-                                        className={`mt-1 text-xs font-bold hover:underline transition-colors ${isHoliday
+                                        className={`mt-1 text-[10px] md:text-xs font-bold hover:underline transition-colors ${isHoliday
                                             ? 'text-red-600 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200'
                                             : 'text-purple-600 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-200'
                                           }`}
                                       >
-                                        {isExpanded ? '▲ کمتر بخوانید' : '▼ بیشتر بخوانید'}
+                                        {isExpanded ? '▲ کمتر' : '▼ بیشتر'}
                                       </button>
                                     )}
                                   </div>
                                 )}
                               </div>
 
-                              {/* Date Badge */}
-                              <div className={`flex-shrink-0 px-4 py-3 rounded-xl text-center shadow-md ${isHoliday
+                              {/* Date Badge - Smaller on mobile */}
+                              <div className={`flex-shrink-0 px-2 md:px-4 py-1.5 md:py-3 rounded-lg md:rounded-xl text-center shadow-md ${isHoliday
                                   ? 'bg-gradient-to-br from-red-200 to-orange-200 dark:from-red-900/70 dark:to-orange-900/70'
                                   : 'bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/70 dark:to-pink-900/70'
                                 }`}>
-                                <div className={`text-2xl font-black ${isHoliday
+                                <div className={`text-lg md:text-2xl font-black ${isHoliday
                                     ? 'text-red-800 dark:text-red-200'
                                     : 'text-purple-800 dark:text-purple-200'
                                   }`}>
                                   {dayNum}
                                 </div>
-                                <div className={`text-xs font-bold ${isHoliday
+                                <div className={`text-[10px] md:text-xs font-bold hidden md:block ${isHoliday
                                     ? 'text-red-700 dark:text-red-300'
                                     : 'text-purple-700 dark:text-purple-300'
                                   }`}>
@@ -662,7 +663,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                           </div>
 
                           {/* Hover Effect Bar */}
-                          <div className={`h-1 w-full ${isHoliday
+                          <div className={`h-0.5 md:h-1 w-full ${isHoliday
                               ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500'
                               : 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500'
                             } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
