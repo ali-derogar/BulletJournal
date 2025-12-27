@@ -126,3 +126,40 @@ export function validateGoal(goal: Partial<Goal>): string[] {
 
   return errors;
 }
+
+// Check if a goal's period has expired
+export function isGoalExpired(goal: Goal): boolean {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const currentQuarter = getQuarterFromMonth(currentMonth);
+  const currentWeek = getWeekNumber(now);
+
+  switch (goal.type) {
+    case "yearly":
+      return goal.year < currentYear;
+
+    case "quarterly":
+      if (goal.year < currentYear) return true;
+      if (goal.year > currentYear) return false;
+      return (goal.quarter || 0) < currentQuarter;
+
+    case "monthly":
+      if (goal.year < currentYear) return true;
+      if (goal.year > currentYear) return false;
+      return (goal.month || 0) < currentMonth;
+
+    case "weekly":
+      if (goal.year < currentYear) return true;
+      if (goal.year > currentYear) return false;
+      return (goal.week || 0) < currentWeek;
+
+    default:
+      return false;
+  }
+}
+
+// Check if goal is completed (reached target)
+export function isGoalCompleted(goal: Goal): boolean {
+  return goal.currentValue >= goal.targetValue;
+}

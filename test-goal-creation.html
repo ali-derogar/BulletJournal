@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Goal Creation</title>
+</head>
+<body>
+    <h1>Test Instructions</h1>
+
+    <h2>Test 1: Create Quarterly Goal for Current Quarter</h2>
+    <ol>
+        <li>Open the app at http://localhost:3000</li>
+        <li>Click "➕ Add Goal"</li>
+        <li>Select "Quarterly" as goal type</li>
+        <li>Fill in:
+            <ul>
+                <li>Title: "Complete 3 projects"</li>
+                <li>Target: 3</li>
+                <li>Unit: "projects"</li>
+            </ul>
+        </li>
+        <li>Click "Add Goal"</li>
+        <li>Expected: Goal should be saved without "Quarter is required" error</li>
+        <li>Expected: Goal should appear in the Quarterly Goals section</li>
+    </ol>
+
+    <h2>Test 2: Select a Different Quarter and View Goals</h2>
+    <ol>
+        <li>Click "📅 Select Period"</li>
+        <li>Select "2024"</li>
+        <li>Click "Q1"</li>
+        <li>Expected: You should see only Q1 2024 quarterly goals</li>
+        <li>Expected: A banner should show "Q1 2024" is selected</li>
+        <li>Expected: "🔄 Current" button should appear</li>
+    </ol>
+
+    <h2>Test 3: Create Goal for Selected Period</h2>
+    <ol>
+        <li>While Q1 2024 is selected, click "➕ Add Goal"</li>
+        <li>Select "Quarterly"</li>
+        <li>Expected: Quarter should be pre-filled with "Q1"</li>
+        <li>Expected: Year should be pre-filled with "2024"</li>
+        <li>Fill in goal details and save</li>
+        <li>Expected: Goal appears in Quarterly Goals for Q1 2024</li>
+    </ol>
+
+    <h2>Test 4: Return to Current Period</h2>
+    <ol>
+        <li>Click "🔄 Current" button</li>
+        <li>Expected: View returns to current periods (Q4 2025)</li>
+        <li>Expected: "🔄 Current" button disappears</li>
+        <li>Expected: Goals for current quarter are shown</li>
+    </ol>
+
+    <h2>Debugging Tips</h2>
+    <p>Open browser console (F12) and look for:</p>
+    <ul>
+        <li>"GoalForm rendered with:" - shows what period is passed to form</li>
+        <li>"handlePeriodSelect called with:" - shows selected period</li>
+        <li>"loadAllGoals: Starting to load goals for selected periods:" - shows what periods are being queried</li>
+        <li>"Querying with filters:" - shows database query parameters</li>
+        <li>"Query completed, found goals:" - shows how many goals were found</li>
+    </ul>
+</body>
+</html>

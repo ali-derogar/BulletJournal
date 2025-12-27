@@ -23,4 +23,7 @@ export {
   deleteGoal,
   getGoalById,
   updateTaskLinkedGoalProgress,
+  autoArchiveExpiredGoals,
+  getArchivedGoals,
+  getArchivedGoalsByPeriod,
 } from "./goal";

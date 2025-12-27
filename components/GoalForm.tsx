@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import type { Goal, GoalType } from "@/domain";
 import { validateGoal, getCurrentPeriod, formatPeriodLabel } from "@/utils/goalUtils";
@@ -22,32 +22,32 @@ interface GoalFormProps {
 export default function GoalForm({ goal, onSave, onCancel, userId = "default", currentPeriod }: GoalFormProps) {
   console.log("GoalForm rendered with:", { goal, userId, currentPeriod });
 
-  const [formData, setFormData] = useState<Partial<Goal>>({
-    title: "",
-    description: "",
-    type: currentPeriod?.type || "monthly",
-    targetValue: 1,
-    currentValue: 0,
-    unit: "",
-    status: "active",
-    progressType: "manual",
-    linkedTaskIds: [],
-    ...(currentPeriod || getCurrentPeriod("monthly")),
-    ...goal,
+  const [formData, setFormData] = useState<Partial<Goal>>(() => {
+    const defaultType = currentPeriod?.type || "monthly";
+    const defaultPeriod = currentPeriod || getCurrentPeriod(defaultType);
+
+    return {
+      title: "",
+      description: "",
+      type: defaultType,
+      targetValue: 1,
+      currentValue: 0,
+      unit: "",
+      status: "active",
+      progressType: "manual",
+      linkedTaskIds: [],
+      year: defaultPeriod.year,
+      quarter: defaultPeriod.quarter,
+      month: defaultPeriod.month,
+      week: defaultPeriod.week,
+      ...goal,
+    };
   });
 
   const [errors, setErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = !!goal;
-
-  useEffect(() => {
-    // Only set default values if they haven't been set yet
-    if (!formData.year) {
-      const currentPeriod = getCurrentPeriod(formData.type || "monthly");
-      setFormData(prev => ({ ...prev, ...currentPeriod }));
-    }
-  }, []); // Only run once on mount
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,13 +96,17 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
   };
 
   const handleTypeChange = (type: GoalType) => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentQuarter = Math.ceil(currentMonth / 3);
+
     setFormData(prev => ({
       ...prev,
       type,
-      // Clear period-specific fields when changing type
-      quarter: type === "quarterly" ? prev.quarter : undefined,
-      month: type === "monthly" ? prev.month : undefined,
-      week: type === "weekly" ? prev.week : undefined,
+      // Set appropriate period-specific fields based on type
+      quarter: type === "quarterly" ? (prev.quarter || currentQuarter) : undefined,
+      month: type === "monthly" ? (prev.month || currentMonth) : undefined,
+      week: type === "weekly" ? (prev.week || getCurrentPeriod("weekly").week) : undefined,
     }));
   };
 

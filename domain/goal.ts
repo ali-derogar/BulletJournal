@@ -1,6 +1,6 @@
 export type GoalType = "yearly" | "quarterly" | "monthly" | "weekly";
 
-export type GoalStatus = "active" | "completed" | "paused";
+export type GoalStatus = "active" | "completed" | "failed" | "paused";
 
 export interface Goal {
   id: string;
