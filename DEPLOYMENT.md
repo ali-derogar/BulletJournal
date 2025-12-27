@@ -41,10 +41,15 @@ sudo ./deploy.sh
 **This script automatically:**
 
 - ✅ Pulls latest changes from GitHub
+- ✅ Auto-detects server IP address
+- ✅ Configures environment variables (.env)
+- ✅ Sets NEXT_PUBLIC_API_URL to server IP
 - ✅ Stops containers
 - ✅ Builds new images
 - ✅ Starts containers
 - ✅ Shows status
+
+**Note:** You no longer need to manually configure `.env` or `.env.local` files. The deploy script automatically detects your server IP and configures everything correctly.
 
 ---
 
@@ -195,18 +200,24 @@ sudo docker system prune -a  # Remove all unused images
 
 ### Edit Environment Variables
 
-**Important:** After initial setup, configure the API URL for production:
+The deploy script automatically detects your server IP and configures the API URL. However, if you need to manually override settings:
 
 ```bash
 # Edit environment file on server
-sudo nano /opt/bulletjournal/.env.local
+sudo nano /opt/bulletjournal/.env
 
-# Change NEXT_PUBLIC_API_URL to your server IP:
-NEXT_PUBLIC_API_URL=http://45.89.244.24:8000
+# The deploy script auto-sets this, but you can override:
+NEXT_PUBLIC_API_URL=http://YOUR_SERVER_IP:8000
+
+# Other backend settings:
+DATABASE_URL=sqlite:///./data/bullet_journal.db
+SECRET_KEY=your-secret-key-change-in-production
 
 # Save and rebuild
 sudo /opt/bulletjournal/deploy.sh
 ```
+
+**Note:** The `.env` file is automatically created/updated by `deploy.sh`. You only need to edit it manually if you want to use a different API URL or change backend settings.
 
 ### Change Repository Address
 

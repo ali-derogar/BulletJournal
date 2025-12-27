@@ -47,6 +47,31 @@ fi
 cd $DEPLOY_DIR
 print_success "Repository updated"
 
+# Auto-detect server IP and create/update .env file
+print_info "Configuring environment variables..."
+SERVER_IP=$(hostname -I | awk '{print $1}')
+if [ -z "$SERVER_IP" ]; then
+    # Fallback: try to get public IP
+    SERVER_IP=$(curl -s ifconfig.me || echo "localhost")
+fi
+
+# Create or update .env file
+if [ ! -f .env ]; then
+    print_info "Creating .env file with server IP: $SERVER_IP"
+    cp .env.example .env
+else
+    print_info "Updating .env file with server IP: $SERVER_IP"
+fi
+
+# Set NEXT_PUBLIC_API_URL in .env
+if grep -q "^NEXT_PUBLIC_API_URL=" .env; then
+    sed -i "s|^NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=http://$SERVER_IP:8000|" .env
+else
+    echo "NEXT_PUBLIC_API_URL=http://$SERVER_IP:8000" >> .env
+fi
+
+print_success "Environment configured with API URL: http://$SERVER_IP:8000"
+
 # Stop existing containers
 print_info "Stopping existing containers..."
 docker compose down
