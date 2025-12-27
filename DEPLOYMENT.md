@@ -195,8 +195,16 @@ sudo docker system prune -a  # Remove all unused images
 
 ### Edit Environment Variables
 
+**Important:** After initial setup, configure the API URL for production:
+
 ```bash
+# Edit environment file on server
 sudo nano /opt/bulletjournal/.env.local
+
+# Change NEXT_PUBLIC_API_URL to your server IP:
+NEXT_PUBLIC_API_URL=http://45.89.244.24:8000
+
+# Save and rebuild
 sudo /opt/bulletjournal/deploy.sh
 ```
 
