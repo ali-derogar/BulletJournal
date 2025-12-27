@@ -32,6 +32,18 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
     }
 
     loadExpenses();
+
+    // Listen for data download events to refresh expenses
+    const handleDataDownloaded = () => {
+      console.log('[DEBUG] Data downloaded event received, reloading expenses');
+      loadExpenses();
+    };
+
+    window.addEventListener('data-downloaded', handleDataDownloaded);
+
+    return () => {
+      window.removeEventListener('data-downloaded', handleDataDownloaded);
+    };
   }, [date, userId]);
 
   const handleAddExpense = async () => {

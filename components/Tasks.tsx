@@ -54,6 +54,19 @@ export default function Tasks({ date, userId }: TasksProps) {
     }
 
     loadTasks();
+
+    // Listen for data download events to refresh tasks
+    const handleDataDownloaded = () => {
+      console.log('[DEBUG] Data downloaded event received, clearing cache and reloading tasks');
+      taskCache.current.clear();
+      loadTasks();
+    };
+
+    window.addEventListener('data-downloaded', handleDataDownloaded);
+
+    return () => {
+      window.removeEventListener('data-downloaded', handleDataDownloaded);
+    };
   }, [date, userId]); // CACHE_DURATION is a constant, no need to include
 
   const handleAddTask = async () => {

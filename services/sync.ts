@@ -6,7 +6,7 @@
 import { post } from './api';
 import { getToken } from './auth';
 import { getLastSyncAt, updateLastSyncAt } from '@/storage/syncMeta';
-import { getAllTasks, getAllExpenses, getAllJournals, migrateDefaultDataToUser } from '@/storage/helpers';
+import { getAllTasks, getAllExpenses, getAllJournals, migrateDefaultDataToUser, upsertTask, upsertExpense, upsertJournal } from '@/storage/helpers';
 import type { Task } from '@/domain/task';
 import type { Expense } from '@/domain/expense';
 import type { DailyJournal } from '@/domain/journal';
@@ -24,6 +24,13 @@ export interface SyncResponse {
   synced_journals: number;
   synced_reflections: number;
   conflicts_resolved: number;
+}
+
+export interface DownloadResponse {
+  tasks: Task[];
+  expenses: Expense[];
+  journals: DailyJournal[];
+  reflections: never[];
 }
 
 export type SyncPhase = 'loading' | 'saving' | 'idle';
@@ -257,32 +264,77 @@ export async function performDownload(
     // Phase 1: Loading - Fetch from server
     onProgress?.({ phase: 'loading', message: 'Downloading from server...' });
 
-    // Add delay to make loading state visible (for testing)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log('📥 Starting download for user:', userId);
 
     // Fetch data from server
-    const serverData = await post<SyncResponse>('/api/sync/download', {}, token);
+    const serverData = await post<DownloadResponse>('/api/sync/download', {}, token);
+
+    console.log('📦 Downloaded data:', {
+      tasks: serverData.tasks.length,
+      expenses: serverData.expenses.length,
+      journals: serverData.journals.length,
+    });
 
     // Phase 2: Saving - Save to local IndexedDB
     onProgress?.({ phase: 'saving', message: 'Saving to local storage...' });
 
-    // Add delay to make saving state visible (for testing)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Save all tasks to IndexedDB
+    let savedTasks = 0;
+    for (const task of serverData.tasks) {
+      try {
+        await upsertTask(task);
+        savedTasks++;
+      } catch (error) {
+        console.error('Failed to save task:', task.id, error);
+      }
+    }
 
-    // TODO: Implement saving to IndexedDB
-    // This will be implemented when backend endpoint is ready
+    // Save all expenses to IndexedDB
+    let savedExpenses = 0;
+    for (const expense of serverData.expenses) {
+      try {
+        await upsertExpense(expense);
+        savedExpenses++;
+      } catch (error) {
+        console.error('Failed to save expense:', expense.id, error);
+      }
+    }
+
+    // Save all journals to IndexedDB
+    let savedJournals = 0;
+    for (const journal of serverData.journals) {
+      try {
+        await upsertJournal(journal);
+        savedJournals++;
+      } catch (error) {
+        console.error('Failed to save journal:', journal.id, error);
+      }
+    }
+
+    console.log('💾 Saved to IndexedDB:', {
+      tasks: savedTasks,
+      expenses: savedExpenses,
+      journals: savedJournals,
+    });
 
     // Update last sync timestamp
     updateLastSyncAt(userId);
+
+    // Trigger a custom event to notify components to refresh their data
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('data-downloaded', {
+        detail: { userId, tasks: savedTasks, expenses: savedExpenses, journals: savedJournals }
+      }));
+    }
 
     return {
       success: true,
       message: 'Downloaded successfully',
       stats: {
-        uploadedTasks: serverData.synced_tasks,
-        uploadedExpenses: serverData.synced_expenses,
-        uploadedJournals: serverData.synced_journals,
-        conflictsResolved: serverData.conflicts_resolved,
+        uploadedTasks: savedTasks,
+        uploadedExpenses: savedExpenses,
+        uploadedJournals: savedJournals,
+        conflictsResolved: 0,
       },
       retryable: false,
     };
