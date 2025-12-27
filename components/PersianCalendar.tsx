@@ -13,11 +13,11 @@ interface PersianCalendarProps {
 }
 
 const persianMonths = [
-  "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
-  "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
+  "Farvardin", "Ordibehesht", "Khordad", "Tir", "Mordad", "Shahrivar",
+  "Mehr", "Aban", "Azar", "Dey", "Bahman", "Esfand"
 ];
 
-const persianWeekdays = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"];
+const persianWeekdays = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 
 const getPersianWeekdayIndex = (gregorianDay: number): number => {
   // gregorianDay: 0=Sun, 1=Mon, ..., 6=Sat
@@ -260,7 +260,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
             <button
               onClick={handleNextMonth}
               className="p-2 md:p-3 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
-              aria-label="ماه بعد"
+              aria-label="Next month"
             >
               <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
@@ -273,14 +273,14 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
               </h1>
               <p className="text-sm md:text-lg opacity-90">{currentYear}</p>
               {loadingHolidays && (
-                <p className="text-xs md:text-sm opacity-75 mt-1">در حال بارگذاری...</p>
+                <p className="text-xs md:text-sm opacity-75 mt-1">Loading...</p>
               )}
             </div>
 
             <button
               onClick={handlePrevMonth}
               className="p-2 md:p-3 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
-              aria-label="ماه قبل"
+              aria-label="Previous month"
             >
               <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -366,7 +366,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                             </div>
                             <div className="absolute right-0 top-7 hidden group-hover/note:block bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
                               <div className="absolute -top-1 right-2 w-2 h-2 bg-blue-600 dark:bg-blue-700 rotate-45"></div>
-                              📝 یادداشت دارد
+                              📝 Has note
                             </div>
                           </div>
                         )}
@@ -404,7 +404,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                       {isToday && (
                         <div className="absolute bottom-1 right-1 md:bottom-2 md:left-2 md:right-2">
                           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 text-white text-[8px] md:text-xs px-1 md:px-2 py-0.5 md:py-1 rounded-full text-center font-bold shadow-lg animate-pulse hidden md:block">
-                            ✨ امروز
+                            ✨ Today
                           </div>
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full md:hidden ml-auto"></div>
                         </div>
@@ -428,10 +428,10 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
               <div className="text-white w-full">
                 <h2 className="text-xl md:text-3xl font-bold mb-1 md:mb-2 flex items-center gap-2 md:gap-3">
                   <span className="text-xl md:text-2xl">📋</span>
-                  <span>رویدادهای {persianMonths[currentMonth - 1]}</span>
+                  <span>{persianMonths[currentMonth - 1]} Events</span>
                 </h2>
                 <p className="text-white/90 text-xs md:text-sm">
-                  {Object.values(holidays).flat().length} رویداد
+                  {Object.values(holidays).flat().length} events
                 </p>
               </div>
 
@@ -441,13 +441,13 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                   <div className="text-lg md:text-2xl font-bold text-white">
                     {Object.values(holidays).flat().filter(h => h.holiday).length}
                   </div>
-                  <div className="text-[10px] md:text-xs text-white/80">تعطیلات</div>
+                  <div className="text-[10px] md:text-xs text-white/80">Holidays</div>
                 </div>
                 <div className="flex-1 bg-white/20 dark:bg-white/10 backdrop-blur-sm rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 text-center">
                   <div className="text-lg md:text-2xl font-bold text-white">
                     {Object.values(holidays).flat().filter(h => !h.holiday).length}
                   </div>
-                  <div className="text-[10px] md:text-xs text-white/80">رویدادها</div>
+                  <div className="text-[10px] md:text-xs text-white/80">Events</div>
                 </div>
               </div>
             </div>
@@ -461,8 +461,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                     : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
-                <span className="hidden md:inline">همه ({Object.values(holidays).flat().length})</span>
-                <span className="md:hidden">همه</span>
+                <span className="hidden md:inline">All ({Object.values(holidays).flat().length})</span>
+                <span className="md:hidden">All</span>
               </button>
               <button
                 onClick={() => setEventFilter('holidays')}
@@ -471,8 +471,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                     : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
-                <span className="hidden md:inline">🎉 تعطیلات ({Object.values(holidays).flat().filter(h => h.holiday).length})</span>
-                <span className="md:hidden">🎉 تعطیل</span>
+                <span className="hidden md:inline">🎉 Holidays ({Object.values(holidays).flat().filter(h => h.holiday).length})</span>
+                <span className="md:hidden">🎉 Holidays</span>
               </button>
               <button
                 onClick={() => setEventFilter('events')}
@@ -481,8 +481,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                     : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
-                <span className="hidden md:inline">📅 رویدادها ({Object.values(holidays).flat().filter(h => !h.holiday).length})</span>
-                <span className="md:hidden">📅 رویداد</span>
+                <span className="hidden md:inline">📅 Events ({Object.values(holidays).flat().filter(h => !h.holiday).length})</span>
+                <span className="md:hidden">📅 Events</span>
               </button>
             </div>
 
@@ -492,7 +492,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="جستجوی رویداد..."
+                placeholder="Search events..."
                 className="w-full px-4 md:px-5 py-2.5 md:py-3 pr-10 md:pr-12 rounded-lg md:rounded-xl text-sm md:text-base bg-white/20 dark:bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-2 border-white/30 focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
               />
               <svg className="w-4 h-4 md:w-5 md:h-5 absolute right-3 md:right-4 top-1/2 -translate-y-1/2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -536,7 +536,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                     <div className="text-center py-16">
                       <div className="text-6xl mb-4 opacity-30">📭</div>
                       <p className="text-muted-foreground dark:text-muted-foreground text-lg font-semibold">
-                        {searchQuery ? 'رویدادی یافت نشد' : 'رویدادی در این دسته وجود ندارد'}
+                        {searchQuery ? 'No events found' : 'No events in this category'}
                       </p>
                     </div>
                   );
@@ -583,7 +583,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                                       ? 'bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300'
                                       : 'bg-purple-200 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
                                     }`}>
-                                    {isHoliday ? '🎉 تعطیل' : '📅 رویداد'}
+                                    {isHoliday ? '🎉 Holiday' : '📅 Event'}
                                   </span>
                                 </div>
 
@@ -634,7 +634,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                                             : 'text-purple-600 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-200'
                                           }`}
                                       >
-                                        {isExpanded ? '▲ کمتر' : '▼ بیشتر'}
+                                        {isExpanded ? '▲ Less' : '▼ More'}
                                       </button>
                                     )}
                                   </div>
@@ -683,27 +683,27 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            راهنمای تقویم
+            Calendar Guide
           </h3>
           <div className="flex flex-wrap gap-3 justify-center">
             <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
               <div className="w-5 h-5 bg-gradient-to-br from-red-50 to-orange-100 dark:from-red-900 dark:to-orange-900 border-2 border-red-300 dark:border-red-700 rounded shadow-sm"></div>
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">🎉 تعطیل رسمی</span>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">🎉 Official Holiday</span>
             </div>
             <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-rose-200 dark:border-rose-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
               <div className="w-5 h-5 bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-900/50 dark:to-pink-900/50 border-2 border-rose-200 dark:border-rose-700 rounded shadow-sm"></div>
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">جمعه</span>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Friday</span>
             </div>
             <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-blue-200 dark:border-blue-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
               <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full shadow-md animate-pulse"></div>
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">✨ امروز</span>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">✨ Today</span>
             </div>
             <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl border-2 border-purple-200 dark:border-purple-800 shadow-sm hover:shadow-md transition-all hover:scale-105">
               <div className="relative">
                 <div className="w-3 h-3 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-full shadow-sm"></div>
                 <div className="absolute inset-0 w-3 h-3 bg-blue-400 dark:bg-blue-500 rounded-full animate-ping"></div>
               </div>
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">📝 دارای یادداشت</span>
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">📝 Has Note</span>
             </div>
           </div>
         </div>
@@ -807,7 +807,7 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
             <button
               onClick={onClose}
               className="p-2.5 hover:bg-white/20 dark:hover:bg-white/30 rounded-xl transition-all duration-200 hover:rotate-90 hover:scale-110"
-              aria-label="بستن"
+              aria-label="Close"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -825,7 +825,7 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                 <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">روز هفته</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">Day of Week</p>
               </div>
               <p className="text-lg font-black text-blue-900 dark:text-blue-300">{weekday}</p>
             </div>
@@ -835,7 +835,7 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                 <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">تاریخ میلادی</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">Gregorian Date</p>
               </div>
               <p className="text-base font-black text-emerald-900 dark:text-emerald-300">
                 {gregorianDate.toLocaleDateString('en-US', {
@@ -881,7 +881,7 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                             ? 'bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-300'
                             : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300'
                           }`}>
-                          {holiday.holiday ? 'تعطیل رسمی' : 'رویداد'}
+                          {holiday.holiday ? 'Official Holiday' : 'Event'}
                         </span>
                       </div>
                       <h4 className={`font-black text-lg mb-1 ${holiday.holiday
@@ -927,7 +927,7 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                                   : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 hover:bg-purple-300 dark:hover:bg-purple-900/80'
                                 }`}
                             >
-                              {isExpanded ? '▲ کمتر بخوانید' : '▼ بیشتر بخوانید'}
+                              {isExpanded ? '▲ Read Less' : '▼ Read More'}
                             </button>
                           )}
                         </div>
@@ -947,12 +947,12 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              یادداشت شخصی
+              Personal Note
             </label>
             <textarea
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
-              placeholder="یادداشتی برای این روز بنویسید..."
+              placeholder="Write a note for this day..."
               className="w-full p-4 border-2 border-indigo-300 dark:border-indigo-700 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-400/50 dark:focus:ring-indigo-600/50 focus:border-indigo-500 dark:focus:border-indigo-500 resize-none transition-all bg-white dark:bg-gray-900 text-foreground dark:text-foreground placeholder-gray-400 dark:placeholder-gray-500 shadow-inner"
               rows={5}
             />
@@ -960,7 +960,7 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>یادداشت‌های شما به صورت خودکار ذخیره می‌شوند</span>
+              <span>Your notes are saved automatically</span>
             </div>
           </div>
         </div>
@@ -976,7 +976,7 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
               </svg>
-              ذخیره
+              Save
             </span>
           </button>
           <button
@@ -988,7 +988,7 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-              لغو
+              Cancel
             </span>
           </button>
         </div>
