@@ -2,6 +2,8 @@
 
 **Version 1.1.0** | Offline-first Progressive Web Application built with Next.js, TypeScript, and TailwindCSS for personal daily journaling, task management, expense tracking, and habit formation.
 
+🚀 **Auto-deployment enabled via GitHub Actions**
+
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success)](https://web.dev/progressive-web-apps/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Build Size](https://img.shields.io/badge/Build-1.7MB-informational)](package.json)
