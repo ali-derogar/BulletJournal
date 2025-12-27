@@ -5,12 +5,9 @@
 
 let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-// Fix for local development: If running in browser and URL points to docker service 'backend',
-// redirect to 'localhost' to avoid ERR_NAME_NOT_RESOLVED
-if (typeof window !== 'undefined' && API_BASE_URL.includes('//backend:')) {
-  console.log(`[API] Correcting API URL from ${API_BASE_URL} to localhost`);
-  API_BASE_URL = API_BASE_URL.replace('//backend:', '//localhost:');
-}
+// Note: NEXT_PUBLIC_API_URL should be set correctly in .env.local
+// Development: http://localhost:8000
+// Production: http://your-server-ip:8000
 
 export interface ApiError {
   message: string;
