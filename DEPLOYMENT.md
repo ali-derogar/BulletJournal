@@ -55,6 +55,8 @@ sudo ./deploy.sh
 
 ## 🚀 Method 2: GitHub Actions (Fully Automated)
 
+GitHub Actions automatically deploys your app whenever you push to the master branch. It uses the same `deploy.sh` script, so all the automatic IP detection and environment configuration works here too!
+
 ### Initial Setup
 
 1. **Initial Server Setup** (same as Method 1):
@@ -110,8 +112,20 @@ Every time you push to `master` branch, **automatic** Build and Deploy happens! 
 git add .
 git commit -m "fix: some bug"
 git push
-# ← GitHub Actions automatically builds and deploys
+# ← GitHub Actions automatically:
+#    1. Builds and tests your code
+#    2. SSHs into your server
+#    3. Runs deploy.sh (which auto-configures everything)
+#    4. Your app is live with correct API URL!
 ```
+
+**What happens automatically:**
+
+- ✅ Code is pulled from GitHub
+- ✅ Server IP is auto-detected
+- ✅ `.env` file is created/updated with correct API URL
+- ✅ Docker containers are rebuilt and restarted
+- ✅ No manual configuration needed!
 
 #### 🎯 Manual Trigger
 
