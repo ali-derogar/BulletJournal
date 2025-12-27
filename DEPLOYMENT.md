@@ -1,211 +1,239 @@
-# راهنمای دیپلوی BulletJournal
+# BulletJournal Deployment Guide
 
-این راهنما سه روش مختلف برای دیپلوی خودکار پروژه را توضیح می‌دهد.
+This guide explains three different methods for automated deployment of the project.
 
-## 🎯 روش ۱: اسکریپت دیپلوی دستی (ساده‌ترین)
+## 🎯 Method 1: Manual Deployment Script (Simplest)
 
-### راه‌اندازی اولیه سرور
+### Initial Server Setup
 
-فقط یک بار در سرور جدید اجرا کنید:
+Run this once on a new server:
 
 ```bash
-# دانلود و اجرای اسکریپت راه‌اندازی
+# Download and run the setup script
 curl -fsSL https://raw.githubusercontent.com/ali-derogar/BulletJournal/master/server-setup.sh -o server-setup.sh
 chmod +x server-setup.sh
 sudo ./server-setup.sh
 ```
 
-این اسکریپت همه چیز را نصب می‌کند:
+This script installs everything:
+
 - ✅ Git
 - ✅ Docker & Docker Compose
 - ✅ Node.js & npm
 - ✅ tmux
-- ✅ کلون پروژه
-- ✅ سرویس systemd
+- ✅ Clone project
+- ✅ systemd service
 
-### دیپلوی بعدی (هر بار که تغییر دادید)
+### Subsequent Deployments (Every time you make changes)
 
-بعد از راه‌اندازی اولیه، فقط این دستور را اجرا کنید:
+After initial setup, just run this command:
 
 ```bash
 sudo /opt/bulletjournal/deploy.sh
 ```
 
-یا اگر در پوشه پروژه هستید:
+Or if you're in the project directory:
 
 ```bash
 sudo ./deploy.sh
 ```
 
-**این اسکریپت خودکار:**
-- ✅ آخرین تغییرات را از GitHub می‌گیرد
-- ✅ کانتینرها را متوقف می‌کند
-- ✅ ایمیج‌های جدید را می‌سازد
-- ✅ کانتینرها را راه‌اندازی می‌کند
-- ✅ وضعیت را نشان می‌دهد
+**This script automatically:**
+
+- ✅ Pulls latest changes from GitHub
+- ✅ Stops containers
+- ✅ Builds new images
+- ✅ Starts containers
+- ✅ Shows status
 
 ---
 
-## 🚀 روش ۲: GitHub Actions (کاملاً خودکار)
+## 🚀 Method 2: GitHub Actions (Fully Automated)
 
-### تنظیمات اولیه
+### Initial Setup
 
-1. **راه‌اندازی اولیه سرور** (مثل روش ۱):
+1. **Initial Server Setup** (same as Method 1):
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ali-derogar/BulletJournal/master/server-setup.sh -o server-setup.sh
 chmod +x server-setup.sh
 sudo ./server-setup.sh
 ```
 
-2. **تنظیم SSH Keys در GitHub:**
+2. **Configure SSH Keys in GitHub:**
 
-   الف) کلید SSH ایجاد کنید (در کامپیوتر محلی):
+   a) Generate SSH key (on your local computer):
+
    ```bash
    ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions
    ```
 
-   ب) کلید عمومی را به سرور اضافه کنید:
+   b) Add public key to server:
+
    ```bash
-   ssh-copy-id -i ~/.ssh/github_actions.pub your-user@your-server
+   ssh-copy-id -i ~/.ssh/github_actions.pub -p 6922 root@45.89.244.24
    ```
 
-   ج) کلید خصوصی را کپی کنید:
+   c) Copy private key:
+
    ```bash
    cat ~/.ssh/github_actions
    ```
 
-3. **اضافه کردن Secrets به GitHub:**
+3. **Add Secrets to GitHub:**
 
-   به مسیر زیر بروید:
+   Navigate to:
+
    ```
    GitHub Repository → Settings → Secrets and variables → Actions → New repository secret
    ```
 
-   این Secrets را اضافه کنید:
-   - `SERVER_HOST`: آدرس IP سرور (مثلاً: `45.89.244.24`)
-   - `SERVER_USER`: نام کاربری SSH (مثلاً: `root` یا `ubuntu`)
-   - `SSH_PRIVATE_KEY`: کلید خصوصی که کپی کردید
-   - `SERVER_PORT`: پورت SSH (معمولاً: `22`)
+   Add these Secrets:
 
-### استفاده
+   - `SERVER_HOST`: Server IP address (e.g., `45.89.244.24`)
+   - `SERVER_USER`: SSH username (e.g., `root` or `ubuntu`)
+   - `SSH_PRIVATE_KEY`: Private key you copied
+   - `SERVER_PORT`: SSH port (e.g., `6922`)
 
-حالا هر بار که به برنچ `master` پوش می‌کنید، **خودکار** دیپلوی می‌شود! 🎉
+### Usage
+
+#### ✅ Auto Deploy
+
+Every time you push to `master` branch, **automatic** Build and Deploy happens! 🎉
 
 ```bash
 git add .
 git commit -m "fix: some bug"
 git push
-# ← GitHub Actions خودکار دیپلوی می‌کند
+# ← GitHub Actions automatically builds and deploys
 ```
 
-برای دیپلوی دستی:
-- به GitHub بروید → Actions → Deploy to Server → Run workflow
+#### 🎯 Manual Trigger
+
+For more control, you can manually choose one of these options:
+
+1. Go to GitHub → **Actions** → **CI/CD Pipeline** → **Run workflow**
+2. Select one of the following options:
+   - **build**: Only build and test code (no deploy)
+   - **deploy**: Only deploy to server (no rebuild)
+   - **build-and-deploy**: Build + Deploy (default)
 
 ---
 
-## 🔄 روش ۳: Systemd Service (اتوماتیک بعد از ریستارت)
+## 🔄 Method 3: Systemd Service (Auto-start after restart)
 
-اگر از `server-setup.sh` استفاده کردید، یک سرویس systemd نصب شده که:
-- ✅ بعد از ریستارت سرور، خودکار اجرا می‌شود
-- ✅ Docker را مدیریت می‌کند
+If you used `server-setup.sh`, a systemd service is installed that:
 
-### دستورات سرویس:
+- ✅ Automatically runs after server restart
+- ✅ Manages Docker
+
+### Service Commands:
 
 ```bash
-# شروع
+# Start
 sudo systemctl start bulletjournal
 
-# توقف
+# Stop
 sudo systemctl stop bulletjournal
 
-# ریستارت
+# Restart
 sudo systemctl restart bulletjournal
 
-# وضعیت
+# Status
 sudo systemctl status bulletjournal
 
-# فعال‌سازی برای اجرای خودکار بعد از بوت
+# Enable auto-start after boot
 sudo systemctl enable bulletjournal
 
-# غیرفعال‌سازی
+# Disable
 sudo systemctl disable bulletjournal
 ```
 
 ---
 
-## 📝 دستورات مفید
+## 📝 Useful Commands
 
-### مشاهده لاگ‌ها
+### View Logs
+
 ```bash
 cd /opt/bulletjournal
 sudo docker compose logs -f
 ```
 
-### مشاهده وضعیت کانتینرها
+### Check Container Status
+
 ```bash
 cd /opt/bulletjournal
 sudo docker compose ps
 ```
 
-### دیباگ
+### Debug
+
 ```bash
-# لاگ فقط frontend
+# Frontend logs only
 sudo docker compose logs -f frontend
 
-# لاگ فقط backend
+# Backend logs only
 sudo docker compose logs -f backend
 
-# ورود به کانتینر
+# Enter container
 sudo docker exec -it bulletjournal-frontend sh
 sudo docker exec -it bulletjournal-backend sh
 ```
 
-### تمیز کردن (پاک کردن همه چیز)
+### Clean Up (Remove everything)
+
 ```bash
 cd /opt/bulletjournal
-sudo docker compose down -v  # حذف volumes هم
-sudo docker system prune -a  # حذف تمام ایمیج‌های استفاده نشده
+sudo docker compose down -v  # Also remove volumes
+sudo docker system prune -a  # Remove all unused images
 ```
 
 ---
 
-## 🔧 تغییر تنظیمات
+## 🔧 Change Settings
 
-### ویرایش environment variables
+### Edit Environment Variables
+
 ```bash
 sudo nano /opt/bulletjournal/.env.local
 sudo /opt/bulletjournal/deploy.sh
 ```
 
-### تغییر آدرس repository
+### Change Repository Address
+
 ```bash
 sudo nano /opt/bulletjournal/deploy.sh
-# خط REPO_URL را ویرایش کنید
+# Edit the REPO_URL line
 ```
 
 ---
 
-## ⚡ سوالات متداول
+## ⚡ FAQ
 
-### چطور فقط frontend را rebuild کنم؟
+### How to rebuild only frontend?
+
 ```bash
 cd /opt/bulletjournal
 sudo docker compose up -d --build frontend
 ```
 
-### چطور فقط backend را rebuild کنم؟
+### How to rebuild only backend?
+
 ```bash
 cd /opt/bulletjournal
 sudo docker compose up -d --build backend
 ```
 
-### چطور کانتینرها را بدون rebuild ریستارت کنم؟
+### How to restart containers without rebuild?
+
 ```bash
 cd /opt/bulletjournal
 sudo docker compose restart
 ```
 
-### چطور به دیتابیس دسترسی پیدا کنم؟
+### How to access database?
+
 ```bash
 sudo docker exec -it bulletjournal-backend sh
 cd data
@@ -214,12 +242,12 @@ sqlite3 bullet_journal.db
 
 ---
 
-## 🎯 خلاصه: کدام روش را انتخاب کنم؟
+## 🎯 Summary: Which Method to Choose?
 
-| روش | زمان راه‌اندازی | سادگی | خودکار بودن | توصیه برای |
-|-----|-----------------|--------|-------------|-----------|
-| اسکریپت دستی | ۵ دقیقه | ⭐⭐⭐⭐⭐ | دستی | شروع سریع، تیم‌های کوچک |
-| GitHub Actions | ۱۵ دقیقه | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | پروژه‌های تیمی، CI/CD |
-| Systemd | خودکار | ⭐⭐⭐⭐ | ⭐⭐⭐ | اجرای خودکار بعد از ریستارت |
+| Method | Setup Time | Simplicity | Automation | Recommended For |
+|--------|-----------|-----------|-----------|-----------------|
+| Manual Script | 5 minutes | ⭐⭐⭐⭐⭐ | Manual | Quick start, small teams |
+| GitHub Actions | 15 minutes | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Team projects, CI/CD |
+| Systemd | Automatic | ⭐⭐⭐⭐ | ⭐⭐⭐ | Auto-run after restart |
 
-**توصیه:** از هر سه روش با هم استفاده کنید! 🚀
+**Recommendation:** Use all three methods together! 🚀

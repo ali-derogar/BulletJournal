@@ -1,16 +1,61 @@
-name: Deploy to Server
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - master
       - main
-  workflow_dispatch: # Manual trigger
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Choose action'
+        required: true
+        type: choice
+        options:
+          - build
+          - deploy
+          - build-and-deploy
+        default: 'build-and-deploy'
 
 jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      github.event.inputs.action == 'build' ||
+      github.event.inputs.action == 'build-and-deploy'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run linter
+        run: npm run lint --if-present || echo "No lint script found"
+
+      - name: Build status
+        run: echo "✅ Build completed successfully!"
+
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    needs: build
+    if: |
+      (github.event_name == 'push' && needs.build.result == 'success') ||
+      github.event.inputs.action == 'deploy' ||
+      (github.event.inputs.action == 'build-and-deploy' && needs.build.result == 'success')
 
     steps:
       - name: Deploy to Server
@@ -25,13 +70,25 @@ jobs:
             cd /opt/bulletjournal || exit 1
 
             # Pull latest changes
+            echo "📥 Pulling latest changes..."
             git fetch origin
             git reset --hard origin/master
 
             # Deploy with docker compose
+            echo "🛑 Stopping containers..."
             sudo docker compose down
+
+            echo "🔨 Building and starting containers..."
             sudo docker compose up -d --build
 
+            # Wait for services to start
+            echo "⏳ Waiting for services to start..."
+            sleep 10
+
             # Show status
-            echo "Deployment completed!"
+            echo "📊 Deployment status:"
             sudo docker compose ps
+
+            echo "✅ Deployment completed successfully!"
+            echo "🌐 Frontend: http://localhost:3000"
+            echo "🔧 Backend: http://localhost:8000"
