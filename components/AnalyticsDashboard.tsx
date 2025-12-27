@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import type { AnalyticsData, Period, PeriodType } from '@/domain/analytics';
 import { getAnalytics } from '@/services/analytics';
 import { getCurrentPeriod, getPreviousPeriod, getPeriodDates } from '@/utils/analytics';
@@ -68,15 +69,20 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
   if (loading) {
     console.log('📊 AnalyticsDashboard: Rendering loading state');
     return (
-      <div className="p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-muted rounded"></div>
-            ))}
+      <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-16"
+        >
+          <div className="relative mb-6">
+            <div className="animate-spin rounded-full h-20 w-20 border-4 border-indigo-200 dark:border-indigo-800 border-t-indigo-600 dark:border-t-indigo-400"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-3xl">📊</span>
+            </div>
           </div>
-        </div>
+          <p className="text-lg md:text-xl text-muted-foreground font-semibold">Loading Analytics...</p>
+        </motion.div>
       </div>
     );
   }
@@ -125,32 +131,53 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
   });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Analytics</h1>
-        <PeriodSelector period={period} onPeriodChange={handlePeriodChange} />
-      </div>
+    <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-6">
+      {/* Header with Gradient */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, type: "spring" }}
+        className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-2xl p-4 md:p-6 mb-4 md:mb-6 shadow-2xl"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="text-white">
+            <h1 className="text-2xl md:text-3xl font-black mb-2 flex items-center gap-3">
+              <span className="text-2xl md:text-3xl">📊</span>
+              Analytics Dashboard
+            </h1>
+            <PeriodSelector period={period} onPeriodChange={handlePeriodChange} />
+          </div>
+        </div>
+      </motion.div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mb-6">
-        <button
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.5 }}
+        className="flex items-center justify-between mb-6 bg-card dark:bg-card rounded-xl p-4 shadow-lg border border-border dark:border-border"
+      >
+        <motion.button
           onClick={() => navigatePeriod('prev')}
-          className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors"
+          whileHover={{ scale: 1.05, x: -2 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-md hover:shadow-lg transition-all duration-300"
         >
-          ← Previous {period.type === 'weekly' ? 'Week' : 'Month'}
-        </button>
-        <span className="text-lg font-medium text-foreground">
+          ← Prev
+        </motion.button>
+        <span className="text-base md:text-lg font-black text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-center px-2">
           {formatPeriodDisplay(period)}
         </span>
-        <button
+        <motion.button
           onClick={() => navigatePeriod('next')}
-          className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          whileHover={{ scale: 1.05, x: 2 }}
+          whileTap={{ scale: 0.95 }}
           disabled={isCurrentPeriod(period)}
+          className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-secondary disabled:hover:to-secondary/80"
         >
-          Next {period.type === 'weekly' ? 'Week' : 'Month'} →
-        </button>
-      </div>
+          Next →
+        </motion.button>
+      </motion.div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -233,10 +260,10 @@ function PeriodSelector({ period, onPeriodChange }: { period: Period; onPeriodCh
           const current = getCurrentPeriod(newType);
           onPeriodChange(current);
         }}
-        className="px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+        className="px-4 py-2 border-2 border-white/30 rounded-xl bg-white/20 dark:bg-white/10 text-white font-bold shadow-lg backdrop-blur-sm hover:bg-white/30 dark:hover:bg-white/20 transition-all cursor-pointer"
       >
-        <option value="weekly">Weekly</option>
-        <option value="monthly">Monthly</option>
+        <option value="weekly" className="text-gray-900">📅 Weekly</option>
+        <option value="monthly" className="text-gray-900">📆 Monthly</option>
       </select>
     </div>
   );
@@ -244,11 +271,20 @@ function PeriodSelector({ period, onPeriodChange }: { period: Period; onPeriodCh
 
 function MetricCard({ title, value, subtitle }: { title: string; value: string; subtitle: string }) {
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
-      <h3 className="text-sm font-medium text-muted-foreground mb-1">{title}</h3>
-      <p className="text-2xl font-bold text-foreground mb-1">{value}</p>
-      <p className="text-sm text-muted-foreground">{subtitle}</p>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.02, y: -4 }}
+      transition={{ duration: 0.3 }}
+      className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 dark:from-card dark:via-card dark:to-card/90 p-6 rounded-2xl shadow-xl border-2 border-primary/20 dark:border-primary/30 hover:border-primary/40 dark:hover:border-primary/50 transition-all duration-300"
+    >
+      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full blur-2xl -mr-12 -mt-12"></div>
+      <div className="relative">
+        <h3 className="text-sm font-bold text-muted-foreground mb-2">{title}</h3>
+        <p className="text-3xl md:text-4xl font-black text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text mb-2">{value}</p>
+        <p className="text-sm font-semibold text-muted-foreground">{subtitle}</p>
+      </div>
+    </motion.div>
   );
 }
 
@@ -256,8 +292,16 @@ function TimeAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
   const { estimatedVsActual, timeByUsefulness } = analytics.time;
 
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Time Analytics</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2, duration: 0.5 }}
+      className="bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border hover:shadow-2xl transition-all duration-300"
+    >
+      <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 dark:from-blue-400 dark:via-cyan-400 dark:to-teal-400 bg-clip-text mb-4 flex items-center gap-2">
+        <span>⏱️</span>
+        Time Analytics
+      </h3>
       <div className="space-y-4">
         {/* Basic Time Stats */}
         <div className="space-y-3">
@@ -323,14 +367,22 @@ function TimeAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 function TaskAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Task Analytics</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.5 }}
+      className="bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border hover:shadow-2xl transition-all duration-300"
+    >
+      <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-400 dark:via-emerald-400 dark:to-teal-400 bg-clip-text mb-4 flex items-center gap-2">
+        <span>✅</span>
+        Task Analytics
+      </h3>
       <div className="space-y-3">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Created:</span>
@@ -355,15 +407,23 @@ function TaskAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 
 function TrendAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Trends vs Previous Period</h3>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4, duration: 0.5 }}
+      className="bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border hover:shadow-2xl transition-all duration-300"
+    >
+      <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 dark:from-orange-400 dark:via-red-400 dark:to-pink-400 bg-clip-text mb-4 flex items-center gap-2">
+        <span>📈</span>
+        Trends vs Previous Period
+      </h3>
       <div className="space-y-3">
         <TrendItem
           label="Time Spent"
@@ -381,7 +441,7 @@ function TrendAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
           formatter={(v) => `${v.toFixed(1)}%`}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -428,17 +488,31 @@ function InsightsCard({ insights }: { insights: string[] }) {
   if (insights.length === 0) return null;
 
   return (
-    <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Insights</h3>
-      <ul className="space-y-2">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5, duration: 0.5 }}
+      className="bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border"
+    >
+      <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-yellow-600 via-amber-600 to-orange-600 dark:from-yellow-400 dark:via-amber-400 dark:to-orange-400 bg-clip-text mb-4 flex items-center gap-2">
+        <span>💡</span>
+        Insights
+      </h3>
+      <ul className="space-y-3">
         {insights.map((insight, index) => (
-          <li key={index} className="flex items-start">
-            <span className="text-blue-500 dark:text-blue-400 mr-2">💡</span>
-            <span className="text-foreground">{insight}</span>
-          </li>
+          <motion.li
+            key={index}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 + index * 0.1 }}
+            className="flex items-start gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-xl border border-blue-200 dark:border-blue-800"
+          >
+            <span className="text-xl flex-shrink-0">💡</span>
+            <span className="text-foreground font-medium">{insight}</span>
+          </motion.li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 }
 

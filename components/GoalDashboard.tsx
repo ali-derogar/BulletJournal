@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Goal, GoalType } from "@/domain";
 import { getGoals, saveGoal, deleteGoal, autoArchiveExpiredGoals, getArchivedGoalsByPeriod } from "@/storage";
 import { useUser } from "@/app/context/UserContext";
@@ -284,25 +284,33 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
   // Always show the dashboard
 
   return (
-    <div className="bg-card rounded-lg shadow border border-border">
-      {/* Header */}
-      <div className="p-4 border-b border-border">
+    <div className="max-w-6xl mx-auto p-2 sm:p-4 md:p-6">
+      {/* Header with Gradient */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, type: "spring" }}
+        className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 dark:from-emerald-700 dark:via-teal-700 dark:to-cyan-700 rounded-2xl p-4 md:p-6 mb-4 md:mb-6 shadow-2xl"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-card-foreground">
+          <div className="text-white">
+            <h2 className="text-2xl md:text-3xl font-black mb-1 flex items-center gap-3">
+              <span className="text-2xl md:text-3xl">🎯</span>
               All Goals
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {Object.values(goalsByPeriod).flat().length} goal{Object.values(goalsByPeriod).flat().length !== 1 ? "s" : ""}
+            <p className="text-sm md:text-base opacity-90">
+              {Object.values(goalsByPeriod).flat().length} goal{Object.values(goalsByPeriod).flat().length !== 1 ? "s" : ""} · Track your progress
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
+            <motion.button
               onClick={() => setShowArchived(!showArchived)}
-              className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm rounded-xl font-bold shadow-lg transition-all duration-300 ${
                 showArchived
-                  ? "bg-purple-500 text-white hover:bg-purple-600"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  ? "bg-white dark:bg-gray-200 text-purple-600 dark:text-purple-700 hover:shadow-xl"
+                  : "bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20"
               }`}
               title="Toggle archived goals"
             >
@@ -312,45 +320,56 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                 );
                 return totalArchived > 0 ? `(${totalArchived})` : '';
               })()}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => setShowCalendar(true)}
-              className="px-3 py-2 text-sm bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm bg-white/20 dark:bg-white/10 text-white rounded-xl hover:bg-white/30 dark:hover:bg-white/20 transition-all duration-300 font-bold shadow-lg"
             >
               📅 Select Period
-            </button>
+            </motion.button>
             {!isShowingCurrentPeriods() && (
-              <button
+              <motion.button
                 onClick={handleResetToCurrentPeriods}
-                className="px-3 py-2 text-sm bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm bg-white/20 dark:bg-white/10 text-white rounded-xl hover:bg-white/30 dark:hover:bg-white/20 transition-all duration-300 font-bold shadow-lg"
                 title="Reset to current periods"
               >
                 🔄 Current
-              </button>
+              </motion.button>
             )}
-            <button
+            <motion.button
               onClick={() => {
                 console.log("➕ Add Goal button clicked (header)");
                 handleAddGoal();
               }}
-              className="px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm bg-white dark:bg-gray-100 text-emerald-600 dark:text-emerald-700 rounded-xl hover:shadow-2xl transition-all duration-300 font-black shadow-lg"
             >
               ➕ Add Goal
-            </button>
+            </motion.button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Content */}
-      <div className="p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="bg-card dark:bg-card rounded-2xl shadow-xl border border-border dark:border-border p-4 md:p-6"
+      >
         {error && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <svg className="w-5 h-5 text-destructive mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-4 p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/40 dark:to-orange-950/40 border-2 border-red-300 dark:border-red-700 rounded-xl shadow-lg">
+            <div className="flex items-start gap-3">
+              <svg className="w-6 h-6 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               <div className="flex-1">
-                <p className="text-sm text-destructive mb-2">{error}</p>
+                <p className="text-sm md:text-base text-red-800 dark:text-red-300 font-semibold mb-2">{error}</p>
                 {error.includes("database") && (
                   <button
                     onClick={() => window.location.reload()}
@@ -381,34 +400,43 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
         )}
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-            <p className="text-sm text-muted-foreground">Loading Goals...</p>
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-200 dark:border-emerald-800 border-t-emerald-600 dark:border-t-emerald-400 mb-6"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl">🎯</span>
+              </div>
+            </div>
+            <p className="text-base md:text-lg text-muted-foreground font-semibold">Loading Goals...</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Period indicators */}
             {!isShowingCurrentPeriods() && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 bg-accent/20 rounded-lg border border-accent/30">
-                <div className="text-xs">
-                  <div className="text-muted-foreground">Year</div>
-                  <div className="font-semibold text-card-foreground">{selectedPeriods.yearly.year}</div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-xl border-2 border-blue-200 dark:border-blue-800 shadow-lg"
+              >
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                  <div className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">Year</div>
+                  <div className="text-lg font-black text-foreground">{selectedPeriods.yearly.year}</div>
                 </div>
-                <div className="text-xs">
-                  <div className="text-muted-foreground">Quarter</div>
-                  <div className="font-semibold text-card-foreground">Q{selectedPeriods.quarterly.quarter} {selectedPeriods.quarterly.year}</div>
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                  <div className="text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">Quarter</div>
+                  <div className="text-lg font-black text-foreground">Q{selectedPeriods.quarterly.quarter} {selectedPeriods.quarterly.year}</div>
                 </div>
-                <div className="text-xs">
-                  <div className="text-muted-foreground">Month</div>
-                  <div className="font-semibold text-card-foreground">
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                  <div className="text-xs font-bold text-pink-600 dark:text-pink-400 mb-1">Month</div>
+                  <div className="text-sm font-black text-foreground">
                     {formatPeriodLabel("monthly", selectedPeriods.monthly.year, undefined, selectedPeriods.monthly.month)}
                   </div>
                 </div>
-                <div className="text-xs">
-                  <div className="text-muted-foreground">Week</div>
-                  <div className="font-semibold text-card-foreground">W{selectedPeriods.weekly.week} {selectedPeriods.weekly.year}</div>
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                  <div className="text-xs font-bold text-teal-600 dark:text-teal-400 mb-1">Week</div>
+                  <div className="text-lg font-black text-foreground">W{selectedPeriods.weekly.week} {selectedPeriods.weekly.year}</div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Archived Goals Section */}
@@ -431,9 +459,10 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
 
                   return (
                     <div key={periodType}>
-                      <h3 className="text-md font-semibold text-card-foreground mb-3 capitalize">
+                      <h3 className="text-lg md:text-xl font-black text-transparent bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 dark:from-emerald-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text mb-4 capitalize flex items-center gap-2">
+                        <span>📊</span>
                         {periodType} Goals
-                        <span className="ml-2 text-xs text-muted-foreground">
+                        <span className="ml-2 text-xs md:text-sm font-bold text-muted-foreground">
                           ({formatPeriodLabel(type, period.year, quarter, month, week)})
                         </span>
                       </h3>
@@ -488,13 +517,17 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                 })}
                 {/* Show message if no archived goals at all */}
                 {Object.values(archivedGoals).every(period => period.completed.length === 0 && period.failed.length === 0) && (
-                  <div className="text-center py-12">
-                    <div className="text-4xl mb-4">📦</div>
-                    <h3 className="text-lg font-medium text-card-foreground mb-2">No archived goals</h3>
-                    <p className="text-muted-foreground">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-16"
+                  >
+                    <div className="text-6xl md:text-7xl mb-6 opacity-40">📦</div>
+                    <h3 className="text-xl md:text-2xl font-black text-foreground mb-3">No archived goals</h3>
+                    <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto">
                       Completed or failed goals for the selected periods will appear here
                     </p>
-                  </div>
+                  </motion.div>
                 )}
               </div>
             ) : (
@@ -508,9 +541,10 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
 
               return (
                 <div key={periodType}>
-                  <h3 className="text-md font-semibold text-card-foreground mb-3 capitalize">
+                  <h3 className="text-lg md:text-xl font-black text-transparent bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 dark:from-emerald-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text mb-4 capitalize flex items-center gap-2">
+                    <span>🎯</span>
                     {periodType} Goals
-                    <span className="ml-2 text-xs text-muted-foreground">
+                    <span className="ml-2 text-xs md:text-sm font-bold text-muted-foreground">
                       ({formatPeriodLabel(type, period.year, quarter, month, week)})
                     </span>
                   </h3>
@@ -535,28 +569,34 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
               );
             })}
             {Object.values(goalsByPeriod).every(goals => goals.length === 0) && (
-              <div className="text-center py-12">
-                <div className="text-4xl mb-4">🎯</div>
-                <h3 className="text-lg font-medium text-card-foreground mb-2">No goals yet</h3>
-                <p className="text-muted-foreground mb-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-16"
+              >
+                <div className="text-6xl md:text-7xl mb-6 opacity-50">🎯</div>
+                <h3 className="text-2xl md:text-3xl font-black text-foreground mb-3">No goals yet</h3>
+                <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-md mx-auto">
                   Set your first goal to start tracking progress
                 </p>
-                <button
+                <motion.button
                   onClick={() => {
                     console.log("Add Your First Goal button clicked (empty state)");
                     handleAddGoal();
                   }}
-                  className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-700 dark:to-teal-700 text-white font-black rounded-xl hover:shadow-2xl transition-all duration-300 shadow-lg"
                 >
-                  Add Your First Goal
-                </button>
-              </div>
+                  ✨ Add Your First Goal
+                </motion.button>
+              </motion.div>
             )}
             </>
             )}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Modals */}
       {showCalendar && (
