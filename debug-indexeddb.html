@@ -14,7 +14,7 @@
             output.textContent = 'Loading...\n';
 
             try {
-                const request = indexedDB.open('BulletJournalDB', 2);
+                const request = indexedDB.open('BulletJournalDB', 3);
 
                 request.onsuccess = (e) => {
                     const db = e.target.result;
@@ -92,11 +92,62 @@
                                     });
                                 });
 
-                                results += '\n=== Current User ===\n';
-                                results += `auth_token: ${localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING'}\n`;
-                                results += `auth_user: ${localStorage.getItem('auth_user')}\n`;
+                                results += '\n';
 
-                                output.textContent = results;
+                                // Check goals
+                                const goalTx = db.transaction(['goals'], 'readonly');
+                                const goalStore = goalTx.objectStore('goals');
+                                const goalRequest = goalStore.getAll();
+
+                                goalRequest.onsuccess = () => {
+                                    const goals = goalRequest.result;
+                                    results += `🎯 GOALS (${goals.length} total):\n`;
+
+                                    const goalsByUser = {};
+                                    goals.forEach(goal => {
+                                        const uid = goal.userId || 'NO_USER_ID';
+                                        if (!goalsByUser[uid]) goalsByUser[uid] = [];
+                                        goalsByUser[uid].push(goal);
+                                    });
+
+                                    Object.entries(goalsByUser).forEach(([userId, userGoals]) => {
+                                        results += `  userId="${userId}": ${userGoals.length} goals\n`;
+                                        userGoals.slice(0, 3).forEach(goal => {
+                                            results += `    - ${goal.title} (${goal.type})\n`;
+                                        });
+                                    });
+                                    results += '\n';
+
+                                    // Check calendar notes
+                                    const calendarTx = db.transaction(['calendarNotes'], 'readonly');
+                                    const calendarStore = calendarTx.objectStore('calendarNotes');
+                                    const calendarRequest = calendarStore.getAll();
+
+                                    calendarRequest.onsuccess = () => {
+                                        const notes = calendarRequest.result;
+                                        results += `📅 CALENDAR NOTES (${notes.length} total):\n`;
+
+                                        const notesByUser = {};
+                                        notes.forEach(note => {
+                                            const uid = note.userId || 'NO_USER_ID';
+                                            if (!notesByUser[uid]) notesByUser[uid] = [];
+                                            notesByUser[uid].push(note);
+                                        });
+
+                                        Object.entries(notesByUser).forEach(([userId, userNotes]) => {
+                                            results += `  userId="${userId}": ${userNotes.length} notes\n`;
+                                            userNotes.slice(0, 3).forEach(note => {
+                                                results += `    - ${note.date}: ${note.note.substring(0, 50)}\n`;
+                                            });
+                                        });
+
+                                        results += '\n=== Current User ===\n';
+                                        results += `auth_token: ${localStorage.getItem('auth_token') ? 'EXISTS' : 'MISSING'}\n`;
+                                        results += `auth_user: ${localStorage.getItem('auth_user')}\n`;
+
+                                        output.textContent = results;
+                                    };
+                                };
                             };
                         };
                     };
