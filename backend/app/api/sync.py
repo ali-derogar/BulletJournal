@@ -11,6 +11,8 @@ from app.models.task import Task
 from app.models.expense import Expense
 from app.models.journal import DailyJournal
 from app.models.reflection import Reflection
+from app.models.goal import Goal
+from app.models.calendar_note import CalendarNote
 from app.schemas.sync import SyncData, SyncResponse
 from app.auth.router import get_current_user
 from app.models.user import User
@@ -318,6 +320,128 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
         db.refresh(new_reflection)
         return False
 
+def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
+    """Upsert a goal. Returns True if conflict was resolved."""
+    goal_id = goal_data["id"]
+    client_updated_at = goal_data.get("updatedAt")
+
+    # Parse client_updated_at if it's a string
+    if isinstance(client_updated_at, str):
+        try:
+            from dateutil import parser
+            client_updated_at = parser.parse(client_updated_at)
+        except:
+            client_updated_at = None
+
+    existing_goal = db.query(Goal).filter(Goal.id == goal_id, Goal.userId == user_id).first()
+
+    if existing_goal:
+        if client_updated_at and existing_goal.updatedAt:
+            if client_updated_at > existing_goal.updatedAt:
+                for key, value in goal_data.items():
+                    if hasattr(existing_goal, key) and key != "id":
+                        setattr(existing_goal, key, value)
+                existing_goal.updatedAt = datetime.utcnow()
+                db.commit()
+                return False
+            else:
+                return True
+        else:
+            for key, value in goal_data.items():
+                if hasattr(existing_goal, key) and key != "id":
+                    setattr(existing_goal, key, value)
+            existing_goal.updatedAt = datetime.utcnow()
+            db.commit()
+            return False
+    else:
+        # Check if goal exists but belongs to another user (security check)
+        existing_goal_other_user = db.query(Goal).filter(Goal.id == goal_id).first()
+        if existing_goal_other_user:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Cannot modify goal {goal_id} belonging to another user"
+            )
+
+        # Convert string datetime fields to datetime objects
+        db_goal_data = goal_data.copy()
+        datetime_fields = ['createdAt', 'updatedAt', 'completedAt']
+        for field in datetime_fields:
+            if field in db_goal_data and isinstance(db_goal_data[field], str):
+                try:
+                    from dateutil import parser
+                    db_goal_data[field] = parser.parse(db_goal_data[field])
+                except:
+                    db_goal_data[field] = None
+
+        db_goal_data["userId"] = user_id
+        new_goal = Goal(**db_goal_data)
+        new_goal.updatedAt = datetime.utcnow()
+        db.add(new_goal)
+        db.commit()
+        db.refresh(new_goal)
+        return False
+
+def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
+    """Upsert a calendar note. Returns True if conflict was resolved."""
+    note_id = note_data["id"]
+    client_updated_at = note_data.get("updatedAt")
+
+    # Parse client_updated_at if it's a string
+    if isinstance(client_updated_at, str):
+        try:
+            from dateutil import parser
+            client_updated_at = parser.parse(client_updated_at)
+        except:
+            client_updated_at = None
+
+    existing_note = db.query(CalendarNote).filter(CalendarNote.id == note_id, CalendarNote.userId == user_id).first()
+
+    if existing_note:
+        if client_updated_at and existing_note.updatedAt:
+            if client_updated_at > existing_note.updatedAt:
+                for key, value in note_data.items():
+                    if hasattr(existing_note, key) and key != "id":
+                        setattr(existing_note, key, value)
+                existing_note.updatedAt = datetime.utcnow()
+                db.commit()
+                return False
+            else:
+                return True
+        else:
+            for key, value in note_data.items():
+                if hasattr(existing_note, key) and key != "id":
+                    setattr(existing_note, key, value)
+            existing_note.updatedAt = datetime.utcnow()
+            db.commit()
+            return False
+    else:
+        # Check if note exists but belongs to another user (security check)
+        existing_note_other_user = db.query(CalendarNote).filter(CalendarNote.id == note_id).first()
+        if existing_note_other_user:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Cannot modify calendar note {note_id} belonging to another user"
+            )
+
+        # Convert string datetime fields to datetime objects
+        db_note_data = note_data.copy()
+        datetime_fields = ['createdAt', 'updatedAt']
+        for field in datetime_fields:
+            if field in db_note_data and isinstance(db_note_data[field], str):
+                try:
+                    from dateutil import parser
+                    db_note_data[field] = parser.parse(db_note_data[field])
+                except:
+                    db_note_data[field] = None
+
+        db_note_data["userId"] = user_id
+        new_note = CalendarNote(**db_note_data)
+        new_note.updatedAt = datetime.utcnow()
+        db.add(new_note)
+        db.commit()
+        db.refresh(new_note)
+        return False
+
 @router.post("/sync", response_model=SyncResponse)
 @limiter.limit("30/minute")  # Rate limit: 30 syncs per minute per user
 async def sync_data(
@@ -331,6 +455,8 @@ async def sync_data(
         synced_tasks = 0
         synced_expenses = 0
         synced_journals = 0
+        synced_goals = 0
+        synced_calendar_notes = 0
         synced_reflections = 0
         conflicts_resolved = 0
 
@@ -339,6 +465,8 @@ async def sync_data(
             len(sync_data.tasks) +
             len(sync_data.expenses) +
             len(sync_data.journals) +
+            len(sync_data.goals) +
+            len(sync_data.calendarNotes) +
             len(sync_data.reflections)
         )
 
@@ -379,6 +507,20 @@ async def sync_data(
                 conflicts_resolved += 1
             synced_journals += 1
 
+        # Sync goals
+        for goal in sync_data.goals:
+            goal_dict = goal.dict() if hasattr(goal, 'dict') else goal.__dict__
+            if upsert_goal(db, goal_dict, current_user.id):
+                conflicts_resolved += 1
+            synced_goals += 1
+
+        # Sync calendar notes
+        for note in sync_data.calendarNotes:
+            note_dict = note.dict() if hasattr(note, 'dict') else note.__dict__
+            if upsert_calendar_note(db, note_dict, current_user.id):
+                conflicts_resolved += 1
+            synced_calendar_notes += 1
+
         # Sync reflections
         for reflection in sync_data.reflections:
             reflection_dict = reflection.dict() if hasattr(reflection, 'dict') else reflection.__dict__
@@ -389,7 +531,8 @@ async def sync_data(
         logger.info(
             f"User {current_user.id} synced {total_items} items "
             f"(tasks={synced_tasks}, expenses={synced_expenses}, "
-            f"journals={synced_journals}, reflections={synced_reflections}, "
+            f"journals={synced_journals}, goals={synced_goals}, "
+            f"calendar_notes={synced_calendar_notes}, reflections={synced_reflections}, "
             f"conflicts={conflicts_resolved})"
         )
 
@@ -397,6 +540,8 @@ async def sync_data(
             synced_tasks=synced_tasks,
             synced_expenses=synced_expenses,
             synced_journals=synced_journals,
+            synced_goals=synced_goals,
+            synced_calendar_notes=synced_calendar_notes,
             synced_reflections=synced_reflections,
             conflicts_resolved=conflicts_resolved
         )
@@ -451,6 +596,24 @@ async def download_data(
                 raise
 
         try:
+            goals = db.query(Goal).filter(Goal.userId == current_user.id).all()
+        except Exception as e:
+            if "no such column" in str(e).lower() or "no such table" in str(e).lower():
+                logger.warning(f"Goal table missing or has missing columns for user {current_user.id}, returning empty")
+                goals = []
+            else:
+                raise
+
+        try:
+            calendar_notes = db.query(CalendarNote).filter(CalendarNote.userId == current_user.id).all()
+        except Exception as e:
+            if "no such column" in str(e).lower() or "no such table" in str(e).lower():
+                logger.warning(f"CalendarNote table missing or has missing columns for user {current_user.id}, returning empty")
+                calendar_notes = []
+            else:
+                raise
+
+        try:
             reflections = db.query(Reflection).filter(Reflection.userId == current_user.id).all()
         except Exception as e:
             if "no such column" in str(e).lower():
@@ -462,7 +625,8 @@ async def download_data(
         logger.info(
             f"User {current_user.id} downloaded data: "
             f"tasks={len(tasks)}, expenses={len(expenses)}, "
-            f"journals={len(journals)}, reflections={len(reflections)}"
+            f"journals={len(journals)}, goals={len(goals)}, "
+            f"calendar_notes={len(calendar_notes)}, reflections={len(reflections)}"
         )
 
         # Return actual data for frontend to save to IndexedDB
@@ -470,6 +634,8 @@ async def download_data(
             tasks=tasks,
             expenses=expenses,
             journals=journals,
+            goals=goals,
+            calendarNotes=calendar_notes,
             reflections=reflections
         )
 

@@ -153,6 +153,14 @@ function validateSyncData(data: SyncRequest): { valid: boolean; errors: string[]
     if (!journal.id) errors.push(`Journal at index ${idx} missing ID`);
   });
 
+  data.goals.forEach((goal, idx) => {
+    if (!goal.id) errors.push(`Goal at index ${idx} missing ID`);
+  });
+
+  data.calendarNotes.forEach((note, idx) => {
+    if (!note.id) errors.push(`Calendar note at index ${idx} missing ID`);
+  });
+
   return {
     valid: errors.length === 0,
     errors,
