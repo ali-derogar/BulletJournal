@@ -28,6 +28,35 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Global error handler to catch all errors
+              window.addEventListener('error', function(event) {
+                console.error('🔴 GLOBAL ERROR:', {
+                  message: event.message,
+                  filename: event.filename,
+                  lineno: event.lineno,
+                  colno: event.colno,
+                  error: event.error ? {
+                    name: event.error.name,
+                    message: event.error.message,
+                    stack: event.error.stack
+                  } : null
+                });
+              });
+
+              window.addEventListener('unhandledrejection', function(event) {
+                console.error('🔴 UNHANDLED PROMISE REJECTION:', {
+                  reason: event.reason,
+                  promise: event.promise
+                });
+              });
+            `,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
