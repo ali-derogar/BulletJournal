@@ -546,10 +546,26 @@ export async function performSync(
     };
   } catch (error) {
     console.error('Sync failed:', error);
+
+    // Convert detail to string if it's an array or object
+    let detailStr = 'Unknown';
+    try {
+      const detail = (error as any)?.detail;
+      if (Array.isArray(detail)) {
+        detailStr = JSON.stringify(detail);
+      } else if (typeof detail === 'object' && detail !== null) {
+        detailStr = JSON.stringify(detail);
+      } else if (detail) {
+        detailStr = String(detail);
+      }
+    } catch (e) {
+      detailStr = 'Unable to parse error detail';
+    }
+
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       status: (error as any)?.status,
-      detail: (error as any)?.detail,
+      detail: detailStr,
     });
 
     // Classify error to provide better feedback
