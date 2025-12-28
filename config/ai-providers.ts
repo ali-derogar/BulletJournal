@@ -60,10 +60,13 @@ export function getAPIKeys(provider: string): string[] {
 
   if (!envKeys) {
     console.warn(`[AI Config] No API keys found for ${provider}`);
-    console.log(`[AI Config] Available env:`, {
+    console.log(`[AI Config] Environment check:`, {
+      providerLiteral: 'openrouter',
+      requestedProvider: provider,
       hasKeys: !!process.env.NEXT_PUBLIC_OPENROUTER_API_KEYS,
-      provider: process.env.NEXT_PUBLIC_DEFAULT_AI_PROVIDER,
-      model: process.env.NEXT_PUBLIC_DEFAULT_AI_MODEL
+      keyPrefix: process.env.NEXT_PUBLIC_OPENROUTER_API_KEYS ? process.env.NEXT_PUBLIC_OPENROUTER_API_KEYS.substring(0, 10) + '...' : 'none',
+      processEnvKeys: process.env.NEXT_PUBLIC_OPENROUTER_API_KEYS ? 'EXISTS' : 'NOT FOUND',
+      allPublicKeys: Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_'))
     });
     return [];
   }
