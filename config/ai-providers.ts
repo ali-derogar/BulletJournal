@@ -90,4 +90,4 @@ export function getNextAPIKey(provider: string): string | null {
 }
 
 export const DEFAULT_PROVIDER = process.env.NEXT_PUBLIC_DEFAULT_AI_PROVIDER || 'openrouter';
-export const DEFAULT_MODEL = process.env.NEXT_PUBLIC_DEFAULT_AI_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
+export const DEFAULT_MODEL = process.env.NEXT_PUBLIC_DEFAULT_AI_MODEL || 'google/gemma-2-9b-it:free';
