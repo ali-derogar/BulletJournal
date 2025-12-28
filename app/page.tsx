@@ -17,6 +17,7 @@ import AuthButton from "@/components/AuthButton";
 import UploadDownloadButtons from "@/components/UploadDownloadButtons";
 import ThemeToggle from "@/components/ThemeToggle";
 import LoginPage from "@/components/LoginPage";
+import AIChat from "@/components/AIChat";
 
 export default function Home() {
   const { currentDate, setCurrentDate } = useDate();
@@ -166,6 +167,9 @@ export default function Home() {
 
       <InstallPrompt />
       <BackupRestore />
+
+      {/* AI Chat Assistant - Only visible when logged in */}
+      {currentUser && <AIChat userId={userId} />}
 
       {/* Footer Navigation - Enhanced with glass effect and animations */}
       <motion.div
