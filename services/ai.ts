@@ -29,7 +29,6 @@ export async function sendChatMessage(
   const temperature = options.temperature ?? 0.7;
   const maxTokens = options.maxTokens ?? 1000;
 
-  console.log(`[AI Service] Sending request:`, { provider, model, messageCount: messages.length });
 
   // Get provider config
   const providerConfig = AI_PROVIDERS[provider];
