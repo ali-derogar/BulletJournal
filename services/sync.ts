@@ -259,17 +259,39 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
 
     console.log('✅ After deduplication - Tasks:', uniqueTasks.length, 'Expenses:', uniqueExpenses.length, 'Journals:', uniqueJournals.length, 'Goals:', uniqueGoals.length, 'Calendar Notes:', uniqueCalendarNotes.length);
 
+    // Fix userId for all items to ensure they match current user
+    const tasksWithCorrectUserId = uniqueTasks.map(task => ({
+      ...task,
+      userId: userId,
+    }));
+    const expensesWithCorrectUserId = uniqueExpenses.map(expense => ({
+      ...expense,
+      userId: userId,
+    }));
+    const journalsWithCorrectUserId = uniqueJournals.map(journal => ({
+      ...journal,
+      userId: userId,
+    }));
+    const goalsWithCorrectUserId = uniqueGoals.map(goal => ({
+      ...goal,
+      userId: userId,
+    }));
+    const calendarNotesWithCorrectUserId = uniqueCalendarNotes.map(note => ({
+      ...note,
+      userId: userId,
+    }));
+
     // Transform goals for backend compatibility
-    const transformedGoals = uniqueGoals.map(transformGoalForBackend);
+    const transformedGoals = goalsWithCorrectUserId.map(transformGoalForBackend);
 
     // If no lastSyncAt, sync everything
     if (!lastSyncAt) {
       return {
-        tasks: uniqueTasks,
-        expenses: uniqueExpenses,
-        journals: uniqueJournals,
+        tasks: tasksWithCorrectUserId,
+        expenses: expensesWithCorrectUserId,
+        journals: journalsWithCorrectUserId,
         goals: transformedGoals,
-        calendarNotes: uniqueCalendarNotes,
+        calendarNotes: calendarNotesWithCorrectUserId,
         reflections: [],
       };
     }
@@ -277,28 +299,28 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
     // Filter items updated since last sync
     const lastSync = new Date(lastSyncAt);
 
-    const changedTasks = uniqueTasks.filter((task) => {
+    const changedTasks = tasksWithCorrectUserId.filter((task) => {
       // Frontend tasks don't have updatedAt field, so sync all for first sync
       // In production, you'd add updatedAt to Task interface
       return true; // For now, sync all tasks when lastSyncAt exists
     });
 
-    const changedExpenses = uniqueExpenses.filter((expense) => {
+    const changedExpenses = expensesWithCorrectUserId.filter((expense) => {
       // Same for expenses
       return true;
     });
 
-    const changedJournals = uniqueJournals.filter((journal) => {
+    const changedJournals = journalsWithCorrectUserId.filter((journal) => {
       // Same for journals
       return true;
     });
 
-    const changedGoals = uniqueGoals.filter((goal) => {
+    const changedGoals = goalsWithCorrectUserId.filter((goal) => {
       // Same for goals
       return true;
     });
 
-    const changedCalendarNotes = uniqueCalendarNotes.filter((note) => {
+    const changedCalendarNotes = calendarNotesWithCorrectUserId.filter((note) => {
       // Same for calendar notes
       return true;
     });
