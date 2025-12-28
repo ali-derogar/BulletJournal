@@ -48,23 +48,35 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
   },
 };
 
-// Get API keys from environment (client-side)
+// Get API keys - tries multiple sources
 export function getAPIKeys(provider: string): string[] {
-  if (typeof window === 'undefined') return [];
-
-  const envKey = `NEXT_PUBLIC_${provider.toUpperCase()}_API_KEYS`;
-  const keys = (process.env as any)[envKey];
-
-  if (!keys) {
-    console.warn(`[AI Config] No API keys found for ${provider}. Looking for ${envKey} in process.env`);
-    console.log('[AI Config] Available env vars:', Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_')));
-    return [];
+  // 1. Try to import from local ai-keys.ts (for development)
+  try {
+    const localKeys = require('./ai-keys');
+    const keys = localKeys.AI_API_KEYS?.[provider];
+    if (keys && Array.isArray(keys) && keys.length > 0) {
+      console.log(`[AI Config] Found ${keys.length} API keys from ai-keys.ts for ${provider}`);
+      return keys;
+    }
+  } catch (e) {
+    // ai-keys.ts doesn't exist, continue to next method
   }
 
-  // Split by comma and trim whitespace
-  const keyArray = keys.split(',').map((key: string) => key.trim()).filter(Boolean);
-  console.log(`[AI Config] Found ${keyArray.length} API keys for ${provider}`);
-  return keyArray;
+  // 2. Try environment variables (for production)
+  if (typeof window !== 'undefined') {
+    const envKey = `NEXT_PUBLIC_${provider.toUpperCase()}_API_KEYS`;
+    const envKeys = (process.env as any)[envKey];
+
+    if (envKeys) {
+      const keyArray = envKeys.split(',').map((key: string) => key.trim()).filter(Boolean);
+      console.log(`[AI Config] Found ${keyArray.length} API keys from env for ${provider}`);
+      return keyArray;
+    }
+  }
+
+  console.warn(`[AI Config] No API keys found for ${provider}`);
+  console.log('[AI Config] To fix: Copy config/ai-keys.example.ts to config/ai-keys.ts and add your keys');
+  return [];
 }
 
 // Rotate through API keys to avoid rate limits
@@ -80,10 +92,20 @@ export function getNextAPIKey(provider: string): string | null {
   return key;
 }
 
-export const DEFAULT_PROVIDER = typeof window !== 'undefined'
-  ? (process.env.NEXT_PUBLIC_DEFAULT_AI_PROVIDER || 'openrouter')
-  : 'openrouter';
+// Get defaults from ai-keys.ts if available, otherwise use fallbacks
+let DEFAULT_PROVIDER = 'openrouter';
+let DEFAULT_MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
 
-export const DEFAULT_MODEL = typeof window !== 'undefined'
-  ? (process.env.NEXT_PUBLIC_DEFAULT_AI_MODEL || 'meta-llama/llama-3.1-8b-instruct:free')
-  : 'meta-llama/llama-3.1-8b-instruct:free';
+try {
+  const localKeys = require('./ai-keys');
+  if (localKeys.AI_DEFAULT_PROVIDER) DEFAULT_PROVIDER = localKeys.AI_DEFAULT_PROVIDER;
+  if (localKeys.AI_DEFAULT_MODEL) DEFAULT_MODEL = localKeys.AI_DEFAULT_MODEL;
+} catch (e) {
+  // Use environment variables as fallback
+  if (typeof window !== 'undefined') {
+    DEFAULT_PROVIDER = (process.env as any).NEXT_PUBLIC_DEFAULT_AI_PROVIDER || DEFAULT_PROVIDER;
+    DEFAULT_MODEL = (process.env as any).NEXT_PUBLIC_DEFAULT_AI_MODEL || DEFAULT_MODEL;
+  }
+}
+
+export { DEFAULT_PROVIDER, DEFAULT_MODEL };

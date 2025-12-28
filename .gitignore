@@ -168,3 +168,4 @@ workbox-*
 # Logs
 backend.log
 frontend.log
+config/ai-keys.ts
