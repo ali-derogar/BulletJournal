@@ -16,7 +16,7 @@ services:
       - ./backend:/app
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      test: [ "CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -30,15 +30,18 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
+        - NEXT_PUBLIC_OPENROUTER_API_KEYS=${NEXT_PUBLIC_OPENROUTER_API_KEYS}
+        - NEXT_PUBLIC_DEFAULT_AI_PROVIDER=${NEXT_PUBLIC_DEFAULT_AI_PROVIDER}
+        - NEXT_PUBLIC_DEFAULT_AI_MODEL=${NEXT_PUBLIC_DEFAULT_AI_MODEL}
     container_name: bulletjournal-frontend
     ports:
-    - "3000:3000"
+      - "3000:3000"
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80" ]
       interval: 30s
       timeout: 10s
       retries: 3
