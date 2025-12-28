@@ -6,18 +6,25 @@ import ChatWindow from './ChatWindow';
 
 interface AIChatProps {
   userId: string;
+  isFullScreen?: boolean;
 }
 
-export default function AIChat({ userId }: AIChatProps) {
+export default function AIChat({ userId, isFullScreen = false }: AIChatProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Full screen mode - always show the chat window
+  if (isFullScreen) {
+    return <ChatWindow isOpen={true} userId={userId} isFullScreen={true} />;
+  }
+
+  // Floating mode - show button and popup window
   return (
     <>
       <FloatingChatButton
         onClick={() => setIsOpen(!isOpen)}
         isOpen={isOpen}
       />
-      <ChatWindow isOpen={isOpen} userId={userId} />
+      <ChatWindow isOpen={isOpen} userId={userId} isFullScreen={false} />
     </>
   );
 }

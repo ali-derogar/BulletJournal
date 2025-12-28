@@ -7,9 +7,10 @@ import type { ChatMessage } from '@/services/ai';
 interface ChatWindowProps {
   isOpen: boolean;
   userId: string;
+  isFullScreen?: boolean;
 }
 
-export default function ChatWindow({ isOpen, userId }: ChatWindowProps) {
+export default function ChatWindow({ isOpen, userId, isFullScreen = false }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -111,11 +112,14 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.9, filter: 'blur(15px)' }}
-          animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, y: 40, scale: 0.9, filter: 'blur(15px)' }}
+          initial={isFullScreen ? { opacity: 0 } : { opacity: 0, y: 40, scale: 0.9, filter: 'blur(15px)' }}
+          animate={isFullScreen ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+          exit={isFullScreen ? { opacity: 0 } : { opacity: 0, y: 40, scale: 0.9, filter: 'blur(15px)' }}
           transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-          className="fixed bottom-28 right-6 z-40 w-[94vw] sm:w-[420px] h-[650px] flex flex-col"
+          className={isFullScreen
+            ? "max-w-5xl mx-auto p-4 sm:p-6 h-[calc(100vh-180px)] flex flex-col"
+            : "fixed bottom-28 right-6 z-40 w-[94vw] sm:w-[420px] h-[650px] flex flex-col"
+          }
         >
           {/* Main Glassmorphic Container */}
           <div className="relative h-full bg-white/10 dark:bg-black/40 backdrop-blur-2xl rounded-3xl overflow-hidden flex flex-col border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]">

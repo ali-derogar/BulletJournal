@@ -24,7 +24,7 @@ export default function Home() {
   const { currentUser } = useUser();
   const userId = currentUser?.id || "default";
   const [showCalendar, setShowCalendar] = useState(false);
-  const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar' | 'login'>('daily');
+  const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar' | 'ai' | 'login'>('daily');
 
   return (
     <div className="min-h-screen bg-background isolation-auto">
@@ -142,6 +142,44 @@ export default function Home() {
           >
             <GoalDashboard />
           </motion.div>
+        ) : currentView === 'ai' ? (
+          <motion.div
+            key="ai"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+          >
+            {currentUser ? (
+              <AIChat userId={userId} isFullScreen={true} />
+            ) : (
+              <div className="max-w-4xl mx-auto p-8 text-center">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="bg-card rounded-2xl p-12 shadow-lg border border-border"
+                >
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12,2C6.477,2,2,6.477,2,12c0,4.418,2.865,8.166,6.839,9.489c0.111,0.02,0.211-0.052,0.228-0.162 c0.017-0.109-0.047-0.216-0.155-0.246C6.18,19.344,4,16.488,4,13.25c0-4.005,3.245-7.25,7.25-7.25c4.005,0,7.25,3.245,7.25,7.25 c0,3.238-2.18,6.094-4.912,6.831c-0.108,0.03-0.172,0.137-0.155,0.246c0.017,0.11,0.117,0.182,0.228,0.162 C19.135,20.166,22,16.418,22,12C22,6.477,17.523,2,12,2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-foreground mb-4">AI Assistant</h2>
+                  <p className="text-muted-foreground mb-6">
+                    برای استفاده از دستیار هوش مصنوعی، لطفاً وارد شوید
+                    <br />
+                    Please login to use the AI Assistant
+                  </p>
+                  <button
+                    onClick={() => setCurrentView('login')}
+                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                  >
+                    ورود / Login
+                  </button>
+                </motion.div>
+              </div>
+            )}
+          </motion.div>
         ) : currentView === 'login' ? (
           <motion.div
             key="login"
@@ -168,9 +206,6 @@ export default function Home() {
       <InstallPrompt />
       <BackupRestore />
 
-      {/* AI Chat Assistant - Only visible when logged in */}
-      {currentUser && <AIChat userId={userId} />}
-
       {/* Footer Navigation - Enhanced with glass effect and animations */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
@@ -185,10 +220,11 @@ export default function Home() {
               layoutId="activeTab"
               className="absolute h-1 bg-gradient-to-r from-primary via-purple-600 to-pink-600 rounded-full top-0"
               style={{
-                width: '25%',
+                width: '20%',
                 left: currentView === 'daily' ? '0%' :
-                  currentView === 'analytics' ? '25%' :
-                    currentView === 'goals' ? '50%' : '75%'
+                  currentView === 'analytics' ? '20%' :
+                    currentView === 'goals' ? '40%' :
+                      currentView === 'ai' ? '60%' : '80%'
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
@@ -257,6 +293,37 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </motion.svg>
               <span className="text-[10px] sm:text-xs font-bold">Goals</span>
+            </motion.button>
+
+            <motion.button
+              onClick={() => setCurrentView('ai')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 relative ${currentView === 'ai'
+                ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-600 dark:text-indigo-400 scale-105 shadow-lg'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+            >
+              {currentUser && (
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"
+                />
+              )}
+              <motion.svg
+                className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                animate={{
+                  rotate: currentView === 'ai' ? 360 : 0,
+                  scale: currentView === 'ai' ? [1, 1.1, 1] : 1
+                }}
+                transition={{ duration: currentView === 'ai' ? 2 : 0.5, repeat: currentView === 'ai' ? Infinity : 0, ease: "linear" }}
+              >
+                <path d="M12,2C6.477,2,2,6.477,2,12c0,4.418,2.865,8.166,6.839,9.489c0.111,0.02,0.211-0.052,0.228-0.162 c0.017-0.109-0.047-0.216-0.155-0.246C6.18,19.344,4,16.488,4,13.25c0-4.005,3.245-7.25,7.25-7.25c4.005,0,7.25,3.245,7.25,7.25 c0,3.238-2.18,6.094-4.912,6.831c-0.108,0.03-0.172,0.137-0.155,0.246c0.017,0.11,0.117,0.182,0.228,0.162 C19.135,20.166,22,16.418,22,12C22,6.477,17.523,2,12,2z" />
+              </motion.svg>
+              <span className="text-[10px] sm:text-xs font-bold">AI</span>
             </motion.button>
 
             <motion.button
