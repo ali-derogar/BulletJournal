@@ -4,14 +4,17 @@
  */
 
 if (typeof window !== 'undefined') {
+  console.log('🐛 Mobile Debug initializing...');
+
   // Capture console errors and display them on screen for mobile debugging
   const originalError = console.error;
   const originalWarn = console.warn;
+  const originalLog = console.log;
 
   let errorLog: string[] = [];
   let errorDisplay: HTMLDivElement | null = null;
 
-  const showErrorOnScreen = (message: string, type: 'error' | 'warn') => {
+  const showErrorOnScreen = (message: string, type: 'error' | 'warn' | 'info') => {
     errorLog.push(`[${type.toUpperCase()}] ${message}`);
 
     // Create error display if it doesn't exist
@@ -23,50 +26,99 @@ if (typeof window !== 'undefined') {
         bottom: 0;
         left: 0;
         right: 0;
-        max-height: 200px;
+        max-height: 300px;
         overflow-y: auto;
         background: rgba(0, 0, 0, 0.95);
         color: #fff;
         font-family: monospace;
-        font-size: 10px;
+        font-size: 11px;
         padding: 10px;
         z-index: 99999;
-        border-top: 2px solid ${type === 'error' ? '#ef4444' : '#f59e0b'};
+        border-top: 2px solid ${type === 'error' ? '#ef4444' : type === 'warn' ? '#f59e0b' : '#3b82f6'};
         display: none;
       `;
       document.body.appendChild(errorDisplay);
 
-      // Add close button
+      // Add header with buttons
+      const header = document.createElement('div');
+      header.style.cssText = `
+        position: sticky;
+        top: 0;
+        background: rgba(0, 0, 0, 0.95);
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        align-items: center;
+      `;
+
+      const title = document.createElement('div');
+      title.textContent = '🐛 Mobile Debug Console';
+      title.style.cssText = `
+        font-weight: bold;
+        font-size: 12px;
+        color: #3b82f6;
+      `;
+      header.appendChild(title);
+
+      const buttonContainer = document.createElement('div');
+      buttonContainer.style.cssText = 'display: flex; gap: 6px;';
+
+      // Clear button
+      const clearBtn = document.createElement('button');
+      clearBtn.textContent = '🗑️ Clear';
+      clearBtn.style.cssText = `
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        cursor: pointer;
+      `;
+      clearBtn.onclick = () => {
+        errorLog = [];
+        if (errorDisplay) {
+          const entries = errorDisplay.querySelectorAll('.log-entry');
+          entries.forEach(entry => entry.remove());
+        }
+      };
+      buttonContainer.appendChild(clearBtn);
+
+      // Close button
       const closeBtn = document.createElement('button');
       closeBtn.textContent = '✕ Close';
       closeBtn.style.cssText = `
-        position: sticky;
-        top: 0;
-        right: 0;
         background: #ef4444;
         color: white;
         border: none;
-        padding: 5px 10px;
-        margin-bottom: 5px;
+        padding: 4px 8px;
         border-radius: 4px;
-        font-size: 11px;
+        font-size: 10px;
         cursor: pointer;
-        float: right;
       `;
       closeBtn.onclick = () => {
         if (errorDisplay) {
           errorDisplay.style.display = 'none';
         }
       };
-      errorDisplay.appendChild(closeBtn);
+      buttonContainer.appendChild(closeBtn);
+
+      header.appendChild(buttonContainer);
+      errorDisplay.appendChild(header);
     }
 
     errorDisplay.style.display = 'block';
     const logEntry = document.createElement('div');
+    logEntry.className = 'log-entry';
     logEntry.style.cssText = `
       padding: 4px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      color: ${type === 'error' ? '#ef4444' : '#f59e0b'};
+      color: ${type === 'error' ? '#ef4444' : type === 'warn' ? '#f59e0b' : '#3b82f6'};
+      word-wrap: break-word;
+      white-space: pre-wrap;
     `;
     logEntry.textContent = message;
     errorDisplay.appendChild(logEntry);
@@ -95,6 +147,15 @@ if (typeof window !== 'undefined') {
       return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
     }).join(' ');
     showErrorOnScreen(message, 'warn');
+  };
+
+  console.log = function(...args) {
+    originalLog.apply(console, args);
+    // Only show important logs on screen
+    const message = args.join(' ');
+    if (message.includes('🐛') || message.includes('ERROR') || message.includes('WARN')) {
+      showErrorOnScreen(message, 'info');
+    }
   };
 
   // Catch unhandled errors
@@ -150,9 +211,13 @@ if (typeof window !== 'undefined') {
     addDebugButton();
   }
 
-  console.log('🐛 Mobile Debug Mode Enabled');
-  console.log('📱 Device:', navigator.userAgent);
-  console.log('🌐 Window size:', window.innerWidth, 'x', window.innerHeight);
+  // Log initial info
+  setTimeout(() => {
+    console.log('🐛 Mobile Debug Mode Enabled');
+    console.log('📱 Device: ' + navigator.userAgent);
+    console.log('🌐 Window size: ' + window.innerWidth + 'x' + window.innerHeight);
+    console.log('🎨 DOM: ' + document.readyState);
+  }, 100);
 }
 
 export {};
