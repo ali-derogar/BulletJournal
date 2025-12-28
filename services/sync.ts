@@ -364,6 +364,17 @@ export async function performDownload(
       calendarNotes: serverData.calendarNotes?.length || 0,
     });
 
+    // DEBUG: Check if any tasks have missing or wrong userId
+    serverData.tasks.forEach((task, idx) => {
+      if (!task.userId || task.userId !== userId) {
+        console.warn(`⚠️ Task ${idx} (${task.id}) has incorrect userId:`, {
+          expected: userId,
+          actual: task.userId,
+          title: task.title,
+        });
+      }
+    });
+
     // Phase 2: Saving - Save to local IndexedDB
     onProgress?.({ phase: 'saving', message: 'Saving to local storage...' });
 
