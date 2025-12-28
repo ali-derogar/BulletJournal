@@ -48,14 +48,23 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
   },
 };
 
-// Get API keys from environment variables (set in GitHub Actions/Vercel)
+// Get API keys from environment variables
+// IMPORTANT: Webpack only replaces process.env.NEXT_PUBLIC_* when used as literals
 export function getAPIKeys(provider: string): string[] {
-  const envKey = `NEXT_PUBLIC_${provider.toUpperCase()}_API_KEYS`;
-  const envKeys = process.env[envKey];
+  let envKeys: string | undefined;
+
+  // We must use literal property access for Webpack to replace these at build time
+  if (provider === 'openrouter') {
+    envKeys = process.env.NEXT_PUBLIC_OPENROUTER_API_KEYS;
+  }
 
   if (!envKeys) {
     console.warn(`[AI Config] No API keys found for ${provider}`);
-    console.log(`[AI Config] Please set ${envKey} in your GitHub repository variables`);
+    console.log(`[AI Config] Available env:`, {
+      hasKeys: !!process.env.NEXT_PUBLIC_OPENROUTER_API_KEYS,
+      provider: process.env.NEXT_PUBLIC_DEFAULT_AI_PROVIDER,
+      model: process.env.NEXT_PUBLIC_DEFAULT_AI_MODEL
+    });
     return [];
   }
 
