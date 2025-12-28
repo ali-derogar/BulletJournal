@@ -192,6 +192,42 @@ export function canSync(isOnline: boolean, isAuthenticated: boolean): {
 }
 
 /**
+ * Transform Goal for backend compatibility
+ * Backend expects linkedTaskIds as a JSON string, not an array
+ */
+function transformGoalForBackend(goal: Goal): any {
+  return {
+    ...goal,
+    linkedTaskIds: JSON.stringify(goal.linkedTaskIds || []),
+  };
+}
+
+/**
+ * Transform Goal from backend format to frontend format
+ * Backend sends linkedTaskIds as a JSON string, we need it as an array
+ */
+function transformGoalFromBackend(backendGoal: any): Goal {
+  let linkedTaskIds: string[] = [];
+
+  // Handle linkedTaskIds - it might be a string, array, or missing
+  if (typeof backendGoal.linkedTaskIds === 'string') {
+    try {
+      linkedTaskIds = JSON.parse(backendGoal.linkedTaskIds);
+    } catch {
+      // If parsing fails, treat as empty array
+      linkedTaskIds = [];
+    }
+  } else if (Array.isArray(backendGoal.linkedTaskIds)) {
+    linkedTaskIds = backendGoal.linkedTaskIds;
+  }
+
+  return {
+    ...backendGoal,
+    linkedTaskIds,
+  };
+}
+
+/**
  * Get all local changes since last sync
  */
 async function getLocalChanges(userId: string, lastSyncAt: string | null): Promise<SyncRequest> {
@@ -223,13 +259,16 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
 
     console.log('✅ After deduplication - Tasks:', uniqueTasks.length, 'Expenses:', uniqueExpenses.length, 'Journals:', uniqueJournals.length, 'Goals:', uniqueGoals.length, 'Calendar Notes:', uniqueCalendarNotes.length);
 
+    // Transform goals for backend compatibility
+    const transformedGoals = uniqueGoals.map(transformGoalForBackend);
+
     // If no lastSyncAt, sync everything
     if (!lastSyncAt) {
       return {
         tasks: uniqueTasks,
         expenses: uniqueExpenses,
         journals: uniqueJournals,
-        goals: uniqueGoals,
+        goals: transformedGoals,
         calendarNotes: uniqueCalendarNotes,
         reflections: [],
       };
@@ -264,11 +303,14 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       return true;
     });
 
+    // Transform goals for backend compatibility
+    const transformedChangedGoals = changedGoals.map(transformGoalForBackend);
+
     return {
       tasks: changedTasks,
       expenses: changedExpenses,
       journals: changedJournals,
-      goals: changedGoals,
+      goals: transformedChangedGoals,
       calendarNotes: changedCalendarNotes,
       reflections: [],
     };
@@ -358,14 +400,15 @@ export async function performDownload(
       }
     }
 
-    // Save all goals to IndexedDB
+    // Save all goals to IndexedDB (transform from backend format first)
     let savedGoals = 0;
-    for (const goal of serverData.goals || []) {
+    for (const backendGoal of serverData.goals || []) {
       try {
+        const goal = transformGoalFromBackend(backendGoal);
         await upsertGoal(goal);
         savedGoals++;
       } catch (error) {
-        console.error('Failed to save goal:', goal.id, error);
+        console.error('Failed to save goal:', backendGoal.id, error);
       }
     }
 
