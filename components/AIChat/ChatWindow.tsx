@@ -47,18 +47,24 @@ export default function ChatWindow({ isOpen, userId }: ChatWindowProps) {
       // Check if we need to load full context (first interaction of the day)
       const { shouldLoadFullContext, gatherUserContext, generateSystemPrompt } = await import('@/services/ai-context');
       const { sendChatMessage } = await import('@/services/ai');
+      const { detectLanguage, getLanguagePromptEnhancementFromHistory } = await import('@/utils/languageDetection');
+
+      // Detect language from user's message
+      const userLanguage = detectLanguage(userMessage.content);
+      const languageInstruction = getLanguagePromptEnhancementFromHistory([...messages, userMessage]);
 
       let systemPrompt = '';
 
       if (shouldLoadFullContext()) {
         setIsLoadingContext(true);
         const context = await gatherUserContext(userId);
-        systemPrompt = generateSystemPrompt(context);
+        systemPrompt = generateSystemPrompt(context, languageInstruction);
         setIsLoadingContext(false);
       } else {
-        // Lightweight prompt for subsequent interactions
+        // Lightweight prompt for subsequent interactions with language detection
         systemPrompt = `You are a personal productivity assistant for a Bullet Journal app.
-Keep responses concise (2-4 sentences). Be encouraging and specific.`;
+Keep responses concise (2-4 sentences). Be encouraging and specific.
+ALWAYS respond in the same language as the user's message.${languageInstruction}`;
       }
 
       const messagesToSend: ChatMessage[] = [
@@ -243,7 +249,7 @@ Keep responses concise (2-4 sentences). Be encouraging and specific.`;
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask your assistant anything..."
+                  placeholder="Ask your assistant anything... | از دستیار خود بپرسید..."
                   disabled={isLoading}
                   className="flex-1 bg-transparent text-gray-900 dark:text-white px-5 py-4 text-sm font-semibold focus:outline-none disabled:opacity-50 placeholder:text-gray-400"
                 />

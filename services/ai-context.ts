@@ -162,7 +162,7 @@ function analyzePatterns(weekTasks: any[], completedTasks: any[]): string[] {
 /**
  * Generate AI system prompt with user context
  */
-export function generateSystemPrompt(context: UserContext): string {
+export function generateSystemPrompt(context: UserContext, languageInstruction?: string): string {
   const totalGoals = Object.values(context.goals).flat().length;
   const totalTasks = context.tasks.today.length;
   const completedToday = context.tasks.today.filter((t: any) => t.completed).length;
@@ -192,6 +192,8 @@ YOUR ROLE:
 4. Recognize their progress and patterns
 5. Suggest improvements based on their productivity patterns
 6. Keep responses concise (2-4 sentences max)
+7. ALWAYS respond in the same language as the user's message
+${languageInstruction || ''}
 
 Respond in a friendly, motivating tone. Use their actual goals and tasks in your suggestions.`;
 }
