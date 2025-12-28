@@ -55,10 +55,16 @@ export function getAPIKeys(provider: string): string[] {
   const envKey = `NEXT_PUBLIC_${provider.toUpperCase()}_API_KEYS`;
   const keys = (process.env as any)[envKey];
 
-  if (!keys) return [];
+  if (!keys) {
+    console.warn(`[AI Config] No API keys found for ${provider}. Looking for ${envKey} in process.env`);
+    console.log('[AI Config] Available env vars:', Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_')));
+    return [];
+  }
 
   // Split by comma and trim whitespace
-  return keys.split(',').map((key: string) => key.trim()).filter(Boolean);
+  const keyArray = keys.split(',').map((key: string) => key.trim()).filter(Boolean);
+  console.log(`[AI Config] Found ${keyArray.length} API keys for ${provider}`);
+  return keyArray;
 }
 
 // Rotate through API keys to avoid rate limits
