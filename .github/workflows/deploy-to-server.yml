@@ -47,6 +47,7 @@ jobs:
           port: 6922
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            export PATH="/root/.nvm/versions/node/v18.20.5/bin:$PATH"
             cd /var/www/BulletJournal
             npm install --production
             pm2 restart bullet-journal || pm2 start npm --name bullet-journal -- start
