@@ -70,7 +70,24 @@ else
     echo "NEXT_PUBLIC_API_URL=http://$SERVER_IP:8000" >> .env
 fi
 
-print_success "Environment configured with API URL: http://$SERVER_IP:8000"
+# Set AI Configuration in .env if provided
+update_env_var() {
+    local var_name=$1
+    local var_value=$2
+    if [ -n "$var_value" ]; then
+        if grep -q "^$var_name=" .env; then
+            sed -i "s|^$var_name=.*|$var_name=$var_value|" .env
+        else
+            echo "$var_name=$var_value" >> .env
+        fi
+    fi
+}
+
+update_env_var "NEXT_PUBLIC_OPENROUTER_API_KEYS" "$NEXT_PUBLIC_OPENROUTER_API_KEYS"
+update_env_var "NEXT_PUBLIC_DEFAULT_AI_PROVIDER" "$NEXT_PUBLIC_DEFAULT_AI_PROVIDER"
+update_env_var "NEXT_PUBLIC_DEFAULT_AI_MODEL" "$NEXT_PUBLIC_DEFAULT_AI_MODEL"
+
+print_success "Environment configured with API URL: http://$SERVER_IP:8000 and AI settings"
 
 # Stop existing containers
 print_info "Stopping existing containers..."
