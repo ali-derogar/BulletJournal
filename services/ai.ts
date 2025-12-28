@@ -59,11 +59,20 @@ export async function sendChatMessage(
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        message: '',
-        error: errorData.error?.message || `HTTP error ${response.status}`,
-      };
+      const errorText = await response.text();
+      console.error('[AI Service] API Error Response:', errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        return {
+          message: '',
+          error: errorData.error?.message || `HTTP error ${response.status}: ${errorText}`,
+        };
+      } catch {
+        return {
+          message: '',
+          error: `HTTP error ${response.status}: ${errorText}`,
+        };
+      }
     }
 
     const data = await response.json();
