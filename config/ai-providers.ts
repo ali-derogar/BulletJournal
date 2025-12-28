@@ -21,15 +21,15 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
     requiresAuth: true,
     models: [
       {
-        id: 'meta-llama/llama-3.1-8b-instruct:free',
-        name: 'Llama 3.1 8B (Free)',
-        description: 'Free access to Llama 3.1 - Fast and capable',
-        isFree: true,
-      },
-      {
         id: 'google/gemma-2-9b-it:free',
         name: 'Gemma 2 9B (Free)',
         description: 'Google\'s Gemma model - Good quality',
+        isFree: true,
+      },
+      {
+        id: 'meta-llama/llama-3.1-8b-instruct:free',
+        name: 'Llama 3.1 8B (Free)',
+        description: 'Free access to Llama 3.1 - Fast and capable',
         isFree: true,
       },
       {
