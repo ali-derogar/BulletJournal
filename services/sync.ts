@@ -228,6 +228,65 @@ function transformGoalFromBackend(backendGoal: any): Goal {
 }
 
 /**
+ * Clean up any data in IndexedDB that has incorrect userId
+ * This handles cases where bad data got into the database
+ */
+async function cleanupIncorrectUserData(userId: string): Promise<void> {
+  try {
+    console.log('🧹 Starting cleanup of incorrect userId data...');
+
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      console.warn('IndexedDB not available for cleanup');
+      return;
+    }
+
+    const dbName = 'BulletJournalDB';
+    const request = indexedDB.open(dbName);
+
+    await new Promise<void>((resolve, reject) => {
+      request.onerror = () => reject(request.error);
+      request.onsuccess = async () => {
+        const db = request.result;
+        let deletedCount = 0;
+
+        try {
+          // Clean up tasks with wrong userId
+          const taskTx = db.transaction('tasks', 'readwrite');
+          const taskStore = taskTx.objectStore('tasks');
+          const taskRequest = taskStore.openCursor();
+
+          await new Promise<void>((resolveTask) => {
+            taskRequest.onsuccess = async (event) => {
+              const cursor = (event.target as IDBRequest).result;
+              if (cursor) {
+                const task = cursor.value;
+                if (task.userId !== userId) {
+                  console.log(`🗑️ Deleting task with wrong userId: ${task.id} (userId: ${task.userId})`);
+                  await cursor.delete();
+                  deletedCount++;
+                }
+                cursor.continue();
+              } else {
+                resolveTask();
+              }
+            };
+          });
+
+          console.log(`✅ Cleanup complete: Deleted ${deletedCount} items with incorrect userId`);
+          resolve();
+        } catch (error) {
+          console.error('Cleanup error:', error);
+          reject(error);
+        }
+      };
+    });
+  } catch (error) {
+    console.error('Failed to cleanup incorrect user data:', error);
+    // Don't throw - cleanup is best-effort
+  }
+}
+
+/**
  * Get all local changes since last sync
  */
 async function getLocalChanges(userId: string, lastSyncAt: string | null): Promise<SyncRequest> {
@@ -400,9 +459,28 @@ export async function performDownload(
     // Phase 2: Saving - Save to local IndexedDB
     onProgress?.({ phase: 'saving', message: 'Saving to local storage...' });
 
+    // Filter out any data with incorrect userId before saving
+    const validTasks = serverData.tasks.filter(task => task.userId === userId);
+    const validExpenses = serverData.expenses.filter(expense => expense.userId === userId);
+    const validJournals = serverData.journals.filter(journal => journal.userId === userId);
+    const validGoals = (serverData.goals || []).filter(goal => goal.userId === userId);
+    const validCalendarNotes = (serverData.calendarNotes || []).filter(note => note.userId === userId);
+
+    // Log if any items were filtered out
+    const filteredCount = {
+      tasks: serverData.tasks.length - validTasks.length,
+      expenses: serverData.expenses.length - validExpenses.length,
+      journals: serverData.journals.length - validJournals.length,
+      goals: (serverData.goals?.length || 0) - validGoals.length,
+      calendarNotes: (serverData.calendarNotes?.length || 0) - validCalendarNotes.length,
+    };
+    if (Object.values(filteredCount).some(count => count > 0)) {
+      console.warn('🗑️ Filtered out items with incorrect userId:', filteredCount);
+    }
+
     // Save all tasks to IndexedDB
     let savedTasks = 0;
-    for (const task of serverData.tasks) {
+    for (const task of validTasks) {
       try {
         await upsertTask(task);
         savedTasks++;
@@ -413,7 +491,7 @@ export async function performDownload(
 
     // Save all expenses to IndexedDB
     let savedExpenses = 0;
-    for (const expense of serverData.expenses) {
+    for (const expense of validExpenses) {
       try {
         await upsertExpense(expense);
         savedExpenses++;
@@ -424,7 +502,7 @@ export async function performDownload(
 
     // Save all journals to IndexedDB
     let savedJournals = 0;
-    for (const journal of serverData.journals) {
+    for (const journal of validJournals) {
       try {
         await upsertJournal(journal);
         savedJournals++;
@@ -435,7 +513,7 @@ export async function performDownload(
 
     // Save all goals to IndexedDB (transform from backend format first)
     let savedGoals = 0;
-    for (const backendGoal of serverData.goals || []) {
+    for (const backendGoal of validGoals) {
       try {
         const goal = transformGoalFromBackend(backendGoal);
         await upsertGoal(goal);
@@ -447,7 +525,7 @@ export async function performDownload(
 
     // Save all calendar notes to IndexedDB
     let savedCalendarNotes = 0;
-    for (const note of serverData.calendarNotes || []) {
+    for (const note of validCalendarNotes) {
       try {
         await upsertCalendarNote(note);
         savedCalendarNotes++;
@@ -463,6 +541,9 @@ export async function performDownload(
       goals: savedGoals,
       calendarNotes: savedCalendarNotes,
     });
+
+    // Clean up any data with incorrect userId that might exist in IndexedDB
+    await cleanupIncorrectUserData(userId);
 
     // Update last sync timestamp
     updateLastSyncAt(userId);
