@@ -40,6 +40,10 @@ jobs:
         run: npm ci
 
       - name: Build project
+        env:
+          NEXT_PUBLIC_OPENROUTER_API_KEYS: ${{ vars.NEXT_PUBLIC_OPENROUTER_API_KEYS }}
+          NEXT_PUBLIC_DEFAULT_AI_PROVIDER: ${{ vars.NEXT_PUBLIC_DEFAULT_AI_PROVIDER }}
+          NEXT_PUBLIC_DEFAULT_AI_MODEL: ${{ vars.NEXT_PUBLIC_DEFAULT_AI_MODEL }}
         run: npm run build
 
       - name: Run linter
