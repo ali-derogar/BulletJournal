@@ -460,6 +460,12 @@ export async function performDownload(
     onProgress?.({ phase: 'saving', message: 'Saving to local storage...' });
 
     // Filter out any data with incorrect userId before saving
+    console.log('🔍 Filtering downloaded data. Current userId:', userId);
+    console.log('📦 Server returned:', {
+      tasks: serverData.tasks.length,
+      taskUserIds: serverData.tasks.map(t => ({ id: t.id, userId: t.userId })),
+    });
+
     const validTasks = serverData.tasks.filter(task => task.userId === userId);
     const validExpenses = serverData.expenses.filter(expense => expense.userId === userId);
     const validJournals = serverData.journals.filter(journal => journal.userId === userId);
@@ -476,6 +482,8 @@ export async function performDownload(
     };
     if (Object.values(filteredCount).some(count => count > 0)) {
       console.warn('🗑️ Filtered out items with incorrect userId:', filteredCount);
+    } else {
+      console.log('✅ All downloaded items have correct userId');
     }
 
     // Save all tasks to IndexedDB
