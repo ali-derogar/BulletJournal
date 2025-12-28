@@ -222,24 +222,13 @@ function formatTasks(tasks: any[]): string {
  * Check if this is the first AI interaction today
  */
 export function shouldLoadFullContext(): boolean {
-  // Check if we're in a browser environment
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return false;
+  const lastContextLoad = localStorage.getItem('ai_last_context_load');
+  const today = new Date().toISOString().split('T')[0];
+
+  if (lastContextLoad !== today) {
+    localStorage.setItem('ai_last_context_load', today);
+    return true;
   }
 
-  try {
-    const lastContextLoad = localStorage.getItem('ai_last_context_load');
-    const today = new Date().toISOString().split('T')[0];
-
-    if (lastContextLoad !== today) {
-      localStorage.setItem('ai_last_context_load', today);
-      return true;
-    }
-
-    return false;
-  } catch (error) {
-    // If localStorage is not available (privacy mode, etc.), return false
-    console.warn('localStorage not available:', error);
-    return false;
-  }
+  return false;
 }
