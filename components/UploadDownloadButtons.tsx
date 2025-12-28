@@ -320,7 +320,9 @@ export default function UploadDownloadButtons() {
                 )}
 
                 {!syncResult.success && syncResult.error && (
-                  <p className="text-xs text-red-700 mt-1 break-words">{syncResult.error}</p>
+                  <p className="text-xs text-red-700 mt-1 break-words">
+                    {typeof syncResult.error === 'string' ? syncResult.error : JSON.stringify(syncResult.error)}
+                  </p>
                 )}
               </div>
 
