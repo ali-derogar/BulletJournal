@@ -5,6 +5,8 @@ import { UserProvider } from "./context/UserContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import PWARegistration from "./PWARegistration";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ClientDebug from "./ClientDebug";
 
 export const metadata: Metadata = {
   title: "Bullet Journal v1.1.0",
@@ -29,13 +31,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <ThemeProvider>
-          <AuthProvider>
-            <UserProvider>
-              <DateProvider>{children}</DateProvider>
-            </UserProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <ClientDebug />
+        <ErrorBoundary>
+          <ThemeProvider>
+            <AuthProvider>
+              <UserProvider>
+                <DateProvider>{children}</DateProvider>
+              </UserProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
         <PWARegistration />
       </body>
     </html>
