@@ -169,3 +169,4 @@ workbox-*
 backend.log
 frontend.log
 config/ai-keys.ts
+dev-with-ai.sh
