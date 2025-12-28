@@ -19,6 +19,19 @@ export async function getTasks(date: string, userId: string = "default"): Promis
       request.onsuccess = () => {
         const tasks = request.result || [];
         console.log(`[DEBUG] getTasks: Retrieved ${tasks.length} raw tasks from DB for date ${date}, userId ${userId}`);
+
+        // Log all task userIds before filtering
+        tasks.forEach((task: Task, idx: number) => {
+          if (!task.userId || task.userId !== userId) {
+            console.warn(`⚠️ Task ${idx} will be filtered out:`, {
+              taskId: task.id,
+              title: task.title,
+              expectedUserId: userId,
+              actualUserId: task.userId || 'undefined',
+            });
+          }
+        });
+
         // Filter by userId and migrate old tasks to include all new fields if they don't have them
         const migratedTasks = tasks
           .map((task: Task) => ({
