@@ -1,4 +1,4 @@
-import { getAuthToken } from './auth';
+import { getStoredToken } from './auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -49,7 +49,7 @@ export interface ListTasksParams {
  */
 export async function createTaskAction(params: CreateTaskParams): Promise<ActionResponse> {
   try {
-    const token = getAuthToken();
+    const token = getStoredToken();
     if (!token) {
       return {
         success: false,
@@ -96,7 +96,7 @@ export async function createTaskAction(params: CreateTaskParams): Promise<Action
  */
 export async function createGoalAction(params: CreateGoalParams): Promise<ActionResponse> {
   try {
-    const token = getAuthToken();
+    const token = getStoredToken();
     if (!token) {
       return {
         success: false,
@@ -138,7 +138,7 @@ export async function createGoalAction(params: CreateGoalParams): Promise<Action
  */
 export async function createCalendarNoteAction(params: CreateCalendarNoteParams): Promise<ActionResponse> {
   try {
-    const token = getAuthToken();
+    const token = getStoredToken();
     if (!token) {
       return {
         success: false,
@@ -180,7 +180,7 @@ export async function createCalendarNoteAction(params: CreateCalendarNoteParams)
  */
 export async function updateTaskAction(params: UpdateTaskParams): Promise<ActionResponse> {
   try {
-    const token = getAuthToken();
+    const token = getStoredToken();
     if (!token) {
       return {
         success: false,
@@ -222,7 +222,7 @@ export async function updateTaskAction(params: UpdateTaskParams): Promise<Action
  */
 export async function listTasksAction(params: ListTasksParams = {}): Promise<ActionResponse> {
   try {
-    const token = getAuthToken();
+    const token = getStoredToken();
     if (!token) {
       return {
         success: false,
@@ -264,7 +264,7 @@ export async function listTasksAction(params: ListTasksParams = {}): Promise<Act
  */
 export async function completeTaskAction(taskId: string): Promise<ActionResponse> {
   try {
-    const token = getAuthToken();
+    const token = getStoredToken();
     if (!token) {
       return {
         success: false,

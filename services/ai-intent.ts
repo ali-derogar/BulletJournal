@@ -1,5 +1,6 @@
 import { sendChatMessage, ChatMessage } from './ai';
-import jalaali from 'jalaali-js';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const jalaali = require('jalaali-js');
 
 export type IntentType =
   | 'CREATE_TASK'
@@ -180,7 +181,11 @@ async function extractEntities(
 ): Promise<Record<string, any>> {
 
   const today = new Date();
-  const jalaliToday = jalaali.toJalaali(today);
+  const jalaliToday = jalaali.toJalaali(
+    today.getFullYear(),
+    today.getMonth() + 1,
+    today.getDate()
+  );
   const currentYear = jalaliToday.jy;
   const currentMonth = jalaliToday.jm;
   const currentDay = jalaliToday.jd;
@@ -301,10 +306,14 @@ function fallbackExtraction(
 
   // Detect "tomorrow"
   if (/فردا|tomorrow/i.test(message)) {
-    const tomorrow = jalaali.toGregorian(jy, jm, jd);
-    const tomorrowDate = new Date(tomorrow.gy, tomorrow.gm - 1, tomorrow.gd);
+    const gregorian = jalaali.toGregorian(jy, jm, jd);
+    const tomorrowDate = new Date(gregorian.gy, gregorian.gm - 1, gregorian.gd);
     tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-    const jalaliTomorrow = jalaali.toJalaali(tomorrowDate);
+    const jalaliTomorrow = jalaali.toJalaali(
+      tomorrowDate.getFullYear(),
+      tomorrowDate.getMonth() + 1,
+      tomorrowDate.getDate()
+    );
     date = `${jalaliTomorrow.jy}/${String(jalaliTomorrow.jm).padStart(2, '0')}/${String(jalaliTomorrow.jd).padStart(2, '0')}`;
   }
 
