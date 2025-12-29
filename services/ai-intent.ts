@@ -277,6 +277,8 @@ Extract and return ONLY a JSON object:
 Date rules:
 - For calendar notes, EVERYTHING MUST BE Persian (Jalali) YYYY-MM-DD.
 - "امروز" or "today" → ${jYear}-${String(jalaliToday.jm).padStart(2, '0')}-${String(jalaliToday.jd).padStart(2, '0')}
+- "اول ماه آینده" or "روز ۱ ماه بعد" → calculate day 1 of the NEXT Jalali month.
+- "فردا" or "tomorrow" → next Jalali day
 - If no date mentioned, use today (Jalali)
 - Return ONLY the JSON.`;
       break;
@@ -384,6 +386,30 @@ function fallbackExtraction(
   if (/فردا|tomorrow/i.test(message)) {
     gDate = gregorianTomorrowStr;
     jDate = jalaliTomorrowStr;
+  }
+
+  // Handle "day X of next month" (Jalali)
+  const nextMonthMatch = message.match(/روز\s*(۱|۲|۳|۴|۵|۶|۷|۸|۹|۰|\d+)\s*ماه\s*(آینده|بعد|دیگه)/i);
+  if (nextMonthMatch) {
+    const persianToEnglishMap: Record<string, string> = {
+      '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9'
+    };
+    let dayStr = nextMonthMatch[1].replace(/[۰-۹]/g, (m) => persianToEnglishMap[m]);
+    let dayNum = parseInt(dayStr);
+
+    if (!isNaN(dayNum)) {
+      let nextMonth = jToday.jm + 1;
+      let nextYear = jToday.jy;
+      if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear++;
+      }
+      jDate = formatJalali(nextYear, nextMonth, dayNum);
+
+      // Also update Gregorian for tasks/list if this was a task (though user usually asks this for notes)
+      const gNext = jalaali.toGregorian(nextYear, nextMonth, dayNum);
+      gDate = `${gNext.gy}-${String(gNext.gm).padStart(2, '0')}-${String(gNext.gd).padStart(2, '0')}`;
+    }
   }
 
   switch (intent) {
