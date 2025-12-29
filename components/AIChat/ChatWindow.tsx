@@ -14,6 +14,7 @@ import {
 } from '@/storage/ai';
 const generateId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
 import Icon from '@/components/Icon';
+import { performDownload } from '@/services/sync';
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -224,6 +225,19 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
 
             setMessages(prev => [...prev, actionMessage]);
             setIsLoading(false);
+
+            // Auto-sync after action
+            if (actionResult.success) {
+              console.log('[ChatWindow] Action successful, triggering auto-sync...');
+              setStatusMessage('Syncing changes...');
+              try {
+                await performDownload(userId);
+                console.log('[ChatWindow] Auto-sync completed');
+              } catch (syncError) {
+                console.error('[ChatWindow] Auto-sync failed:', syncError);
+              }
+            }
+
             return; // Don't continue to regular chat
           }
         } catch (actionError) {
