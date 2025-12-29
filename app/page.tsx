@@ -18,6 +18,7 @@ import UploadDownloadButtons from "@/components/UploadDownloadButtons";
 import ThemeToggle from "@/components/ThemeToggle";
 import LoginPage from "@/components/LoginPage";
 import AIChat from "@/components/AIChat";
+import InstallButton from "@/components/InstallButton";
 
 export default function Home() {
   const { currentDate, setCurrentDate } = useDate();
@@ -80,6 +81,7 @@ export default function Home() {
             className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3"
           >
             <ThemeToggle />
+            <InstallButton />
             <UploadDownloadButtons />
             <AuthButton />
           </motion.div>
