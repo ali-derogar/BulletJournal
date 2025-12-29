@@ -1,4 +1,4 @@
-"use client";
+                                                                                                                                                                                                            "use client";
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -102,7 +102,6 @@ export default function Home() {
               currentDate={currentDate}
               onDateChange={setCurrentDate}
               onOpenCalendar={() => setShowCalendar(true)}
-              userId={userId}
             />
 
             <DayView date={currentDate} />

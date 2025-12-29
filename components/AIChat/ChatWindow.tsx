@@ -291,7 +291,7 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
 
         setMessages(prev => [...prev, assistantMessage]);
       }
-    } catch (_error) {
+    } catch {
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: 'Sorry, something went wrong. Please try again.',
