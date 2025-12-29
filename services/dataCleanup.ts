@@ -78,7 +78,7 @@ export async function clearUserData(userId: string): Promise<{
     });
 
     // Clear sync metadata
-    clearSyncMetadata(userId);
+    clearSyncMetadata();
 
     console.log(`✅ Data cleanup complete: Deleted ${result.deletedCount} items`);
 
