@@ -41,7 +41,7 @@ class CreateGoalRequest(BaseModel):
 
 
 class CreateCalendarNoteRequest(BaseModel):
-    date: str = Field(..., description="Gregorian date in YYYY-MM-DD format")
+    date: str = Field(..., description="Persian date in YYYY-MM-DD format")
     note: str = Field(..., min_length=1)
 
 
