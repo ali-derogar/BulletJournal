@@ -202,7 +202,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isOnline, syncAuthUserToLocal]);
 
   // Logout
-  const logout = useCallback(() => {
+  const logout = useCallback(async (clearData = false) => {
+    // Optional data cleanup
+    if (clearData && user) {
+      const { clearUserData } = await import('@/services/dataCleanup');
+      const result = await clearUserData(user.id);
+
+      if (result.success) {
+        console.log(`✅ Cleared ${result.deletedCount} items from local storage`);
+      } else {
+        console.error('Failed to clear user data:', result.error);
+      }
+    }
+
     authService.logout();
     setUser(null);
     setError(null);
@@ -210,7 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Switch back to default user
     localStorage.setItem('activeUserId', 'default');
     window.dispatchEvent(new CustomEvent('userProfileUpdated', { detail: 'default' }));
-  }, []);
+  }, [user]);
 
   // Update user name
   const updateUserName = useCallback(async (name: string) => {

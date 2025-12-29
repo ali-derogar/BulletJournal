@@ -223,6 +223,7 @@ export async function upsertCalendarNote(note: CalendarNote): Promise<void> {
 /**
  * Migrate data from "default" userId to actual userId
  * This is needed when user logs in and we need to associate their offline data with their account
+ * Now includes conflict resolution - keeps newer data based on timestamps
  */
 export async function migrateDefaultDataToUser(actualUserId: string): Promise<{
   migratedTasks: number;
@@ -230,6 +231,11 @@ export async function migrateDefaultDataToUser(actualUserId: string): Promise<{
   migratedJournals: number;
   migratedGoals: number;
   migratedCalendarNotes: number;
+  skippedTasks: number;
+  skippedExpenses: number;
+  skippedJournals: number;
+  skippedGoals: number;
+  skippedCalendarNotes: number;
 }> {
   console.log('🔄 Starting migration from "default" to userId:', actualUserId);
 
@@ -238,59 +244,166 @@ export async function migrateDefaultDataToUser(actualUserId: string): Promise<{
   let migratedJournals = 0;
   let migratedGoals = 0;
   let migratedCalendarNotes = 0;
+  let skippedTasks = 0;
+  let skippedExpenses = 0;
+  let skippedJournals = 0;
+  let skippedGoals = 0;
+  let skippedCalendarNotes = 0;
 
-  // Migrate tasks
+  // Migrate tasks with conflict resolution
   const defaultTasks = await getAllTasks('default');
+  const existingTasks = await getAllTasks(actualUserId);
+  const existingTasksById = new Map(existingTasks.map(t => [t.id, t]));
+
   console.log('📋 Found', defaultTasks.length, 'tasks with userId="default"');
   for (const task of defaultTasks) {
-    const updatedTask = { ...task, userId: actualUserId };
-    await upsertTask(updatedTask);
-    migratedTasks++;
+    const existing = existingTasksById.get(task.id);
+
+    if (!existing) {
+      // No conflict - safe to migrate
+      const updatedTask = { ...task, userId: actualUserId };
+      await upsertTask(updatedTask);
+      migratedTasks++;
+    } else {
+      // Compare timestamps - keep newer
+      const defaultTime = new Date(task.updatedAt || task.createdAt);
+      const existingTime = new Date(existing.updatedAt || existing.createdAt);
+
+      if (defaultTime > existingTime) {
+        console.log(`  → Migrating newer default task: ${task.id}`);
+        const updatedTask = { ...task, userId: actualUserId };
+        await upsertTask(updatedTask);
+        migratedTasks++;
+      } else {
+        console.log(`  → Skipping older default task: ${task.id}`);
+        skippedTasks++;
+      }
+    }
   }
 
-  // Migrate expenses
+  // Migrate expenses with conflict resolution
   const defaultExpenses = await getAllExpenses('default');
+  const existingExpenses = await getAllExpenses(actualUserId);
+  const existingExpensesById = new Map(existingExpenses.map(e => [e.id, e]));
+
   console.log('💰 Found', defaultExpenses.length, 'expenses with userId="default"');
   for (const expense of defaultExpenses) {
-    const updatedExpense = { ...expense, userId: actualUserId };
-    await upsertExpense(updatedExpense);
-    migratedExpenses++;
+    const existing = existingExpensesById.get(expense.id);
+
+    if (!existing) {
+      const updatedExpense = { ...expense, userId: actualUserId };
+      await upsertExpense(updatedExpense);
+      migratedExpenses++;
+    } else {
+      const defaultTime = new Date(expense.updatedAt || expense.createdAt);
+      const existingTime = new Date(existing.updatedAt || existing.createdAt);
+
+      if (defaultTime > existingTime) {
+        const updatedExpense = { ...expense, userId: actualUserId };
+        await upsertExpense(updatedExpense);
+        migratedExpenses++;
+      } else {
+        skippedExpenses++;
+      }
+    }
   }
 
-  // Migrate journals
+  // Migrate journals with conflict resolution
   const defaultJournals = await getAllJournals('default');
+  const existingJournals = await getAllJournals(actualUserId);
+  const existingJournalsById = new Map(existingJournals.map(j => [j.id, j]));
+
   console.log('📖 Found', defaultJournals.length, 'journals with userId="default"');
   for (const journal of defaultJournals) {
-    const updatedJournal = { ...journal, userId: actualUserId };
-    await upsertJournal(updatedJournal);
-    migratedJournals++;
+    const existing = existingJournalsById.get(journal.id);
+
+    if (!existing) {
+      const updatedJournal = { ...journal, userId: actualUserId };
+      await upsertJournal(updatedJournal);
+      migratedJournals++;
+    } else {
+      const defaultTime = new Date(journal.updatedAt || journal.createdAt);
+      const existingTime = new Date(existing.updatedAt || existing.createdAt);
+
+      if (defaultTime > existingTime) {
+        const updatedJournal = { ...journal, userId: actualUserId };
+        await upsertJournal(updatedJournal);
+        migratedJournals++;
+      } else {
+        skippedJournals++;
+      }
+    }
   }
 
-  // Migrate goals
+  // Migrate goals with conflict resolution
   const defaultGoals = await getAllGoals('default');
+  const existingGoals = await getAllGoals(actualUserId);
+  const existingGoalsById = new Map(existingGoals.map(g => [g.id, g]));
+
   console.log('🎯 Found', defaultGoals.length, 'goals with userId="default"');
   for (const goal of defaultGoals) {
-    const updatedGoal = { ...goal, userId: actualUserId };
-    await upsertGoal(updatedGoal);
-    migratedGoals++;
+    const existing = existingGoalsById.get(goal.id);
+
+    if (!existing) {
+      const updatedGoal = { ...goal, userId: actualUserId };
+      await upsertGoal(updatedGoal);
+      migratedGoals++;
+    } else {
+      const defaultTime = new Date(goal.updatedAt || goal.createdAt);
+      const existingTime = new Date(existing.updatedAt || existing.createdAt);
+
+      if (defaultTime > existingTime) {
+        const updatedGoal = { ...goal, userId: actualUserId };
+        await upsertGoal(updatedGoal);
+        migratedGoals++;
+      } else {
+        skippedGoals++;
+      }
+    }
   }
 
-  // Migrate calendar notes
+  // Migrate calendar notes with conflict resolution
   const defaultCalendarNotes = await getAllCalendarNotes('default');
+  const existingCalendarNotes = await getAllCalendarNotes(actualUserId);
+  const existingNotesById = new Map(existingCalendarNotes.map(n => [n.id, n]));
+
   console.log('📅 Found', defaultCalendarNotes.length, 'calendar notes with userId="default"');
   for (const note of defaultCalendarNotes) {
-    const updatedNote = { ...note, userId: actualUserId };
-    await upsertCalendarNote(updatedNote);
-    migratedCalendarNotes++;
+    const existing = existingNotesById.get(note.id);
+
+    if (!existing) {
+      const updatedNote = { ...note, userId: actualUserId };
+      await upsertCalendarNote(updatedNote);
+      migratedCalendarNotes++;
+    } else {
+      const defaultTime = new Date(note.updatedAt || note.createdAt);
+      const existingTime = new Date(existing.updatedAt || existing.createdAt);
+
+      if (defaultTime > existingTime) {
+        const updatedNote = { ...note, userId: actualUserId };
+        await upsertCalendarNote(updatedNote);
+        migratedCalendarNotes++;
+      } else {
+        skippedCalendarNotes++;
+      }
+    }
   }
 
   console.log('✅ Migration complete:', {
+    migrated: { migratedTasks, migratedExpenses, migratedJournals, migratedGoals, migratedCalendarNotes },
+    skipped: { skippedTasks, skippedExpenses, skippedJournals, skippedGoals, skippedCalendarNotes },
+  });
+
+  return {
     migratedTasks,
     migratedExpenses,
     migratedJournals,
     migratedGoals,
     migratedCalendarNotes,
-  });
-
-  return { migratedTasks, migratedExpenses, migratedJournals, migratedGoals, migratedCalendarNotes };
+    skippedTasks,
+    skippedExpenses,
+    skippedJournals,
+    skippedGoals,
+    skippedCalendarNotes,
+  };
 }

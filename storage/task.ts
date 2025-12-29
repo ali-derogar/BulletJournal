@@ -75,10 +75,16 @@ export async function saveTask(task: Task): Promise<void> {
     await initDB();
     const db = getDB();
 
+    // Auto-populate updatedAt if not present
+    const taskToSave: Task = {
+      ...task,
+      updatedAt: task.updatedAt || new Date().toISOString(),
+    };
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORES.TASKS], "readwrite");
       const store = transaction.objectStore(STORES.TASKS);
-      const request = store.put(task);
+      const request = store.put(taskToSave);
 
       request.onsuccess = () => {
         resolve();

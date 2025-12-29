@@ -77,6 +77,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
       ...task,
       timerRunning: true,
       timerStart: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     onUpdate(updatedTask);
   };
@@ -106,6 +107,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
       timerStart: null,
       spentTime: task.spentTime + elapsedMinutes,
       timeLogs: [...(task.timeLogs || []), timeLogEntry],
+      updatedAt: new Date().toISOString(),
     };
     onUpdate(updatedTask);
   };
@@ -128,6 +130,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
       timerStart: null,
       spentTime: 0,
       timeLogs: [], // Clear time logs when stopping completely
+      updatedAt: new Date().toISOString(),
     };
     onUpdate(updatedTask);
   };
@@ -146,6 +149,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
     const updatedTask: Task = {
       ...task,
       estimatedTime: minutes,
+      updatedAt: new Date().toISOString(),
     };
     onUpdate(updatedTask);
     setIsEditingEstimate(false);
@@ -175,6 +179,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
       ...task,
       spentTime: task.spentTime + minutes,
       timeLogs: [...(task.timeLogs || []), timeLogEntry],
+      updatedAt: new Date().toISOString(),
     };
     onUpdate(updatedTask);
     setIsAddingTime(false);
@@ -188,6 +193,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
     const updatedTask: Task = {
       ...task,
       estimatedTime: null,
+      updatedAt: new Date().toISOString(),
     };
     onUpdate(updatedTask);
   };
@@ -199,6 +205,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
     const updatedTask: Task = {
       ...task,
       isUseful,
+      updatedAt: new Date().toISOString(),
     };
     onUpdate(updatedTask);
   };
@@ -210,6 +217,7 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
     const updatedTask: Task = {
       ...task,
       isUseful: null,
+      updatedAt: new Date().toISOString(),
     };
     onUpdate(updatedTask);
   };

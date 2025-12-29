@@ -247,32 +247,46 @@ async function cleanupIncorrectUserData(userId: string): Promise<void> {
       request.onerror = () => reject(request.error);
       request.onsuccess = async () => {
         const db = request.result;
-        let deletedCount = 0;
+        let totalDeleted = 0;
 
         try {
-          // Clean up tasks with wrong userId
-          const taskTx = db.transaction('tasks', 'readwrite');
-          const taskStore = taskTx.objectStore('tasks');
-          const taskRequest = taskStore.openCursor();
+          // All stores to clean up
+          const storesToClean = ['tasks', 'expenses', 'dailyJournals', 'goals', 'calendarNotes'];
 
-          await new Promise<void>((resolveTask) => {
-            taskRequest.onsuccess = async (event) => {
-              const cursor = (event.target as IDBRequest).result;
-              if (cursor) {
-                const task = cursor.value;
-                if (task.userId !== userId) {
-                  console.log(`🗑️ Deleting task with wrong userId: ${task.id} (userId: ${task.userId})`);
-                  await cursor.delete();
-                  deletedCount++;
+          for (const storeName of storesToClean) {
+            let storeDeleted = 0;
+
+            const tx = db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            const cursorRequest = store.openCursor();
+
+            await new Promise<void>((resolveStore) => {
+              cursorRequest.onsuccess = async (event) => {
+                const cursor = (event.target as IDBRequest).result;
+                if (cursor) {
+                  const item = cursor.value;
+                  if (item.userId !== userId) {
+                    console.log(`🗑️ Deleting ${storeName} with wrong userId: ${item.id} (userId: ${item.userId})`);
+                    await cursor.delete();
+                    storeDeleted++;
+                    totalDeleted++;
+                  }
+                  cursor.continue();
+                } else {
+                  if (storeDeleted > 0) {
+                    console.log(`  → Deleted ${storeDeleted} items from ${storeName}`);
+                  }
+                  resolveStore();
                 }
-                cursor.continue();
-              } else {
-                resolveTask();
-              }
-            };
-          });
+              };
+              cursorRequest.onerror = () => {
+                console.error(`Error cleaning ${storeName}:`, cursorRequest.error);
+                resolveStore(); // Continue even if one store fails
+              };
+            });
+          }
 
-          console.log(`✅ Cleanup complete: Deleted ${deletedCount} items with incorrect userId`);
+          console.log(`✅ Cleanup complete: Deleted ${totalDeleted} total items with incorrect userId`);
           resolve();
         } catch (error) {
           console.error('Cleanup error:', error);
@@ -318,71 +332,113 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
 
     console.log('✅ After deduplication - Tasks:', uniqueTasks.length, 'Expenses:', uniqueExpenses.length, 'Journals:', uniqueJournals.length, 'Goals:', uniqueGoals.length, 'Calendar Notes:', uniqueCalendarNotes.length);
 
-    // Fix userId for all items to ensure they match current user
-    const tasksWithCorrectUserId = uniqueTasks.map(task => ({
-      ...task,
-      userId: userId,
-    }));
-    const expensesWithCorrectUserId = uniqueExpenses.map(expense => ({
-      ...expense,
-      userId: userId,
-    }));
-    const journalsWithCorrectUserId = uniqueJournals.map(journal => ({
-      ...journal,
-      userId: userId,
-    }));
-    const goalsWithCorrectUserId = uniqueGoals.map(goal => ({
-      ...goal,
-      userId: userId,
-    }));
-    const calendarNotesWithCorrectUserId = uniqueCalendarNotes.map(note => ({
-      ...note,
-      userId: userId,
-    }));
+    // Validate userId - filter out items with wrong userId instead of forcing
+    const validTasks = uniqueTasks.filter(task => {
+      if (task.userId !== userId) {
+        console.error(`❌ CRITICAL: Task ${task.id} has wrong userId: ${task.userId} (expected: ${userId})`);
+        return false; // Don't sync wrong data
+      }
+      return true;
+    });
 
-    // Transform goals for backend compatibility
-    const transformedGoals = goalsWithCorrectUserId.map(transformGoalForBackend);
+    const validExpenses = uniqueExpenses.filter(expense => {
+      if (expense.userId !== userId) {
+        console.error(`❌ CRITICAL: Expense ${expense.id} has wrong userId: ${expense.userId} (expected: ${userId})`);
+        return false;
+      }
+      return true;
+    });
 
-    // If no lastSyncAt, sync everything
+    const validJournals = uniqueJournals.filter(journal => {
+      if (journal.userId !== userId) {
+        console.error(`❌ CRITICAL: Journal ${journal.id} has wrong userId: ${journal.userId} (expected: ${userId})`);
+        return false;
+      }
+      return true;
+    });
+
+    const validGoals = uniqueGoals.filter(goal => {
+      if (goal.userId !== userId) {
+        console.error(`❌ CRITICAL: Goal ${goal.id} has wrong userId: ${goal.userId} (expected: ${userId})`);
+        return false;
+      }
+      return true;
+    });
+
+    const validCalendarNotes = uniqueCalendarNotes.filter(note => {
+      if (note.userId !== userId) {
+        console.error(`❌ CRITICAL: CalendarNote ${note.id} has wrong userId: ${note.userId} (expected: ${userId})`);
+        return false;
+      }
+      return true;
+    });
+
+    console.log('✅ After userId validation - Tasks:', validTasks.length, 'Expenses:', validExpenses.length, 'Journals:', validJournals.length, 'Goals:', validGoals.length, 'Calendar Notes:', validCalendarNotes.length);
+
+    // If no lastSyncAt, sync everything (first sync)
     if (!lastSyncAt) {
+      // Transform goals for backend compatibility
+      const transformedGoals = validGoals.map(transformGoalForBackend);
+
       return {
-        tasks: tasksWithCorrectUserId,
-        expenses: expensesWithCorrectUserId,
-        journals: journalsWithCorrectUserId,
+        tasks: validTasks,
+        expenses: validExpenses,
+        journals: validJournals,
         goals: transformedGoals,
-        calendarNotes: calendarNotesWithCorrectUserId,
+        calendarNotes: validCalendarNotes,
         reflections: [],
       };
     }
 
-    // Filter items updated since last sync
+    // Filter items updated since last sync using updatedAt or createdAt
     const lastSync = new Date(lastSyncAt);
 
-    const changedTasks = tasksWithCorrectUserId.filter((task) => {
-      // Frontend tasks don't have updatedAt field, so sync all for first sync
-      // In production, you'd add updatedAt to Task interface
-      return true; // For now, sync all tasks when lastSyncAt exists
+    const changedTasks = validTasks.filter((task) => {
+      const timestamp = task.updatedAt || task.createdAt;
+      if (!timestamp) {
+        console.warn(`Task ${task.id} has no timestamp, including in sync`);
+        return true; // Include items without timestamps to be safe
+      }
+      return new Date(timestamp) > lastSync;
     });
 
-    const changedExpenses = expensesWithCorrectUserId.filter((expense) => {
-      // Same for expenses
-      return true;
+    const changedExpenses = validExpenses.filter((expense) => {
+      const timestamp = expense.updatedAt || expense.createdAt;
+      if (!timestamp) {
+        console.warn(`Expense ${expense.id} has no timestamp, including in sync`);
+        return true;
+      }
+      return new Date(timestamp) > lastSync;
     });
 
-    const changedJournals = journalsWithCorrectUserId.filter((journal) => {
-      // Same for journals
-      return true;
+    const changedJournals = validJournals.filter((journal) => {
+      const timestamp = journal.updatedAt || journal.createdAt;
+      if (!timestamp) {
+        console.warn(`Journal ${journal.id} has no timestamp, including in sync`);
+        return true;
+      }
+      return new Date(timestamp) > lastSync;
     });
 
-    const changedGoals = goalsWithCorrectUserId.filter((goal) => {
-      // Same for goals
-      return true;
+    const changedGoals = validGoals.filter((goal) => {
+      const timestamp = goal.updatedAt || goal.createdAt;
+      if (!timestamp) {
+        console.warn(`Goal ${goal.id} has no timestamp, including in sync`);
+        return true;
+      }
+      return new Date(timestamp) > lastSync;
     });
 
-    const changedCalendarNotes = calendarNotesWithCorrectUserId.filter((note) => {
-      // Same for calendar notes
-      return true;
+    const changedCalendarNotes = validCalendarNotes.filter((note) => {
+      const timestamp = note.updatedAt || note.createdAt;
+      if (!timestamp) {
+        console.warn(`CalendarNote ${note.id} has no timestamp, including in sync`);
+        return true;
+      }
+      return new Date(timestamp) > lastSync;
     });
+
+    console.log('✅ After incremental filtering - Tasks:', changedTasks.length, 'Expenses:', changedExpenses.length, 'Journals:', changedJournals.length, 'Goals:', changedGoals.length, 'Calendar Notes:', changedCalendarNotes.length);
 
     // Transform goals for backend compatibility
     const transformedChangedGoals = changedGoals.map(transformGoalForBackend);

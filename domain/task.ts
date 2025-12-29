@@ -14,6 +14,7 @@ export interface Task {
   title: string;
   status: TaskStatus;
   createdAt: string;
+  updatedAt?: string; // Optional for backward compatibility, auto-populated on save
   // Time tracking - spentTime is the single source of truth
   spentTime: number; // Total time spent in minutes
   timeLogs: TimeLogEntry[]; // Array of time log entries

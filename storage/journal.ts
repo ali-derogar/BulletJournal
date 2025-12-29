@@ -48,10 +48,16 @@ export async function saveDay(journal: DailyJournal): Promise<void> {
     await initDB();
     const db = getDB();
 
+    // Auto-populate updatedAt if not present
+    const journalToSave: DailyJournal = {
+      ...journal,
+      updatedAt: journal.updatedAt || new Date().toISOString(),
+    };
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORES.DAILY_JOURNALS], "readwrite");
       const store = transaction.objectStore(STORES.DAILY_JOURNALS);
-      const request = store.put(journal);
+      const request = store.put(journalToSave);
 
       request.onsuccess = () => {
         resolve();

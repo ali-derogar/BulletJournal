@@ -7,4 +7,5 @@ export interface DailyJournal {
   sleepId: string | null;
   moodId: string | null;
   createdAt: string;
+  updatedAt?: string; // Optional for backward compatibility, auto-populated on save
 }

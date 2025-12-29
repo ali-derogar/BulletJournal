@@ -73,13 +73,15 @@ export default function Tasks({ date, userId }: TasksProps) {
     if (!newTaskTitle.trim()) return;
 
     try {
+      const now = new Date().toISOString();
       const newTask: Task = {
         id: `task-${date}-${Date.now()}`,
         userId,
         date,
         title: newTaskTitle.trim(),
         status: "todo",
-        createdAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now, // Set updatedAt for sync tracking
         // Initialize timer fields
         spentTime: 0,
         timeLogs: [],
@@ -103,7 +105,7 @@ export default function Tasks({ date, userId }: TasksProps) {
       const task = tasks.find((t) => t.id === taskId);
       if (!task) return;
 
-      const updatedTask = { ...task, status: newStatus };
+      const updatedTask = { ...task, status: newStatus, updatedAt: new Date().toISOString() };
       await saveTask(updatedTask);
       setTasks(tasks.map((t) => (t.id === taskId ? updatedTask : t)));
     } catch (error) {
@@ -123,7 +125,7 @@ export default function Tasks({ date, userId }: TasksProps) {
       const task = tasks.find((t) => t.id === taskId);
       if (!task) return;
 
-      const updatedTask = { ...task, title: editingTitle.trim() };
+      const updatedTask = { ...task, title: editingTitle.trim(), updatedAt: new Date().toISOString() };
       await saveTask(updatedTask);
       setTasks(tasks.map((t) => (t.id === taskId ? updatedTask : t)));
       setEditingId(null);

@@ -53,13 +53,15 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
     if (isNaN(amount) || amount <= 0) return;
 
     try {
+      const now = new Date().toISOString();
       const newExpense: Expense = {
         id: `expense-${date}-${Date.now()}`,
         userId,
         date,
         title: newTitle.trim(),
         amount,
-        createdAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now, // Set updatedAt for sync tracking
       };
 
       await saveExpense(newExpense);
@@ -91,6 +93,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
         ...expense,
         title: editingTitle.trim(),
         amount,
+        updatedAt: new Date().toISOString(), // Set updatedAt for sync tracking
       };
 
       await saveExpense(updatedExpense);

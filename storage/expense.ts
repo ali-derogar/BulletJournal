@@ -48,10 +48,16 @@ export async function saveExpense(expense: Expense): Promise<void> {
     await initDB();
     const db = getDB();
 
+    // Auto-populate updatedAt if not present
+    const expenseToSave: Expense = {
+      ...expense,
+      updatedAt: expense.updatedAt || new Date().toISOString(),
+    };
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORES.EXPENSES], "readwrite");
       const store = transaction.objectStore(STORES.EXPENSES);
-      const request = store.put(expense);
+      const request = store.put(expenseToSave);
 
       request.onsuccess = () => {
         resolve();

@@ -91,19 +91,36 @@ export default function AuthButton() {
             </div>
           </div>
 
-          {/* Logout Button */}
-          <button
-            onClick={() => {
-              logout();
-              setShowUserMenu(false);
-            }}
-            className="w-full px-4 py-3 text-left text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
-          >
-            <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </Icon>
-            <span>Logout</span>
-          </button>
+          {/* Logout Buttons */}
+          <div className="border-t border-border">
+            <button
+              onClick={() => {
+                logout(false); // Keep data
+                setShowUserMenu(false);
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2"
+            >
+              <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </Icon>
+              <span>Logout (Keep Data)</span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (confirm('Are you sure you want to delete all your local data? You can download it from the server on next login.')) {
+                  logout(true); // Clear data
+                  setShowUserMenu(false);
+                }
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-2 border-t border-border"
+            >
+              <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </Icon>
+              <span>Logout & Clear Data</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
