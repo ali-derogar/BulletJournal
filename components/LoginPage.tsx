@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthContext';
+import InstallButton from '@/components/InstallButton';
 
 export default function LoginPage() {
     const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -64,12 +65,17 @@ export default function LoginPage() {
             <div className="bg-gradient-to-br from-white via-white to-gray-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-gray-200/50 dark:border-gray-700/50">
                 {/* Header */}
                 <div className="p-6 pb-4">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                        {mode === 'login' ? 'Welcome Back' : 'Join Us'}
-                    </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {mode === 'login' ? 'Sign in to your account' : 'Create your new account'}
-                    </p>
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                {mode === 'login' ? 'Welcome Back' : 'Join Us'}
+                            </h2>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {mode === 'login' ? 'Sign in to your account' : 'Create your new account'}
+                            </p>
+                        </div>
+                        <InstallButton />
+                    </div>
                 </div>
 
                 {/* Online/Offline Warning */}
