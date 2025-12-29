@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   title: "Bullet Journal v1.1.0",
   description: "Offline-first Progressive Web Application",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/apple-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
