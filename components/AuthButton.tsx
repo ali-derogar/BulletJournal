@@ -74,7 +74,7 @@ export default function AuthButton() {
 
       {/* Dropdown Menu */}
       {showUserMenu && (
-        <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-card border border-border rounded-lg shadow-lg z-[100]">
           {/* User Info (mobile) */}
           <div className="sm:hidden px-4 py-3 border-b border-border">
             <p className="text-sm font-medium text-card-foreground">{user?.name}</p>

@@ -35,7 +35,7 @@ export default function Home() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-gradient-to-r from-card via-card to-card shadow-lg border-b-2 border-primary/20 px-2 sm:px-4 py-3 backdrop-blur-sm bg-card/95"
+        className="bg-gradient-to-r from-card via-card to-card shadow-lg border-b-2 border-primary/20 px-2 sm:px-4 py-3 backdrop-blur-sm bg-card/95 relative z-[60]"
       >
         <div className="max-w-4xl mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <motion.div
