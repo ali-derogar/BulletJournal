@@ -18,7 +18,7 @@ interface AuthContextType {
   isOnline: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: (clearData?: boolean) => Promise<void>;
   updateUserName: (name: string) => Promise<void>;
   error: string | null;
   clearError: () => void;
