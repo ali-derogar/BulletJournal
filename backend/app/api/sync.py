@@ -31,6 +31,9 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
+            # Remove timezone info to match datetime.utcnow() (timezone-naive)
+            if client_updated_at.tzinfo is not None:
+                client_updated_at = client_updated_at.replace(tzinfo=None)
         except:
             client_updated_at = None
 
@@ -94,7 +97,11 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
             if field in db_task_data and isinstance(db_task_data[field], str):
                 try:
                     from dateutil import parser
-                    db_task_data[field] = parser.parse(db_task_data[field])
+                    parsed_dt = parser.parse(db_task_data[field])
+                    # Remove timezone info to match datetime.utcnow()
+                    if parsed_dt.tzinfo is not None:
+                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    db_task_data[field] = parsed_dt
                 except:
                     db_task_data[field] = None
 
@@ -116,6 +123,9 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
+            # Remove timezone info to match datetime.utcnow() (timezone-naive)
+            if client_updated_at.tzinfo is not None:
+                client_updated_at = client_updated_at.replace(tzinfo=None)
         except:
             client_updated_at = None
 
@@ -166,7 +176,11 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
             if field in db_expense_data and isinstance(db_expense_data[field], str):
                 try:
                     from dateutil import parser
-                    db_expense_data[field] = parser.parse(db_expense_data[field])
+                    parsed_dt = parser.parse(db_expense_data[field])
+                    # Remove timezone info to match datetime.utcnow()
+                    if parsed_dt.tzinfo is not None:
+                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    db_expense_data[field] = parsed_dt
                 except:
                     db_expense_data[field] = None
 
@@ -188,6 +202,9 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
+            # Remove timezone info to match datetime.utcnow() (timezone-naive)
+            if client_updated_at.tzinfo is not None:
+                client_updated_at = client_updated_at.replace(tzinfo=None)
         except:
             client_updated_at = None
 
@@ -236,7 +253,11 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
             if field in db_journal_data and isinstance(db_journal_data[field], str):
                 try:
                     from dateutil import parser
-                    db_journal_data[field] = parser.parse(db_journal_data[field])
+                    parsed_dt = parser.parse(db_journal_data[field])
+                    # Remove timezone info to match datetime.utcnow()
+                    if parsed_dt.tzinfo is not None:
+                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    db_journal_data[field] = parsed_dt
                 except:
                     db_journal_data[field] = None
 
@@ -258,6 +279,9 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
+            # Remove timezone info to match datetime.utcnow() (timezone-naive)
+            if client_updated_at.tzinfo is not None:
+                client_updated_at = client_updated_at.replace(tzinfo=None)
         except:
             client_updated_at = None
 
@@ -308,7 +332,11 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
             if field in db_reflection_data and isinstance(db_reflection_data[field], str):
                 try:
                     from dateutil import parser
-                    db_reflection_data[field] = parser.parse(db_reflection_data[field])
+                    parsed_dt = parser.parse(db_reflection_data[field])
+                    # Remove timezone info to match datetime.utcnow()
+                    if parsed_dt.tzinfo is not None:
+                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    db_reflection_data[field] = parsed_dt
                 except:
                     db_reflection_data[field] = None
 
@@ -330,6 +358,9 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
+            # Remove timezone info to match datetime.utcnow() (timezone-naive)
+            if client_updated_at.tzinfo is not None:
+                client_updated_at = client_updated_at.replace(tzinfo=None)
         except:
             client_updated_at = None
 
@@ -369,7 +400,11 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
             if field in db_goal_data and isinstance(db_goal_data[field], str):
                 try:
                     from dateutil import parser
-                    db_goal_data[field] = parser.parse(db_goal_data[field])
+                    parsed_dt = parser.parse(db_goal_data[field])
+                    # Remove timezone info to match datetime.utcnow()
+                    if parsed_dt.tzinfo is not None:
+                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    db_goal_data[field] = parsed_dt
                 except:
                     db_goal_data[field] = None
 
@@ -391,6 +426,9 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
+            # Remove timezone info to match datetime.utcnow() (timezone-naive)
+            if client_updated_at.tzinfo is not None:
+                client_updated_at = client_updated_at.replace(tzinfo=None)
         except:
             client_updated_at = None
 
@@ -430,7 +468,11 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
             if field in db_note_data and isinstance(db_note_data[field], str):
                 try:
                     from dateutil import parser
-                    db_note_data[field] = parser.parse(db_note_data[field])
+                    parsed_dt = parser.parse(db_note_data[field])
+                    # Remove timezone info to match datetime.utcnow()
+                    if parsed_dt.tzinfo is not None:
+                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    db_note_data[field] = parsed_dt
                 except:
                     db_note_data[field] = None
 
