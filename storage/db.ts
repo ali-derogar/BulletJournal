@@ -1,5 +1,5 @@
 const DB_NAME = "BulletJournalDB";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export const STORES = {
   DAILY_JOURNALS: "dailyJournals",
@@ -10,14 +10,16 @@ export const STORES = {
   USERS: "users",
   GOALS: "goals",
   CALENDAR_NOTES: "calendarNotes",
+  AI_SESSIONS: "ai_sessions",
+  AI_MESSAGES: "ai_messages",
 } as const;
 
 let dbInstance: IDBDatabase | null = null;
 
 export async function initDB(): Promise<IDBDatabase> {
   // Reset instance if we need to force a reconnect
-  if (dbInstance && (!dbInstance.objectStoreNames.contains(STORES.GOALS) || !dbInstance.objectStoreNames.contains(STORES.CALENDAR_NOTES))) {
-    console.log("Database instance exists but missing stores, resetting...");
+  if (dbInstance && (!dbInstance.objectStoreNames.contains(STORES.GOALS) || !dbInstance.objectStoreNames.contains(STORES.CALENDAR_NOTES) || !dbInstance.objectStoreNames.contains(STORES.AI_SESSIONS))) {
+    console.log("Database instance exists but missing stores or outdated, resetting...");
     dbInstance.close();
     dbInstance = null;
   }
@@ -36,7 +38,6 @@ export async function initDB(): Promise<IDBDatabase> {
     request.onsuccess = () => {
       dbInstance = request.result;
       console.log("Database opened successfully, stores:", Array.from(request.result.objectStoreNames));
-      console.log("Goals store exists:", request.result.objectStoreNames.contains(STORES.GOALS));
       resolve(request.result);
     };
 
@@ -107,6 +108,22 @@ export async function initDB(): Promise<IDBDatabase> {
         });
         calendarStore.createIndex("userId", "userId", { unique: false });
         calendarStore.createIndex("date", "date", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORES.AI_SESSIONS)) {
+        const aiSessionStore = db.createObjectStore(STORES.AI_SESSIONS, {
+          keyPath: "id",
+        });
+        aiSessionStore.createIndex("userId", "userId", { unique: false });
+        aiSessionStore.createIndex("updatedAt", "updatedAt", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORES.AI_MESSAGES)) {
+        const aiMessageStore = db.createObjectStore(STORES.AI_MESSAGES, {
+          keyPath: "id",
+        });
+        aiMessageStore.createIndex("sessionId", "sessionId", { unique: false });
+        aiMessageStore.createIndex("timestamp", "timestamp", { unique: false });
       }
     };
   });

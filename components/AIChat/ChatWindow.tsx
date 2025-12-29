@@ -1,8 +1,19 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ChatMessage } from '@/services/ai';
+import {
+  getAISessions,
+  saveAISession,
+  getAIMessages,
+  saveAIMessage,
+  deleteAISession,
+  type AISession,
+  type AIMessage
+} from '@/storage/ai';
+const generateId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+import Icon from '@/components/Icon';
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -12,11 +23,70 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ isOpen, userId, isFullScreen = false }: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessions, setSessions] = useState<AISession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showSessions, setShowSessions] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingContext, setIsLoadingContext] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load sessions on mount
+  useEffect(() => {
+    if (userId) {
+      loadSessions();
+    }
+  }, [userId]);
+
+  const loadSessions = async () => {
+    const userSessions = await getAISessions(userId);
+    setSessions(userSessions);
+
+    // If no session is selected, select the most recent one or create a new one
+    if (userSessions.length > 0) {
+      handleSelectSession(userSessions[0].id);
+    } else {
+      createNewSession();
+    }
+  };
+
+  const createNewSession = async () => {
+    const newSession: AISession = {
+      id: generateId(),
+      userId,
+      title: "New Chat",
+      updatedAt: new Date().toISOString(),
+    };
+    await saveAISession(newSession);
+    setSessions(prev => [newSession, ...prev]);
+    setCurrentSessionId(newSession.id);
+    setMessages([]);
+  };
+
+  const handleSelectSession = async (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    const sessionMessages = await getAIMessages(sessionId);
+    setMessages(sessionMessages.map(m => ({ role: m.role, content: m.content })));
+    setShowSessions(false);
+  };
+
+  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this chat?')) {
+      await deleteAISession(sessionId);
+      const updatedSessions = sessions.filter(s => s.id !== sessionId);
+      setSessions(updatedSessions);
+
+      if (currentSessionId === sessionId) {
+        if (updatedSessions.length > 0) {
+          handleSelectSession(updatedSessions[0].id);
+        } else {
+          createNewSession();
+        }
+      }
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -39,6 +109,21 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
       role: 'user',
       content: input.trim(),
     };
+
+    // Save user message to DB
+    if (currentSessionId) {
+      const dbUserMessage: AIMessage = {
+        id: generateId(),
+        sessionId: currentSessionId,
+        role: 'user',
+        content: userMessage.content,
+        timestamp: new Date().toISOString(),
+      };
+      await saveAIMessage(dbUserMessage);
+      // Refresh sessions to update title if it was "New Chat"
+      const updatedSessions = await getAISessions(userId);
+      setSessions(updatedSessions);
+    }
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');
@@ -87,6 +172,19 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
           role: 'assistant',
           content: response.message,
         };
+
+        // Save assistant message to DB
+        if (currentSessionId) {
+          const dbAssistantMessage: AIMessage = {
+            id: generateId(),
+            sessionId: currentSessionId,
+            role: 'assistant',
+            content: assistantMessage.content,
+            timestamp: new Date().toISOString(),
+          };
+          await saveAIMessage(dbAssistantMessage);
+        }
+
         setMessages(prev => [...prev, assistantMessage]);
       }
     } catch (error) {
@@ -127,6 +225,15 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
             {/* Header: Layered Premium Look */}
             <div className="relative bg-gradient-to-br from-indigo-600/90 via-purple-600/90 to-pink-500/90 p-5 flex items-center justify-between border-b border-white/10">
               <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setShowSessions(!showSessions)}
+                  className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all border border-white/20"
+                  title="History"
+                >
+                  <Icon className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </Icon>
+                </button>
                 <div className="relative">
                   <motion.div
                     animate={{ rotate: 360 }}
@@ -156,6 +263,68 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
                 </svg>
               </button>
             </div>
+
+            {/* Sessions Overlay */}
+            <AnimatePresence>
+              {showSessions && (
+                <motion.div
+                  initial={{ x: -300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="absolute inset-y-0 left-0 w-80 bg-gray-900/95 backdrop-blur-2xl z-50 border-r border-white/10 shadow-2xl flex flex-col"
+                >
+                  <div className="p-5 border-b border-white/10 flex items-center justify-between">
+                    <h4 className="text-white font-bold text-lg">Recent Chats</h4>
+                    <button onClick={() => setShowSessions(false)} className="text-white/60 hover:text-white p-1">
+                      <Icon className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </Icon>
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
+                    <button
+                      onClick={createNewSession}
+                      className="w-full p-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold flex items-center gap-3 transition-all shadow-lg shadow-indigo-600/20"
+                    >
+                      <Icon className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </Icon>
+                      New Conversation
+                    </button>
+
+                    <div className="space-y-1">
+                      {sessions.map(session => (
+                        <div
+                          key={session.id}
+                          onClick={() => handleSelectSession(session.id)}
+                          className={`group relative p-4 rounded-2xl border cursor-pointer transition-all ${currentSessionId === session.id
+                              ? 'bg-white/10 border-indigo-500/50 text-white shadow-inner'
+                              : 'bg-transparent border-transparent text-white/60 hover:bg-white/5 hover:text-white'
+                            }`}
+                        >
+                          <div className="pr-10">
+                            <p className="text-sm font-semibold truncate">{session.title}</p>
+                            <p className="text-[10px] uppercase tracking-widest font-bold opacity-30 mt-1">
+                              {new Date(session.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => handleDeleteSession(e, session.id)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
+                          >
+                            <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </Icon>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Messages area: Soft backgrounds, Smooth bubbles */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-white/5 dark:bg-transparent">
@@ -201,8 +370,8 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
                 >
                   <div
                     className={`relative max-w-[85%] px-5 py-4 rounded-3xl text-sm font-medium leading-relaxed drop-shadow-sm ${message.role === 'user'
-                        ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20'
-                        : 'bg-white dark:bg-gray-800/80 text-gray-800 dark:text-gray-100 border border-white/10 shadow-lg'
+                      ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/20'
+                      : 'bg-white dark:bg-gray-800/80 text-gray-800 dark:text-gray-100 border border-white/10 shadow-lg'
                       }`}
                   >
                     <p className="whitespace-pre-wrap">{message.content}</p>
