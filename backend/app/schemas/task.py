@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from typing import Optional, List, Any
 import json
@@ -24,20 +24,20 @@ class TaskUpdate(BaseModel):
 
 class Task(TaskBase):
     created_at: Optional[datetime] = None
-    createdAt: Optional[str] = None
+    createdAt: Optional[datetime] = Field(None, alias="created_at")
     updatedAt: Optional[datetime] = None
     deletedAt: Optional[datetime] = None
     spentTime: Optional[float] = 0.0  # Total time spent in minutes
     timeLogs: Optional[Any] = None  # Can accept array or JSON string
     accumulatedTime: Optional[float] = 0.0  # Legacy field for migration (camelCase)
     accumulated_time: Optional[float] = 0.0  # Legacy field for migration (snake_case)
-    timerRunning: Optional[bool] = False  # camelCase
+    timerRunning: Optional[bool] = Field(False, alias="timer_running")  # camelCase with alias
     timer_running: Optional[bool] = False  # snake_case
-    timerStart: Optional[str] = None  # camelCase
+    timerStart: Optional[datetime] = Field(None, alias="timer_start")  # camelCase with alias
     timer_start: Optional[datetime] = None  # snake_case
-    estimatedTime: Optional[float] = None  # camelCase
+    estimatedTime: Optional[float] = Field(None, alias="estimated_time")  # camelCase with alias
     estimated_time: Optional[float] = None  # snake_case
-    isUseful: Optional[bool] = None  # camelCase
+    isUseful: Optional[bool] = Field(None, alias="is_useful")  # camelCase with alias
     is_useful: Optional[bool] = None  # snake_case
 
     @field_validator('timeLogs', mode='before')

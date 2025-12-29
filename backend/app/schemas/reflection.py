@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
@@ -14,9 +14,11 @@ class ReflectionCreate(ReflectionBase):
 
 class Reflection(ReflectionBase):
     userId: str
+    createdAt: Optional[datetime] = Field(None, alias="created_at")
     created_at: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
     deletedAt: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+        populate_by_name = True

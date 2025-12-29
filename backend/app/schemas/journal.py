@@ -49,7 +49,7 @@ class DailyJournalUpdate(BaseModel):
         return json.dumps(v)
 
 class DailyJournal(DailyJournalBase):
-    createdAt: Optional[str] = None
+    createdAt: Optional[datetime] = Field(None, alias="created_at")
     created_at: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
     deletedAt: Optional[datetime] = None

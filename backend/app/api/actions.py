@@ -60,12 +60,17 @@ class ListTasksRequest(BaseModel):
 # Response models
 class TaskResponse(BaseModel):
     id: str
+    userId: str
     title: str
     date: str
     status: str
-    estimatedTime: Optional[float]
+    estimatedTime: Optional[float] = Field(None, alias="estimated_time")
     spentTime: float
-    createdAt: datetime
+    isUseful: Optional[bool] = Field(None, alias="is_useful")
+    createdAt: datetime = Field(..., alias="created_at")
+    timerRunning: bool = Field(False, alias="timer_running")
+    timerStart: Optional[datetime] = Field(None, alias="timer_start")
+    timeLogs: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -139,12 +144,7 @@ async def create_task_action(
         return ActionResponse(
             success=True,
             message=f"Added '{task_request.title}' for {task_request.date}",
-            data={
-                "id": new_task.id,
-                "title": new_task.title,
-                "date": new_task.date,
-                "status": new_task.status
-            }
+            data=TaskResponse.from_orm(new_task).dict()
         )
 
     except Exception as e:
@@ -215,13 +215,7 @@ async def create_goal_action(
         return ActionResponse(
             success=True,
             message=f"Added goal '{goal_request.title}' for {period_desc[goal_request.type]}",
-            data={
-                "id": new_goal.id,
-                "title": new_goal.title,
-                "type": new_goal.type,
-                "targetValue": new_goal.targetValue,
-                "unit": new_goal.unit
-            }
+            data=GoalResponse.from_orm(new_goal).dict()
         )
 
     except HTTPException:
@@ -268,12 +262,8 @@ async def create_calendar_note_action(
 
         return ActionResponse(
             success=True,
-            message=f"Added calendar note for {note_request.date}",
-            data={
-                "id": new_note.id,
-                "date": new_note.date,
-                "note": new_note.note
-            }
+            message=f"Added note for {note_request.date}",
+            data=CalendarNoteResponse.from_orm(new_note).dict()
         )
 
     except Exception as e:
