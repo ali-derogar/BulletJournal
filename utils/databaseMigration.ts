@@ -1,11 +1,12 @@
 "use client";
+import { DB_NAME, DB_VERSION } from "../storage/db";
 
 // Database migration helper for goals feature
 export async function checkDatabaseMigration(): Promise<boolean> {
   try {
-    // Force database upgrade by opening with version 3
+    // Force database upgrade by opening with current version
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("BulletJournalDB", 3);
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
@@ -30,7 +31,7 @@ export async function checkDatabaseMigration(): Promise<boolean> {
 
 async function forceDatabaseUpgrade(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("BulletJournalDB", 3);
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onsuccess = () => {
       console.log("Database upgrade completed successfully");
       request.result.close();
@@ -48,7 +49,7 @@ async function forceDatabaseUpgrade(): Promise<void> {
 
 export async function clearDatabase(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const deleteRequest = indexedDB.deleteDatabase("BulletJournalDB");
+    const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
     deleteRequest.onsuccess = () => {
       console.log("Database cleared successfully");
       resolve();
@@ -73,7 +74,7 @@ export async function migrateDatabase(): Promise<void> {
 
   // Force database upgrade by opening with new version
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("BulletJournalDB", 3);
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onsuccess = () => {
       console.log("Database migration successful");
       request.result.close();

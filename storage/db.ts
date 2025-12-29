@@ -1,5 +1,5 @@
-const DB_NAME = "BulletJournalDB";
-const DB_VERSION = 4;
+export const DB_NAME = "BulletJournalDB";
+export const DB_VERSION = 4;
 
 export const STORES = {
   DAILY_JOURNALS: "dailyJournals",
