@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 import logging
@@ -31,9 +31,9 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
-            # Remove timezone info to match datetime.utcnow() (timezone-naive)
-            if client_updated_at.tzinfo is not None:
-                client_updated_at = client_updated_at.replace(tzinfo=None)
+            # Ensure timezone-aware (add UTC if naive)
+            if client_updated_at.tzinfo is None:
+                client_updated_at = client_updated_at.replace(tzinfo=timezone.utc)
         except:
             client_updated_at = None
 
@@ -48,7 +48,7 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
                 for key, value in task_data.items():
                     if hasattr(existing_task, key) and key != "id":
                         setattr(existing_task, key, value)
-                existing_task.updatedAt = datetime.utcnow()
+                existing_task.updatedAt = datetime.now(timezone.utc)
                 db.commit()
                 return False  # No conflict, just updated
             else:
@@ -59,7 +59,7 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
             for key, value in task_data.items():
                 if hasattr(existing_task, key) and key != "id":
                     setattr(existing_task, key, value)
-            existing_task.updatedAt = datetime.utcnow()
+            existing_task.updatedAt = datetime.now(timezone.utc)
             db.commit()
             return False
     else:
@@ -98,16 +98,16 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
                 try:
                     from dateutil import parser
                     parsed_dt = parser.parse(db_task_data[field])
-                    # Remove timezone info to match datetime.utcnow()
-                    if parsed_dt.tzinfo is not None:
-                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    # Ensure timezone-aware (add UTC if naive)
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
                     db_task_data[field] = parsed_dt
                 except:
                     db_task_data[field] = None
 
         db_task_data["userId"] = user_id
         new_task = Task(**db_task_data)
-        new_task.updatedAt = datetime.utcnow()
+        new_task.updatedAt = datetime.now(timezone.utc)
         db.add(new_task)
         db.commit()
         db.refresh(new_task)
@@ -123,9 +123,9 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
-            # Remove timezone info to match datetime.utcnow() (timezone-naive)
-            if client_updated_at.tzinfo is not None:
-                client_updated_at = client_updated_at.replace(tzinfo=None)
+            # Ensure timezone-aware (add UTC if naive)
+            if client_updated_at.tzinfo is None:
+                client_updated_at = client_updated_at.replace(tzinfo=timezone.utc)
         except:
             client_updated_at = None
 
@@ -137,7 +137,7 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
                 for key, value in expense_data.items():
                     if hasattr(existing_expense, key) and key != "id":
                         setattr(existing_expense, key, value)
-                existing_expense.updatedAt = datetime.utcnow()
+                existing_expense.updatedAt = datetime.now(timezone.utc)
                 db.commit()
                 return False
             else:
@@ -146,7 +146,7 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
             for key, value in expense_data.items():
                 if hasattr(existing_expense, key) and key != "id":
                     setattr(existing_expense, key, value)
-            existing_expense.updatedAt = datetime.utcnow()
+            existing_expense.updatedAt = datetime.now(timezone.utc)
             db.commit()
             return False
     else:
@@ -177,16 +177,16 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
                 try:
                     from dateutil import parser
                     parsed_dt = parser.parse(db_expense_data[field])
-                    # Remove timezone info to match datetime.utcnow()
-                    if parsed_dt.tzinfo is not None:
-                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    # Ensure timezone-aware (add UTC if naive)
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
                     db_expense_data[field] = parsed_dt
                 except:
                     db_expense_data[field] = None
 
         db_expense_data["userId"] = user_id
         new_expense = Expense(**db_expense_data)
-        new_expense.updatedAt = datetime.utcnow()
+        new_expense.updatedAt = datetime.now(timezone.utc)
         db.add(new_expense)
         db.commit()
         db.refresh(new_expense)
@@ -202,9 +202,9 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
-            # Remove timezone info to match datetime.utcnow() (timezone-naive)
-            if client_updated_at.tzinfo is not None:
-                client_updated_at = client_updated_at.replace(tzinfo=None)
+            # Ensure timezone-aware (add UTC if naive)
+            if client_updated_at.tzinfo is None:
+                client_updated_at = client_updated_at.replace(tzinfo=timezone.utc)
         except:
             client_updated_at = None
 
@@ -225,7 +225,7 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
                 for key, value in db_journal_data.items():
                     if hasattr(existing_journal, key) and key != "id":
                         setattr(existing_journal, key, value)
-                existing_journal.updatedAt = datetime.utcnow()
+                existing_journal.updatedAt = datetime.now(timezone.utc)
                 db.commit()
                 return False
             else:
@@ -234,7 +234,7 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
             for key, value in db_journal_data.items():
                 if hasattr(existing_journal, key) and key != "id":
                     setattr(existing_journal, key, value)
-            existing_journal.updatedAt = datetime.utcnow()
+            existing_journal.updatedAt = datetime.now(timezone.utc)
             db.commit()
             return False
     else:
@@ -254,16 +254,16 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
                 try:
                     from dateutil import parser
                     parsed_dt = parser.parse(db_journal_data[field])
-                    # Remove timezone info to match datetime.utcnow()
-                    if parsed_dt.tzinfo is not None:
-                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    # Ensure timezone-aware (add UTC if naive)
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
                     db_journal_data[field] = parsed_dt
                 except:
                     db_journal_data[field] = None
 
         db_journal_data["userId"] = user_id
         new_journal = DailyJournal(**db_journal_data)
-        new_journal.updatedAt = datetime.utcnow()
+        new_journal.updatedAt = datetime.now(timezone.utc)
         db.add(new_journal)
         db.commit()
         db.refresh(new_journal)
@@ -279,9 +279,9 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
-            # Remove timezone info to match datetime.utcnow() (timezone-naive)
-            if client_updated_at.tzinfo is not None:
-                client_updated_at = client_updated_at.replace(tzinfo=None)
+            # Ensure timezone-aware (add UTC if naive)
+            if client_updated_at.tzinfo is None:
+                client_updated_at = client_updated_at.replace(tzinfo=timezone.utc)
         except:
             client_updated_at = None
 
@@ -293,7 +293,7 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
                 for key, value in reflection_data.items():
                     if hasattr(existing_reflection, key) and key != "id":
                         setattr(existing_reflection, key, value)
-                existing_reflection.updatedAt = datetime.utcnow()
+                existing_reflection.updatedAt = datetime.now(timezone.utc)
                 db.commit()
                 return False
             else:
@@ -302,7 +302,7 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
             for key, value in reflection_data.items():
                 if hasattr(existing_reflection, key) and key != "id":
                     setattr(existing_reflection, key, value)
-            existing_reflection.updatedAt = datetime.utcnow()
+            existing_reflection.updatedAt = datetime.now(timezone.utc)
             db.commit()
             return False
     else:
@@ -333,16 +333,16 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
                 try:
                     from dateutil import parser
                     parsed_dt = parser.parse(db_reflection_data[field])
-                    # Remove timezone info to match datetime.utcnow()
-                    if parsed_dt.tzinfo is not None:
-                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    # Ensure timezone-aware (add UTC if naive)
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
                     db_reflection_data[field] = parsed_dt
                 except:
                     db_reflection_data[field] = None
 
         db_reflection_data["userId"] = user_id
         new_reflection = Reflection(**db_reflection_data)
-        new_reflection.updatedAt = datetime.utcnow()
+        new_reflection.updatedAt = datetime.now(timezone.utc)
         db.add(new_reflection)
         db.commit()
         db.refresh(new_reflection)
@@ -358,9 +358,9 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
-            # Remove timezone info to match datetime.utcnow() (timezone-naive)
-            if client_updated_at.tzinfo is not None:
-                client_updated_at = client_updated_at.replace(tzinfo=None)
+            # Ensure timezone-aware (add UTC if naive)
+            if client_updated_at.tzinfo is None:
+                client_updated_at = client_updated_at.replace(tzinfo=timezone.utc)
         except:
             client_updated_at = None
 
@@ -372,7 +372,7 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
                 for key, value in goal_data.items():
                     if hasattr(existing_goal, key) and key != "id":
                         setattr(existing_goal, key, value)
-                existing_goal.updatedAt = datetime.utcnow()
+                existing_goal.updatedAt = datetime.now(timezone.utc)
                 db.commit()
                 return False
             else:
@@ -381,7 +381,7 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
             for key, value in goal_data.items():
                 if hasattr(existing_goal, key) and key != "id":
                     setattr(existing_goal, key, value)
-            existing_goal.updatedAt = datetime.utcnow()
+            existing_goal.updatedAt = datetime.now(timezone.utc)
             db.commit()
             return False
     else:
@@ -401,16 +401,16 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
                 try:
                     from dateutil import parser
                     parsed_dt = parser.parse(db_goal_data[field])
-                    # Remove timezone info to match datetime.utcnow()
-                    if parsed_dt.tzinfo is not None:
-                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    # Ensure timezone-aware (add UTC if naive)
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
                     db_goal_data[field] = parsed_dt
                 except:
                     db_goal_data[field] = None
 
         db_goal_data["userId"] = user_id
         new_goal = Goal(**db_goal_data)
-        new_goal.updatedAt = datetime.utcnow()
+        new_goal.updatedAt = datetime.now(timezone.utc)
         db.add(new_goal)
         db.commit()
         db.refresh(new_goal)
@@ -426,9 +426,9 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
         try:
             from dateutil import parser
             client_updated_at = parser.parse(client_updated_at)
-            # Remove timezone info to match datetime.utcnow() (timezone-naive)
-            if client_updated_at.tzinfo is not None:
-                client_updated_at = client_updated_at.replace(tzinfo=None)
+            # Ensure timezone-aware (add UTC if naive)
+            if client_updated_at.tzinfo is None:
+                client_updated_at = client_updated_at.replace(tzinfo=timezone.utc)
         except:
             client_updated_at = None
 
@@ -440,7 +440,7 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
                 for key, value in note_data.items():
                     if hasattr(existing_note, key) and key != "id":
                         setattr(existing_note, key, value)
-                existing_note.updatedAt = datetime.utcnow()
+                existing_note.updatedAt = datetime.now(timezone.utc)
                 db.commit()
                 return False
             else:
@@ -449,7 +449,7 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
             for key, value in note_data.items():
                 if hasattr(existing_note, key) and key != "id":
                     setattr(existing_note, key, value)
-            existing_note.updatedAt = datetime.utcnow()
+            existing_note.updatedAt = datetime.now(timezone.utc)
             db.commit()
             return False
     else:
@@ -469,16 +469,16 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
                 try:
                     from dateutil import parser
                     parsed_dt = parser.parse(db_note_data[field])
-                    # Remove timezone info to match datetime.utcnow()
-                    if parsed_dt.tzinfo is not None:
-                        parsed_dt = parsed_dt.replace(tzinfo=None)
+                    # Ensure timezone-aware (add UTC if naive)
+                    if parsed_dt.tzinfo is None:
+                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
                     db_note_data[field] = parsed_dt
                 except:
                     db_note_data[field] = None
 
         db_note_data["userId"] = user_id
         new_note = CalendarNote(**db_note_data)
-        new_note.updatedAt = datetime.utcnow()
+        new_note.updatedAt = datetime.now(timezone.utc)
         db.add(new_note)
         db.commit()
         db.refresh(new_note)
