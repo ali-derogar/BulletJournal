@@ -43,7 +43,11 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
     if existing_task:
         # Compare updatedAt for conflict resolution (last-write-wins)
         if client_updated_at and existing_task.updatedAt:
-            if client_updated_at > existing_task.updatedAt:
+            # Ensure server updatedAt is timezone-aware for comparison
+            server_updated_at = existing_task.updatedAt
+            if server_updated_at.tzinfo is None:
+                server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
+            if client_updated_at > server_updated_at:
                 # Client has newer version, update
                 for key, value in task_data.items():
                     if hasattr(existing_task, key) and key != "id":
@@ -133,7 +137,11 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
 
     if existing_expense:
         if client_updated_at and existing_expense.updatedAt:
-            if client_updated_at > existing_expense.updatedAt:
+            # Ensure server updatedAt is timezone-aware for comparison
+            server_updated_at = existing_expense.updatedAt
+            if server_updated_at.tzinfo is None:
+                server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
+            if client_updated_at > server_updated_at:
                 for key, value in expense_data.items():
                     if hasattr(existing_expense, key) and key != "id":
                         setattr(existing_expense, key, value)
@@ -221,7 +229,11 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
 
     if existing_journal:
         if client_updated_at and existing_journal.updatedAt:
-            if client_updated_at > existing_journal.updatedAt:
+            # Ensure server updatedAt is timezone-aware for comparison
+            server_updated_at = existing_journal.updatedAt
+            if server_updated_at.tzinfo is None:
+                server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
+            if client_updated_at > server_updated_at:
                 for key, value in db_journal_data.items():
                     if hasattr(existing_journal, key) and key != "id":
                         setattr(existing_journal, key, value)
@@ -289,7 +301,11 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
 
     if existing_reflection:
         if client_updated_at and existing_reflection.updatedAt:
-            if client_updated_at > existing_reflection.updatedAt:
+            # Ensure server updatedAt is timezone-aware for comparison
+            server_updated_at = existing_reflection.updatedAt
+            if server_updated_at.tzinfo is None:
+                server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
+            if client_updated_at > server_updated_at:
                 for key, value in reflection_data.items():
                     if hasattr(existing_reflection, key) and key != "id":
                         setattr(existing_reflection, key, value)
@@ -368,7 +384,11 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
 
     if existing_goal:
         if client_updated_at and existing_goal.updatedAt:
-            if client_updated_at > existing_goal.updatedAt:
+            # Ensure server updatedAt is timezone-aware for comparison
+            server_updated_at = existing_goal.updatedAt
+            if server_updated_at.tzinfo is None:
+                server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
+            if client_updated_at > server_updated_at:
                 for key, value in goal_data.items():
                     if hasattr(existing_goal, key) and key != "id":
                         setattr(existing_goal, key, value)
@@ -436,7 +456,11 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
 
     if existing_note:
         if client_updated_at and existing_note.updatedAt:
-            if client_updated_at > existing_note.updatedAt:
+            # Ensure server updatedAt is timezone-aware for comparison
+            server_updated_at = existing_note.updatedAt
+            if server_updated_at.tzinfo is None:
+                server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
+            if client_updated_at > server_updated_at:
                 for key, value in note_data.items():
                     if hasattr(existing_note, key) and key != "id":
                         setattr(existing_note, key, value)
