@@ -201,26 +201,6 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
   /**
    * Set task as useful or not useful
    */
-  const handleSetUsefulness = (isUseful: boolean) => {
-    const updatedTask: Task = {
-      ...task,
-      isUseful,
-      updatedAt: new Date().toISOString(),
-    };
-    onUpdate(updatedTask);
-  };
-
-  /**
-   * Clear usefulness categorization
-   */
-  const handleClearUsefulness = () => {
-    const updatedTask: Task = {
-      ...task,
-      isUseful: null,
-      updatedAt: new Date().toISOString(),
-    };
-    onUpdate(updatedTask);
-  };
 
   /**
    * Format time in minutes to human-readable string
@@ -396,9 +376,8 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
             key={task.timerRunning ? "running" : "stopped"}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`text-xs font-semibold uppercase tracking-wide ${
-              task.timerRunning ? "text-green-700" : "text-gray-600"
-            }`}
+            className={`text-xs font-semibold uppercase tracking-wide ${task.timerRunning ? "text-green-700" : "text-gray-600"
+              }`}
           >
             {task.timerRunning ? "Running" : "Tracked"}
           </motion.div>
@@ -408,9 +387,8 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className={`text-xl font-bold ${
-              task.timerRunning ? "text-green-800" : "text-gray-800"
-            }`}
+            className={`text-xl font-bold ${task.timerRunning ? "text-green-800" : "text-gray-800"
+              }`}
           >
             {task.timerRunning ? (
               <motion.span
@@ -449,11 +427,10 @@ export default function TaskTimer({ task, onUpdate }: TaskTimerProps) {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className={`text-xs font-semibold mt-1 px-2 py-1 rounded-full ${
-                totalMinutes > task.estimatedTime
+              className={`text-xs font-semibold mt-1 px-2 py-1 rounded-full ${totalMinutes > task.estimatedTime
                   ? "bg-red-100 text-red-700"
                   : "bg-green-100 text-green-700"
-              }`}
+                }`}
             >
               {totalMinutes > task.estimatedTime ? "+" : ""}
               {formatTime(totalMinutes - task.estimatedTime)} vs est

@@ -4,7 +4,7 @@ import { useTheme } from '@/app/context/ThemeContext';
 import { motion } from 'framer-motion';
 
 export default function ThemeToggle() {
-  const { theme, actualTheme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   const getThemeIcon = () => {
     switch (theme) {

@@ -10,6 +10,9 @@ interface TasksProps {
   userId: string;
 }
 
+// Cache duration for tasks (30 seconds)
+const CACHE_DURATION = 30 * 1000;
+
 export default function Tasks({ date, userId }: TasksProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -21,7 +24,6 @@ export default function Tasks({ date, userId }: TasksProps) {
 
   // Cache for tasks to avoid unnecessary reloads
   const taskCache = useRef<Map<string, { data: Task[], timestamp: number }>>(new Map());
-  const CACHE_DURATION = 30 * 1000; // 30 seconds for task data
 
   useEffect(() => {
     async function loadTasks() {
@@ -166,14 +168,14 @@ export default function Tasks({ date, userId }: TasksProps) {
     * Handle timer updates from TaskTimer component
     * Saves updated task to storage and updates local state
     */
-   const handleTaskTimerUpdate = async (updatedTask: Task) => {
-     try {
-       await saveTask(updatedTask);
-       setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
-     } catch (error) {
-       console.error("Failed to update task timer:", error);
-     }
-   };
+  const handleTaskTimerUpdate = async (updatedTask: Task) => {
+    try {
+      await saveTask(updatedTask);
+      setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+    } catch (error) {
+      console.error("Failed to update task timer:", error);
+    }
+  };
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
@@ -332,11 +334,10 @@ export default function Tasks({ date, userId }: TasksProps) {
             <div className="flex flex-col ml-2">
               <span className="text-xs text-muted-foreground">Diff:</span>
               <span
-                className={`text-sm font-bold ${
-                  totalTimeMinutes > totalEstimatedMinutes
-                    ? "text-destructive"
-                    : "text-green-600"
-                }`}
+                className={`text-sm font-bold ${totalTimeMinutes > totalEstimatedMinutes
+                  ? "text-destructive"
+                  : "text-green-600"
+                  }`}
               >
                 {totalTimeMinutes > totalEstimatedMinutes ? "+" : ""}
                 {formatTime(totalTimeMinutes - totalEstimatedMinutes)}
@@ -352,11 +353,10 @@ export default function Tasks({ date, userId }: TasksProps) {
           return (
             <div
               key={task.id}
-              className={`p-2 sm:p-3 border-2 rounded-lg transition-all cursor-pointer ${
-                task.timerRunning
-                  ? "border-accent bg-accent/10 shadow-md"
-                  : "border-border bg-card hover:bg-muted"
-              }`}
+              className={`p-2 sm:p-3 border-2 rounded-lg transition-all cursor-pointer ${task.timerRunning
+                ? "border-accent bg-accent/10 shadow-md"
+                : "border-border bg-card hover:bg-muted"
+                }`}
             >
               {editingId === task.id ? (
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -403,13 +403,12 @@ export default function Tasks({ date, userId }: TasksProps) {
                       <option value="done">Done</option>
                     </select>
                     <span
-                      className={`flex-1 font-medium text-sm sm:text-base ${
-                        task.status === "done"
-                          ? "line-through text-muted-foreground"
-                          : task.timerRunning
-                            ? "text-green-400"
-                            : "text-foreground"
-                      }`}
+                      className={`flex-1 font-medium text-sm sm:text-base ${task.status === "done"
+                        ? "line-through text-muted-foreground"
+                        : task.timerRunning
+                          ? "text-green-400"
+                          : "text-foreground"
+                        }`}
                     >
                       {task.title}
                     </span>
@@ -420,9 +419,8 @@ export default function Tasks({ date, userId }: TasksProps) {
                         </div>
                       )}
                       <svg
-                        className={`w-4 h-4 text-muted-foreground transition-transform ${
-                          isExpanded ? 'rotate-180' : ''
-                        }`}
+                        className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''
+                          }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"

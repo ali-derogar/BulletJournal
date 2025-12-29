@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Task, TaskStatus, Expense, MoodInfo, SleepInfo } from "@/domain";
 import { getTasks, saveTask, deleteTask, getExpenses, getMood, getSleep } from "@/storage";
 import TaskCard from "./TaskCard";
-import { calculateEmotionalScore, getSleepQualityColor, getUsefulTaskRatioColor, type EmotionalScore } from "@/utils/emotionalScoring";
+import { calculateEmotionalScore, getSleepQualityColor, getUsefulTaskRatioColor } from "@/utils/emotionalScoring";
 
 interface TaskDashboardProps {
   date: string;
@@ -257,12 +257,6 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
   /**
    * Format seconds to MM:SS for running timers
    */
-  const formatSeconds = (minutes: number): string => {
-    const totalSeconds = Math.floor(minutes * 60);
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
 
   // ===== AGGREGATIONS =====
 
@@ -406,24 +400,22 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
             className="flex items-center gap-4 mt-4 overflow-x-auto pb-2"
           >
             {/* Sleep Indicator */}
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
-              getSleepQualityColor(emotionalScore.indicators.sleepQuality)
-            }`}>
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${getSleepQualityColor(emotionalScore.indicators.sleepQuality)
+              }`}>
               <span className="text-lg">
                 {emotionalScore.indicators.sleepQuality === 'excellent' ? '😴' :
-                 emotionalScore.indicators.sleepQuality === 'good' ? '🙂' :
-                 emotionalScore.indicators.sleepQuality === 'fair' ? '😐' :
-                 emotionalScore.indicators.sleepQuality === 'poor' ? '😞' : '❓'}
+                  emotionalScore.indicators.sleepQuality === 'good' ? '🙂' :
+                    emotionalScore.indicators.sleepQuality === 'fair' ? '😐' :
+                      emotionalScore.indicators.sleepQuality === 'poor' ? '😞' : '❓'}
               </span>
               <span>Sleep: {emotionalScore.indicators.sleepQuality}</span>
             </div>
 
             {/* Reflection Indicator */}
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
-              emotionalScore.indicators.reflectionPresent
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${emotionalScore.indicators.reflectionPresent
                 ? 'text-green-700 bg-green-100'
                 : 'text-muted-foreground bg-muted'
-            }`}>
+              }`}>
               <span className="text-lg">
                 {emotionalScore.indicators.reflectionPresent ? '📝' : '❓'}
               </span>
@@ -431,24 +423,22 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
             </div>
 
             {/* Useful Task Ratio Indicator */}
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
-              getUsefulTaskRatioColor(emotionalScore.indicators.usefulTaskRatio)
-            }`}>
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${getUsefulTaskRatioColor(emotionalScore.indicators.usefulTaskRatio)
+              }`}>
               <span className="text-lg">
                 {emotionalScore.indicators.usefulTaskRatio >= 0.8 ? '🎯' :
-                 emotionalScore.indicators.usefulTaskRatio >= 0.6 ? '👍' :
-                 emotionalScore.indicators.usefulTaskRatio >= 0.4 ? '⚖️' :
-                 emotionalScore.indicators.usefulTaskRatio >= 0.2 ? '👎' : '⚠️'}
+                  emotionalScore.indicators.usefulTaskRatio >= 0.6 ? '👍' :
+                    emotionalScore.indicators.usefulTaskRatio >= 0.4 ? '⚖️' :
+                      emotionalScore.indicators.usefulTaskRatio >= 0.2 ? '👎' : '⚠️'}
               </span>
               <span>Useful Tasks: {Math.round(emotionalScore.indicators.usefulTaskRatio * 100)}%</span>
             </div>
 
             {/* Mood Indicator */}
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
-              emotionalScore.indicators.hasMoodData
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${emotionalScore.indicators.hasMoodData
                 ? 'text-blue-700 bg-blue-100'
                 : 'text-muted-foreground bg-muted'
-            }`}>
+              }`}>
               <span className="text-lg">
                 {emotionalScore.indicators.hasMoodData ? '😊' : '❓'}
               </span>
@@ -492,9 +482,8 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
                 <div className="pt-2 border-t border-border">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-muted-foreground">Difference:</span>
-                    <span className={`text-sm font-semibold ${
-                      totalActualMinutes > totalEstimatedMinutes ? "text-destructive" : "text-green-600"
-                    }`}>
+                    <span className={`text-sm font-semibold ${totalActualMinutes > totalEstimatedMinutes ? "text-destructive" : "text-green-600"
+                      }`}>
                       {totalActualMinutes > totalEstimatedMinutes ? "+" : ""}
                       {formatTime(totalActualMinutes - totalEstimatedMinutes)}
                     </span>

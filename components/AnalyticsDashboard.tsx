@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { AnalyticsData, Period, PeriodType } from '@/domain/analytics';
 import { getAnalytics } from '@/services/analytics';
@@ -18,14 +18,8 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log('📊 AnalyticsDashboard: useEffect triggered', { period, userId: currentUser?.id });
-    if (currentUser?.id) {
-      loadAnalytics();
-    }
-  }, [period, currentUser?.id]);
 
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     console.log('📊 AnalyticsDashboard: loadAnalytics called');
     if (!currentUser?.id) {
       console.log('📊 AnalyticsDashboard: No user ID, returning');
@@ -48,7 +42,14 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       console.log('📊 AnalyticsDashboard: Setting loading to false');
       setLoading(false);
     }
-  };
+  }, [currentUser?.id, period]);
+
+  useEffect(() => {
+    console.log('📊 AnalyticsDashboard: useEffect triggered', { period, userId: currentUser?.id });
+    if (currentUser?.id) {
+      loadAnalytics();
+    }
+  }, [period, currentUser?.id, loadAnalytics]);
 
   const handlePeriodChange = (newPeriod: Period) => {
     console.log('📊 AnalyticsDashboard: Period changed', { from: period, to: newPeriod });

@@ -28,7 +28,6 @@ interface TaskCardProps {
  */
 export default function TaskCard({
   task,
-  onUpdate,
   onDelete,
   onStartTimer,
   onPauseTimer,

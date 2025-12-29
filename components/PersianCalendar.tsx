@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toJalaali, jalaaliToDateObject, isValidJalaaliDate } from "jalaali-js";
 import type { JalaaliDate } from "jalaali-js";
 import { getCalendarNotes, saveCalendarNote, deleteCalendarNote } from "@/storage/calendar";
@@ -49,24 +49,24 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
 
-  // Load notes and holidays from storage
-  useEffect(() => {
-    console.log('[PersianCalendar] Loading for year:', currentYear, 'month:', currentMonth);
-    loadNotes();
-    loadHolidaysForMonth(currentYear, currentMonth);
-  }, [userId, currentYear, currentMonth]);
 
-  const loadNotes = async () => {
+  const loadNotes = useCallback(async () => {
     try {
       const data = await getCalendarNotes(userId);
       setNotes(data);
     } catch (error) {
       console.error("Failed to load calendar notes:", error);
     }
-  };
+  }, [userId]);
+
+  // Load notes and holidays from storage
+  useEffect(() => {
+    console.log('[PersianCalendar] Loading for year:', currentYear, 'month:', currentMonth);
+    loadNotes();
+    loadHolidaysForMonth(currentYear, currentMonth);
+  }, [userId, currentYear, currentMonth, loadNotes]);
 
   const loadHolidaysForMonth = async (year: number, month: number) => {
-    const monthKey = `${year}-${month}`;
     setLoadingHolidays(true);
     try {
       const newHolidays: { [key: string]: HolidayData[] } = {};
@@ -123,18 +123,6 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
     }
   };
 
-  const saveNotes = async (newNotes: CalendarNote[]) => {
-    try {
-      // Save each note individually (for updates/deletes)
-      for (const note of newNotes) {
-        await saveCalendarNote(note);
-      }
-      // For deletes, we need to handle separately, but for now assume all are saves
-      setNotes(newNotes);
-    } catch (error) {
-      console.error("Failed to save calendar notes:", error);
-    }
-  };
 
   const getDaysInPersianMonth = (year: number, month: number): JalaaliDate[] => {
     const days: JalaaliDate[] = [];
@@ -157,9 +145,6 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
     return jalaaliToDateObject(jDate.jy, jDate.jm, jDate.jd);
   };
 
-  const formatPersianDate = (jDate: JalaaliDate): string => {
-    return `${jDate.jd} ${persianMonths[jDate.jm - 1]} ${jDate.jy}`;
-  };
 
   const isHoliday = (jDate: JalaaliDate): HolidayData[] => {
     const key = `${jDate.jy}-${jDate.jm}-${jDate.jd}`;
@@ -457,8 +442,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
               <button
                 onClick={() => setEventFilter('all')}
                 className={`flex-1 px-2 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-base font-bold transition-all duration-200 ${eventFilter === 'all'
-                    ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
-                    : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
+                  ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
+                  : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
                 <span className="hidden md:inline">All ({Object.values(holidays).flat().length})</span>
@@ -467,8 +452,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
               <button
                 onClick={() => setEventFilter('holidays')}
                 className={`flex-1 px-2 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-base font-bold transition-all duration-200 ${eventFilter === 'holidays'
-                    ? 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-lg scale-105'
-                    : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
+                  ? 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-lg scale-105'
+                  : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
                 <span className="hidden md:inline">🎉 Holidays ({Object.values(holidays).flat().filter(h => h.holiday).length})</span>
@@ -477,8 +462,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
               <button
                 onClick={() => setEventFilter('events')}
                 className={`flex-1 px-2 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-base font-bold transition-all duration-200 ${eventFilter === 'events'
-                    ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
-                    : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
+                  ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-lg scale-105'
+                  : 'bg-white/20 dark:bg-white/10 text-white hover:bg-white/30 dark:hover:bg-white/20'
                   }`}
               >
                 <span className="hidden md:inline">📅 Events ({Object.values(holidays).flat().filter(h => !h.holiday).length})</span>
@@ -563,16 +548,16 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                       <div className="relative md:pr-16 transition-all duration-300">
                         {/* Timeline Dot - Hidden on mobile */}
                         <div className={`hidden md:flex absolute right-5 top-5 w-8 h-8 rounded-full items-center justify-center shadow-lg ${isHoliday
-                            ? 'bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-600 dark:to-orange-600'
-                            : 'bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600'
+                          ? 'bg-gradient-to-br from-red-500 to-orange-500 dark:from-red-600 dark:to-orange-600'
+                          : 'bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600'
                           } group-hover:scale-125 transition-transform duration-300`}>
                           <span className="text-white text-sm font-bold">{dayNum}</span>
                         </div>
 
                         {/* Event Content */}
                         <div className={`rounded-lg md:rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${isHoliday
-                            ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-50 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/40 border-2 border-red-200 dark:border-red-800'
-                            : 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-purple-950/40 border-2 border-purple-200 dark:border-purple-800'
+                          ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-50 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/40 border-2 border-red-200 dark:border-red-800'
+                          : 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-purple-950/40 border-2 border-purple-200 dark:border-purple-800'
                           }`}>
                           <div className="p-3 md:p-5">
                             <div className="flex items-start justify-between gap-2 md:gap-4 mb-2 md:mb-3">
@@ -580,8 +565,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                                 {/* Event Type Badge */}
                                 <div className="mb-1.5 md:mb-2">
                                   <span className={`inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold ${isHoliday
-                                      ? 'bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300'
-                                      : 'bg-purple-200 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
+                                    ? 'bg-red-200 dark:bg-red-900/60 text-red-700 dark:text-red-300'
+                                    : 'bg-purple-200 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300'
                                     }`}>
                                     {isHoliday ? '🎉 Holiday' : '📅 Event'}
                                   </span>
@@ -589,8 +574,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
                                 {/* Event Title */}
                                 <h3 className={`text-sm md:text-lg font-bold mb-0.5 md:mb-1 line-clamp-2 md:line-clamp-none ${isHoliday
-                                    ? 'text-red-800 dark:text-red-300'
-                                    : 'text-purple-800 dark:text-purple-300'
+                                  ? 'text-red-800 dark:text-red-300'
+                                  : 'text-purple-800 dark:text-purple-300'
                                   }`}>
                                   {event.title}
                                 </h3>
@@ -598,8 +583,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                                 {/* Date String */}
                                 {event.base !== 0 && event.date_string && (
                                   <p className={`text-[10px] md:text-sm font-medium ${isHoliday
-                                      ? 'text-red-600 dark:text-red-400'
-                                      : 'text-purple-600 dark:text-purple-400'
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : 'text-purple-600 dark:text-purple-400'
                                     }`}>
                                     📍 {event.date_string}
                                   </p>
@@ -610,8 +595,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                                   <div className="mt-1 md:mt-2">
                                     <div
                                       className={`text-xs md:text-sm leading-relaxed ${isHoliday
-                                          ? 'text-red-700 dark:text-red-400'
-                                          : 'text-purple-700 dark:text-purple-400'
+                                        ? 'text-red-700 dark:text-red-400'
+                                        : 'text-purple-700 dark:text-purple-400'
                                         } ${!isExpanded && shouldTruncate ? 'line-clamp-2' : ''}`}
                                       dangerouslySetInnerHTML={{ __html: event.description }}
                                     />
@@ -630,8 +615,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
                                           });
                                         }}
                                         className={`mt-1 text-[10px] md:text-xs font-bold hover:underline transition-colors ${isHoliday
-                                            ? 'text-red-600 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200'
-                                            : 'text-purple-600 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-200'
+                                          ? 'text-red-600 dark:text-red-300 hover:text-red-800 dark:hover:text-red-200'
+                                          : 'text-purple-600 dark:text-purple-300 hover:text-purple-800 dark:hover:text-purple-200'
                                           }`}
                                       >
                                         {isExpanded ? '▲ Less' : '▼ More'}
@@ -643,18 +628,18 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
                               {/* Date Badge - Smaller on mobile */}
                               <div className={`flex-shrink-0 px-2 md:px-4 py-1.5 md:py-3 rounded-lg md:rounded-xl text-center shadow-md ${isHoliday
-                                  ? 'bg-gradient-to-br from-red-200 to-orange-200 dark:from-red-900/70 dark:to-orange-900/70'
-                                  : 'bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/70 dark:to-pink-900/70'
+                                ? 'bg-gradient-to-br from-red-200 to-orange-200 dark:from-red-900/70 dark:to-orange-900/70'
+                                : 'bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/70 dark:to-pink-900/70'
                                 }`}>
                                 <div className={`text-lg md:text-2xl font-black ${isHoliday
-                                    ? 'text-red-800 dark:text-red-200'
-                                    : 'text-purple-800 dark:text-purple-200'
+                                  ? 'text-red-800 dark:text-red-200'
+                                  : 'text-purple-800 dark:text-purple-200'
                                   }`}>
                                   {dayNum}
                                 </div>
                                 <div className={`text-[10px] md:text-xs font-bold hidden md:block ${isHoliday
-                                    ? 'text-red-700 dark:text-red-300'
-                                    : 'text-purple-700 dark:text-purple-300'
+                                  ? 'text-red-700 dark:text-red-300'
+                                  : 'text-purple-700 dark:text-purple-300'
                                   }`}>
                                   {persianMonths[currentMonth - 1]}
                                 </div>
@@ -664,8 +649,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
                           {/* Hover Effect Bar */}
                           <div className={`h-0.5 md:h-1 w-full ${isHoliday
-                              ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500'
-                              : 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500'
+                            ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500'
+                            : 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500'
                             } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                         </div>
                       </div>
@@ -857,43 +842,43 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
               <div
                 key={idx}
                 className={`group relative overflow-hidden rounded-2xl border-2 shadow-lg hover:shadow-xl transition-all ${holiday.holiday
-                    ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-100 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/50 border-red-300 dark:border-red-700'
-                    : 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-purple-950/50 border-purple-300 dark:border-purple-700'
+                  ? 'bg-gradient-to-br from-red-50 via-orange-50 to-red-100 dark:from-red-950/40 dark:via-orange-950/40 dark:to-red-950/50 border-red-300 dark:border-red-700'
+                  : 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-purple-950/50 border-purple-300 dark:border-purple-700'
                   }`}
               >
                 {/* Decorative gradient bar */}
                 <div className={`h-1.5 w-full ${holiday.holiday
-                    ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500'
-                    : 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500'
+                  ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500'
+                  : 'bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500'
                   }`}></div>
 
                 <div className="p-5">
                   <div className="flex items-start gap-4">
                     <div className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-md ${holiday.holiday
-                        ? 'bg-gradient-to-br from-red-200 to-orange-200 dark:from-red-900/70 dark:to-orange-900/70'
-                        : 'bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/70 dark:to-pink-900/70'
+                      ? 'bg-gradient-to-br from-red-200 to-orange-200 dark:from-red-900/70 dark:to-orange-900/70'
+                      : 'bg-gradient-to-br from-purple-200 to-pink-200 dark:from-purple-900/70 dark:to-pink-900/70'
                       }`}>
                       {holiday.holiday ? '🎉' : '📅'}
                     </div>
                     <div className="flex-1">
                       <div className="mb-2">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${holiday.holiday
-                            ? 'bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-300'
-                            : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300'
+                          ? 'bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-300'
+                          : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300'
                           }`}>
                           {holiday.holiday ? 'Official Holiday' : 'Event'}
                         </span>
                       </div>
                       <h4 className={`font-black text-lg mb-1 ${holiday.holiday
-                          ? 'text-red-800 dark:text-red-300'
-                          : 'text-purple-800 dark:text-purple-300'
+                        ? 'text-red-800 dark:text-red-300'
+                        : 'text-purple-800 dark:text-purple-300'
                         }`}>
                         {holiday.title}
                       </h4>
                       {holiday.base !== 0 && holiday.date_string && (
                         <p className={`text-sm font-semibold flex items-center gap-1 ${holiday.holiday
-                            ? 'text-red-700 dark:text-red-400'
-                            : 'text-purple-700 dark:text-purple-400'
+                          ? 'text-red-700 dark:text-red-400'
+                          : 'text-purple-700 dark:text-purple-400'
                           }`}>
                           <span>📍</span>
                           {holiday.date_string}
@@ -903,8 +888,8 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                         <div className="mt-2">
                           <div
                             className={`text-sm leading-relaxed ${holiday.holiday
-                                ? 'text-red-700 dark:text-red-400'
-                                : 'text-purple-700 dark:text-purple-400'
+                              ? 'text-red-700 dark:text-red-400'
+                              : 'text-purple-700 dark:text-purple-400'
                               } ${!isExpanded && shouldTruncate ? 'line-clamp-3' : ''}`}
                             dangerouslySetInnerHTML={{ __html: holiday.description }}
                           />
@@ -923,8 +908,8 @@ function DayDetailModal({ jDate, note, holidays, onSave, onClose }: DayDetailMod
                                 });
                               }}
                               className={`mt-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm hover:shadow-md ${holiday.holiday
-                                  ? 'bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-300 hover:bg-red-300 dark:hover:bg-red-900/80'
-                                  : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 hover:bg-purple-300 dark:hover:bg-purple-900/80'
+                                ? 'bg-red-200 dark:bg-red-900/60 text-red-800 dark:text-red-300 hover:bg-red-300 dark:hover:bg-red-900/80'
+                                : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300 hover:bg-purple-300 dark:hover:bg-purple-900/80'
                                 }`}
                             >
                               {isExpanded ? '▲ Read Less' : '▼ Read More'}

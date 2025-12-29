@@ -33,26 +33,14 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load sessions on mount
-  useEffect(() => {
-    if (userId) {
-      loadSessions();
-    }
-  }, [userId]);
+  const handleSelectSession = useCallback(async (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    const sessionMessages = await getAIMessages(sessionId);
+    setMessages(sessionMessages.map(m => ({ role: m.role, content: m.content })));
+    setShowSessions(false);
+  }, []);
 
-  const loadSessions = async () => {
-    const userSessions = await getAISessions(userId);
-    setSessions(userSessions);
-
-    // If no session is selected, select the most recent one or create a new one
-    if (userSessions.length > 0) {
-      handleSelectSession(userSessions[0].id);
-    } else {
-      createNewSession();
-    }
-  };
-
-  const createNewSession = async () => {
+  const createNewSession = useCallback(async () => {
     const newSession: AISession = {
       id: generateId(),
       userId,
@@ -63,14 +51,25 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
     setMessages([]);
-  };
+  }, [userId]);
 
-  const handleSelectSession = async (sessionId: string) => {
-    setCurrentSessionId(sessionId);
-    const sessionMessages = await getAIMessages(sessionId);
-    setMessages(sessionMessages.map(m => ({ role: m.role, content: m.content })));
-    setShowSessions(false);
-  };
+  // Load sessions on mount
+  useEffect(() => {
+    if (userId) {
+      const load = async () => {
+        const userSessions = await getAISessions(userId);
+        setSessions(userSessions);
+
+        // If no session is selected, select the most recent one or create a new one
+        if (userSessions.length > 0) {
+          handleSelectSession(userSessions[0].id);
+        } else {
+          createNewSession();
+        }
+      };
+      load();
+    }
+  }, [userId, handleSelectSession, createNewSession]);
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
@@ -156,36 +155,36 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
           switch (detectedIntent.intent) {
             case 'CREATE_TASK':
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await createTaskAction(detectedIntent.entities as any);
+              actionResult = await createTaskAction(detectedIntent.entities as never);
               break;
             case 'CREATE_GOAL':
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await createGoalAction(detectedIntent.entities as any);
+              actionResult = await createGoalAction(detectedIntent.entities as never);
               break;
             case 'CREATE_NOTE':
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await createCalendarNoteAction(detectedIntent.entities as any);
+              actionResult = await createCalendarNoteAction(detectedIntent.entities as never);
               break;
             case 'LIST_TASKS':
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await listTasksAction(detectedIntent.entities as any);
+              actionResult = await listTasksAction(detectedIntent.entities as never);
               break;
             case 'UPDATE_TASK':
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await updateTaskAction(detectedIntent.entities as any);
+              actionResult = await updateTaskAction(detectedIntent.entities as never);
               break;
             case 'COMPLETE_TASK': {
-              const entities = detectedIntent.entities as any;
-              let taskId = entities.taskId;
+              const entities = detectedIntent.entities as Record<string, string | number | null | undefined>;
+              let taskId = entities.taskId as string | undefined;
+              const entityTitle = entities.title as string | undefined;
 
               // If AI didn't find the ID but found a title, try to find the task in today's context
-              if (!taskId && entities.title) {
+              if (!taskId && entityTitle) {
                 const { getTasks } = await import('@/storage/task');
                 const today = new Date().toISOString().split('T')[0];
                 const todayTasks = await getTasks(today, userId);
                 const match = todayTasks.find(t =>
-                  t.title.toLowerCase().includes(entities.title.toLowerCase()) ||
-                  entities.title.toLowerCase().includes(t.title.toLowerCase())
+                  t.title.toLowerCase().includes(entityTitle.toLowerCase()) ||
+                  entityTitle.toLowerCase().includes(t.title.toLowerCase())
                 );
                 if (match) taskId = match.id;
               }
@@ -195,7 +194,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
               } else {
                 actionResult = {
                   success: false,
-                  message: entities.title ? `Could not find a task named "${entities.title}"` : "Could not identify which task to complete"
+                  message: entityTitle ? `Could not find a task named "${entityTitle}"` : "Could not identify which task to complete"
                 };
               }
               break;
@@ -239,7 +238,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
       const { detectLanguage, getLanguagePromptEnhancementFromHistory } = await import('@/utils/languageDetection');
 
       // Detect language from user's message
-      const userLanguage = detectLanguage(userMessage.content);
+      detectLanguage(userMessage.content);
       const languageInstruction = getLanguagePromptEnhancementFromHistory([...messages, userMessage]);
 
       let systemPrompt = '';
@@ -292,7 +291,7 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
 
         setMessages(prev => [...prev, assistantMessage]);
       }
-    } catch (error) {
+    } catch (_error) {
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: 'Sorry, something went wrong. Please try again.',

@@ -7,14 +7,12 @@ interface DateNavigatorProps {
   currentDate: string;
   onDateChange: (date: string) => void;
   onOpenCalendar: () => void;
-  userId: string;
 }
 
 export default function DateNavigator({
   currentDate,
   onDateChange,
   onOpenCalendar,
-  userId,
 }: DateNavigatorProps) {
   const handlePrevDay = () => {
     onDateChange(addDays(currentDate, -1));
@@ -104,11 +102,10 @@ export default function DateNavigator({
             whileTap={{ scale: 0.95 }}
             aria-label="Go to today"
             disabled={isToday}
-            className={`relative px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
-              isToday
-                ? "bg-green-500/20 text-green-600 cursor-not-allowed"
-                : "bg-gradient-to-r from-primary to-purple-600 text-white hover:shadow-lg hover:shadow-primary/50"
-            }`}
+            className={`relative px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${isToday
+              ? "bg-green-500/20 text-green-600 cursor-not-allowed"
+              : "bg-gradient-to-r from-primary to-purple-600 text-white hover:shadow-lg hover:shadow-primary/50"
+              }`}
           >
             {isToday ? (
               <span className="flex items-center gap-1">
