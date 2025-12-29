@@ -49,12 +49,9 @@ async def get_task_analytics(
             SELECT id, user_id, date, title, status, created_at, spentTime, accumulated_time, timer_running, timer_start, estimated_time, is_useful
             FROM tasks
             WHERE user_id = :user_id
-            AND date >= :start_date
-            AND date <= :end_date
+            AND DATE(date) >= :start_date
+            AND DATE(date) <= :end_date
         """)
-
-        # Debug logging
-        print(f"Analytics query for user {current_user.id}: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
 
         result = db.execute(query, {
             'user_id': current_user.id,
@@ -63,9 +60,8 @@ async def get_task_analytics(
         })
 
         # Convert to list to count
-        rows = list(result)
-        print(f"Found {len(rows)} tasks for analytics")
-        result = iter(rows)  # Reset iterator
+        tasks_data = list(result)
+        result = iter(tasks_data)  # Reset iterator
 
         # Convert to dict-like objects
         tasks = []
@@ -91,21 +87,27 @@ async def get_task_analytics(
         active_days = set()
 
         for task in tasks:
+            # Normalize task date to YYYY-MM-DD
+            task_date = str(task.date)[:10] if task.date else "unknown"
+            
             if task.status == 'done':
-                completed_by_day[task.date] = completed_by_day.get(task.date, 0) + 1
+                completed_by_day[task_date] = completed_by_day.get(task_date, 0) + 1
+                active_days.add(task_date) # Count day as active if a task was completed
+            
             time_spent = getattr(task, 'spentTime', 0) or 0
             if time_spent > 0:
-                time_by_day[task.date] = time_by_day.get(task.date, 0) + time_spent
-                active_days.add(task.date)
+                time_by_day[task_date] = time_by_day.get(task_date, 0) + time_spent
+                active_days.add(task_date)
 
         # Convert tasks to TaskDetail format
         task_details = []
         for task in tasks:
+            task_date = str(task.date)[:10] if task.date else "unknown"
             task_details.append({
                 'id': task.id,
-                'date': task.date,
+                'date': task_date,
                 'status': task.status,
-                'accumulated_time': getattr(task, 'accumulated_time', 0) or 0,
+                'accumulated_time': getattr(task, 'spentTime', 0) or 0,
                 'estimated_time': getattr(task, 'estimated_time', None),
                 'is_useful': getattr(task, 'is_useful', None)
             })
