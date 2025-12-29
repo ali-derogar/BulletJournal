@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Pydantic schemas for request validation
 class CreateTaskRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
-    date: str = Field(..., description="Persian date in YYYY-MM-DD format")
+    date: str = Field(..., description="Gregorian date in YYYY-MM-DD format")
     status: str = Field(default="todo", pattern="^(todo|in-progress|done)$")
     estimatedTime: Optional[float] = Field(None, ge=0, description="Estimated time in minutes")
 
@@ -41,7 +41,7 @@ class CreateGoalRequest(BaseModel):
 
 
 class CreateCalendarNoteRequest(BaseModel):
-    date: str = Field(..., description="Persian date in YYYY-MM-DD format")
+    date: str = Field(..., description="Gregorian date in YYYY-MM-DD format")
     note: str = Field(..., min_length=1)
 
 
@@ -53,7 +53,7 @@ class UpdateTaskRequest(BaseModel):
 
 
 class ListTasksRequest(BaseModel):
-    date: Optional[str] = Field(None, description="Filter by Persian date YYYY-MM-DD")
+    date: Optional[str] = Field(None, description="Filter by Gregorian date YYYY-MM-DD")
     status: Optional[str] = Field(None, pattern="^(todo|in-progress|done)$")
 
 

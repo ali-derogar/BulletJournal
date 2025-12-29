@@ -19,7 +19,7 @@ export interface DetectedIntent {
 
 export interface TaskEntity {
   title: string;
-  date: string; // Persian YYYY-MM-DD
+  date: string; // Gregorian YYYY-MM-DD
   estimatedTime?: number;
 }
 
@@ -36,7 +36,7 @@ export interface GoalEntity {
 }
 
 export interface CalendarNoteEntity {
-  date: string; // Persian YYYY-MM-DD
+  date: string; // Gregorian YYYY-MM-DD
   note: string;
 }
 
@@ -206,26 +206,24 @@ async function extractEntities(
 ): Promise<Record<string, any>> {
 
   const today = new Date();
-  const jalaliToday = jalaali.toJalaali(
-    today.getFullYear(),
-    today.getMonth() + 1,
-    today.getDate()
-  );
-  const currentYear = jalaliToday.jy;
-  const currentMonth = jalaliToday.jm;
-  const currentDay = jalaliToday.jd;
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+  const currentDateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+  const jalaliToday = jalaali.toJalaali(currentYear, currentMonth, currentDay);
+  const jYear = jalaliToday.jy;
 
   let systemPrompt = '';
 
   switch (intent) {
     case 'CREATE_TASK':
       systemPrompt = `You are an entity extraction assistant. Extract task details from Persian/English text.
-Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
+Current date (Gregorian): ${currentDateStr}
 
 Extract and return ONLY a JSON object with these fields:
 {
   "title": "CLEAN task title in Persian or English. REMOVE all conversational filler, emojis (like ✅), and checkmarks.",
-  "date": "YYYY-MM-DD in Jalali format",
+  "date": "YYYY-MM-DD in Gregorian format",
   "estimatedTime": optional number in minutes
 }
 
@@ -236,24 +234,24 @@ Title rules:
 - Good: "خرید نان"
 
 Date conversion rules:
-- "امروز" or "today" → ${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}
+- "امروز" or "today" → ${currentDateStr}
 - "فردا" or "tomorrow" → add 1 day to current date
 - "پس‌فردا" or "day after tomorrow" → add 2 days
 - If no date mentioned, use today
-- Format must be Jalali YYYY-MM-DD
+- Format must be Gregorian YYYY-MM-DD
 
 Return ONLY the JSON, no other text.`;
       break;
 
     case 'CREATE_GOAL':
       systemPrompt = `You are an entity extraction assistant. Extract goal details from Persian/English text.
-Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
+Current date (Jalali): ${jYear}-${jalaliToday.jm}-${jalaliToday.jd}
 
 Extract and return ONLY a JSON object:
 {
   "title": "CLEAN goal title. REMOVE all conversational filler and emojis.",
   "type": "yearly|quarterly|monthly|weekly",
-  "year": ${currentYear},
+  "year": ${jYear},
   "quarter": 1-4 (if quarterly),
   "month": 1-12 (if monthly),
   "week": 1-53 (if weekly),
@@ -274,11 +272,11 @@ Return ONLY the JSON, no other text.`;
 
     case 'CREATE_NOTE':
       systemPrompt = `You are an entity extraction assistant. Extract calendar note from Persian/English text.
-Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
+Current date (Gregorian): ${currentDateStr}
 
 Extract and return ONLY a JSON object:
 {
-  "date": "YYYY-MM-DD in Jalali format",
+  "date": "YYYY-MM-DD in Gregorian format",
   "note": "the note text"
 }
 
@@ -288,11 +286,11 @@ Return ONLY the JSON, no other text.`;
 
     case 'LIST_TASKS':
       systemPrompt = `You are an entity extraction assistant. Extract filtering criteria for listing tasks.
-Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
+Current date (Gregorian): ${currentDateStr}
 
 Extract and return ONLY a JSON object:
 {
-  "date": "YYYY-MM-DD in Jalali format (if mentioned, otherwise null)",
+  "date": "YYYY-MM-DD in Gregorian format (if mentioned, otherwise null)",
   "status": "todo|in-progress|done|null"
 }
 Return ONLY the JSON.`;
@@ -303,7 +301,7 @@ Return ONLY the JSON.`;
       // For these, we don't have task IDs easily here, 
       // but we can extract the title the user wants to act on.
       systemPrompt = `You are an entity extraction assistant.
-Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
+Current date (Gregorian): ${currentDateStr}
 
 Extract and return ONLY a JSON object:
 {
@@ -333,7 +331,7 @@ Return ONLY the JSON.`;
     if (response.error) {
       console.error('[Intent] Entity extraction failed:', response.error);
       console.log('[Intent] Falling back to regex extraction');
-      return fallbackExtraction(userMessage, intent, jalaliToday);
+      return fallbackExtraction(userMessage, intent, today);
     }
 
     console.log(`[Intent Extraction] RAW AI Response for ${intent}: "${response.message}"`);
@@ -356,11 +354,11 @@ Return ONLY the JSON.`;
 
     console.warn(`[Intent Extraction] No valid JSON found for ${intent}, falling back to regex`);
     // Fallback if JSON parsing failed
-    return fallbackExtraction(userMessage, intent, jalaliToday);
+    return fallbackExtraction(userMessage, intent, today);
 
   } catch (error) {
     console.error(`[Intent Extraction] Fatal error in extractEntities for ${intent}:`, error);
-    return fallbackExtraction(userMessage, intent, jalaliToday);
+    return fallbackExtraction(userMessage, intent, today);
   }
 }
 
@@ -370,23 +368,17 @@ Return ONLY the JSON.`;
 function fallbackExtraction(
   message: string,
   intent: IntentType,
-  jalaliToday: { jy: number; jm: number; jd: number }
+  today: Date
 ): Record<string, any> {
 
-  const { jy, jm, jd } = jalaliToday;
-  let date = `${jy}-${String(jm).padStart(2, '0')}-${String(jd).padStart(2, '0')}`;
+  const formatDateFull = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  let date = formatDateFull(today);
 
   // Detect "tomorrow"
   if (/فردا|tomorrow/i.test(message)) {
-    const gregorian = jalaali.toGregorian(jy, jm, jd);
-    const tomorrowDate = new Date(gregorian.gy, gregorian.gm - 1, gregorian.gd);
+    const tomorrowDate = new Date(today);
     tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-    const jalaliTomorrow = jalaali.toJalaali(
-      tomorrowDate.getFullYear(),
-      tomorrowDate.getMonth() + 1,
-      tomorrowDate.getDate()
-    );
-    date = `${jalaliTomorrow.jy}-${String(jalaliTomorrow.jm).padStart(2, '0')}-${String(jalaliTomorrow.jd).padStart(2, '0')}`;
+    date = formatDateFull(tomorrowDate);
   }
 
   switch (intent) {
@@ -428,8 +420,8 @@ function fallbackExtraction(
       return {
         title: normalizeTitle(goalTitle),
         type,
-        year: jy,
-        month: type === 'monthly' ? jm : undefined,
+        year: today.getFullYear(),
+        month: type === 'monthly' ? today.getMonth() + 1 : undefined,
         targetValue,
         unit: 'مورد'
       };
@@ -452,7 +444,7 @@ function fallbackExtraction(
       const isTomorrow = /فردا|tomorrow/i.test(message);
       const isToday = /امروز|today/i.test(message);
       return {
-        date: isTomorrow ? (fallbackExtraction(message, 'CREATE_TASK', jalaliToday).date) : (isToday ? date : null),
+        date: isTomorrow ? (fallbackExtraction(message, 'CREATE_TASK', today).date) : (isToday ? date : null),
         status: /انجام|done|complete|کامل/i.test(message) ? 'done' : null
       };
 

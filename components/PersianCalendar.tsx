@@ -145,19 +145,27 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
     return jalaaliToDateObject(jDate.jy, jDate.jm, jDate.jd);
   };
 
+  const getGregorianDateStr = (jDate: JalaaliDate): string => {
+    const d = getGregorianDate(jDate);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
 
   const isHoliday = (jDate: JalaaliDate): HolidayData[] => {
-    const key = `${jDate.jy}-${jDate.jm}-${jDate.jd}`;
+    const key = `${jDate.jy}-${jDate.jm}-${jDate.jd}`; // Holidays are still indexed by Jalali in the API/Holidays state
     return holidays[key] || [];
   };
 
   const hasNote = (jDate: JalaaliDate): boolean => {
-    const dateStr = `${jDate.jy}-${String(jDate.jm).padStart(2, '0')}-${String(jDate.jd).padStart(2, '0')}`;
+    const dateStr = getGregorianDateStr(jDate);
     return notes.some(note => note.date === dateStr);
   };
 
   const getNoteForDay = (jDate: JalaaliDate): CalendarNote | null => {
-    const dateStr = `${jDate.jy}-${String(jDate.jm).padStart(2, '0')}-${String(jDate.jd).padStart(2, '0')}`;
+    const dateStr = getGregorianDateStr(jDate);
     return notes.find(note => note.date === dateStr) || null;
   };
 
@@ -700,7 +708,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
             note={getNoteForDay(selectedDay)}
             holidays={isHoliday(selectedDay)}
             onSave={async (note) => {
-              const dateStr = `${selectedDay.jy}-${String(selectedDay.jm).padStart(2, '0')}-${String(selectedDay.jd).padStart(2, '0')}`;
+              const dateStr = getGregorianDateStr(selectedDay);
               const existingNote = getNoteForDay(selectedDay);
 
               try {
