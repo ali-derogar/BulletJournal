@@ -53,10 +53,11 @@ export async function createTaskAction(params: CreateTaskParams): Promise<Action
     if (!token) {
       return {
         success: false,
-        message: 'لطفاً ابتدا وارد شوید'
+        message: 'Please login first'
       };
     }
 
+    console.log(`[AI Action] Sending POST to /api/actions/create-task:`, params);
     const response = await fetch(`${API_BASE_URL}/api/actions/create-task`, {
       method: 'POST',
       headers: {
@@ -71,22 +72,26 @@ export async function createTaskAction(params: CreateTaskParams): Promise<Action
       })
     });
 
+    console.log(`[AI Action] Received status ${response.status} from /api/actions/create-task`);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('[AI Action] Create task error data:', errorData);
       return {
         success: false,
-        message: errorData.detail || `خطا در ساخت تسک (${response.status})`
+        message: errorData.detail || `Error creating task (${response.status})`
       };
     }
 
     const result = await response.json();
+    console.log('[AI Action] Create task success result:', result);
     return result;
 
   } catch (error) {
-    console.error('[AI Actions] Create task failed:', error);
+    console.error('[AI Action] Fetch error in createTaskAction:', error);
     return {
       success: false,
-      message: 'خطا در ارتباط با سرور'
+      message: 'Server connection error'
     };
   }
 }
@@ -100,10 +105,11 @@ export async function createGoalAction(params: CreateGoalParams): Promise<Action
     if (!token) {
       return {
         success: false,
-        message: 'لطفاً ابتدا وارد شوید'
+        message: 'Please login first'
       };
     }
 
+    console.log(`[AI Action] Sending POST to /api/actions/create-goal:`, params);
     const response = await fetch(`${API_BASE_URL}/api/actions/create-goal`, {
       method: 'POST',
       headers: {
@@ -113,22 +119,26 @@ export async function createGoalAction(params: CreateGoalParams): Promise<Action
       body: JSON.stringify(params)
     });
 
+    console.log(`[AI Action] Received status ${response.status} from /api/actions/create-goal`);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('[AI Action] Create goal error data:', errorData);
       return {
         success: false,
-        message: errorData.detail || `خطا در ساخت هدف (${response.status})`
+        message: errorData.detail || `Error creating goal (${response.status})`
       };
     }
 
     const result = await response.json();
+    console.log('[AI Action] Create goal success result:', result);
     return result;
 
   } catch (error) {
-    console.error('[AI Actions] Create goal failed:', error);
+    console.error('[AI Action] Fetch error in createGoalAction:', error);
     return {
       success: false,
-      message: 'خطا در ارتباط با سرور'
+      message: 'Server connection error'
     };
   }
 }
@@ -142,10 +152,11 @@ export async function createCalendarNoteAction(params: CreateCalendarNoteParams)
     if (!token) {
       return {
         success: false,
-        message: 'لطفاً ابتدا وارد شوید'
+        message: 'Please login first'
       };
     }
 
+    console.log(`[AI Action] Sending POST to /api/actions/create-calendar-note:`, params);
     const response = await fetch(`${API_BASE_URL}/api/actions/create-calendar-note`, {
       method: 'POST',
       headers: {
@@ -155,22 +166,26 @@ export async function createCalendarNoteAction(params: CreateCalendarNoteParams)
       body: JSON.stringify(params)
     });
 
+    console.log(`[AI Action] Received status ${response.status} from /api/actions/create-calendar-note`);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('[AI Action] Create note error data:', errorData);
       return {
         success: false,
-        message: errorData.detail || `خطا در ساخت یادداشت (${response.status})`
+        message: errorData.detail || `Error creating note (${response.status})`
       };
     }
 
     const result = await response.json();
+    console.log('[AI Action] Create note success result:', result);
     return result;
 
   } catch (error) {
-    console.error('[AI Actions] Create calendar note failed:', error);
+    console.error('[AI Action] Fetch error in createCalendarNoteAction:', error);
     return {
       success: false,
-      message: 'خطا در ارتباط با سرور'
+      message: 'Server connection error'
     };
   }
 }
@@ -184,7 +199,7 @@ export async function updateTaskAction(params: UpdateTaskParams): Promise<Action
     if (!token) {
       return {
         success: false,
-        message: 'لطفاً ابتدا وارد شوید'
+        message: 'Please login first'
       };
     }
 
@@ -201,7 +216,7 @@ export async function updateTaskAction(params: UpdateTaskParams): Promise<Action
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errorData.detail || `خطا در به‌روزرسانی تسک (${response.status})`
+        message: errorData.detail || `Error updating task (${response.status})`
       };
     }
 
@@ -212,7 +227,7 @@ export async function updateTaskAction(params: UpdateTaskParams): Promise<Action
     console.error('[AI Actions] Update task failed:', error);
     return {
       success: false,
-      message: 'خطا در ارتباط با سرور'
+      message: 'Server connection error'
     };
   }
 }
@@ -226,7 +241,7 @@ export async function listTasksAction(params: ListTasksParams = {}): Promise<Act
     if (!token) {
       return {
         success: false,
-        message: 'لطفاً ابتدا وارد شوید'
+        message: 'Please login first'
       };
     }
 
@@ -243,7 +258,7 @@ export async function listTasksAction(params: ListTasksParams = {}): Promise<Act
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errorData.detail || `خطا در دریافت لیست (${response.status})`
+        message: errorData.detail || `Error fetching list (${response.status})`
       };
     }
 
@@ -254,7 +269,7 @@ export async function listTasksAction(params: ListTasksParams = {}): Promise<Act
     console.error('[AI Actions] List tasks failed:', error);
     return {
       success: false,
-      message: 'خطا در ارتباط با سرور'
+      message: 'Server connection error'
     };
   }
 }
@@ -268,7 +283,7 @@ export async function completeTaskAction(taskId: string): Promise<ActionResponse
     if (!token) {
       return {
         success: false,
-        message: 'لطفاً ابتدا وارد شوید'
+        message: 'Please login first'
       };
     }
 
@@ -284,7 +299,7 @@ export async function completeTaskAction(taskId: string): Promise<ActionResponse
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errorData.detail || `خطا در تکمیل تسک (${response.status})`
+        message: errorData.detail || `Error completing task (${response.status})`
       };
     }
 
@@ -295,7 +310,7 @@ export async function completeTaskAction(taskId: string): Promise<ActionResponse
     console.error('[AI Actions] Complete task failed:', error);
     return {
       success: false,
-      message: 'خطا در ارتباط با سرور'
+      message: 'Server connection error'
     };
   }
 }

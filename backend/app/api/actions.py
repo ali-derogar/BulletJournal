@@ -115,6 +115,7 @@ async def create_task_action(
         task_id = str(uuid.uuid4())
 
         # Create task
+        logger.info(f"[AI Backend] Creating task for user {current_user.id}: {task_request.title} (Date: {task_request.date})")
         new_task = Task(
             id=task_id,
             userId=current_user.id,
@@ -137,7 +138,7 @@ async def create_task_action(
 
         return ActionResponse(
             success=True,
-            message=f"تسک «{task_request.title}» برای {task_request.date} اضافه شد",
+            message=f"Added '{task_request.title}' for {task_request.date}",
             data={
                 "id": new_task.id,
                 "title": new_task.title,
@@ -151,7 +152,7 @@ async def create_task_action(
         logger.error(f"Failed to create task for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"خطا در ساخت تسک: {str(e)}"
+            detail=f"Error creating task: {str(e)}"
         )
 
 
@@ -199,20 +200,21 @@ async def create_goal_action(
         db.add(new_goal)
         db.commit()
         db.refresh(new_goal)
+        logger.info(f"[AI Backend] Goal committed to DB: {goal_id}")
 
         # Build period description
         period_desc = {
-            "yearly": f"سال {goal_request.year}",
-            "quarterly": f"فصل {goal_request.quarter} سال {goal_request.year}",
-            "monthly": f"ماه {goal_request.month} سال {goal_request.year}",
-            "weekly": f"هفته {goal_request.week} سال {goal_request.year}"
+            "yearly": f"Year {goal_request.year}",
+            "quarterly": f"Q{goal_request.quarter} {goal_request.year}",
+            "monthly": f"Month {goal_request.month} {goal_request.year}",
+            "weekly": f"Week {goal_request.week} {goal_request.year}"
         }
 
         logger.info(f"User {current_user.id} created goal {goal_id} via AI action: {goal_request.title}")
 
         return ActionResponse(
             success=True,
-            message=f"هدف «{goal_request.title}» برای {period_desc[goal_request.type]} اضافه شد",
+            message=f"Added goal '{goal_request.title}' for {period_desc[goal_request.type]}",
             data={
                 "id": new_goal.id,
                 "title": new_goal.title,
@@ -230,7 +232,7 @@ async def create_goal_action(
         logger.error(f"Failed to create goal for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"خطا در ساخت هدف: {str(e)}"
+            detail=f"Error creating goal: {str(e)}"
         )
 
 
@@ -260,12 +262,13 @@ async def create_calendar_note_action(
         db.add(new_note)
         db.commit()
         db.refresh(new_note)
+        logger.info(f"[AI Backend] Calendar note committed for user {current_user.id}: {note_id}")
 
         logger.info(f"User {current_user.id} created calendar note {note_id} via AI action for {note_request.date}")
 
         return ActionResponse(
             success=True,
-            message=f"یادداشت در تقویم برای {note_request.date} اضافه شد",
+            message=f"Added calendar note for {note_request.date}",
             data={
                 "id": new_note.id,
                 "date": new_note.date,
@@ -278,7 +281,7 @@ async def create_calendar_note_action(
         logger.error(f"Failed to create calendar note for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"خطا در ساخت یادداشت تقویم: {str(e)}"
+            detail=f"Error creating calendar note: {str(e)}"
         )
 
 
@@ -301,7 +304,7 @@ async def update_task_action(
         if not task:
             raise HTTPException(
                 status_code=404,
-                detail=f"تسک با شناسه {update_request.taskId} یافت نشد"
+                detail=f"Task {update_request.taskId} not found"
             )
 
         # Update fields
@@ -317,11 +320,11 @@ async def update_task_action(
         db.commit()
         db.refresh(task)
 
-        logger.info(f"User {current_user.id} updated task {update_request.taskId} via AI action")
+        logger.info(f"[AI Backend] Task {update_request.taskId} updated for user {current_user.id}: status={update_request.status}, title={update_request.title}")
 
         return ActionResponse(
             success=True,
-            message=f"تسک «{task.title}» به‌روزرسانی شد",
+            message=f"Updated '{task.title}'",
             data={
                 "id": task.id,
                 "title": task.title,
@@ -337,7 +340,7 @@ async def update_task_action(
         logger.error(f"Failed to update task for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"خطا در به‌روزرسانی تسک: {str(e)}"
+            detail=f"Error updating task: {str(e)}"
         )
 
 
@@ -379,7 +382,7 @@ async def list_tasks_action(
 
         return ActionResponse(
             success=True,
-            message=f"{len(tasks)} تسک یافت شد",
+            message=f"Found {len(tasks)} tasks",
             data={"tasks": task_list}
         )
 
@@ -387,7 +390,7 @@ async def list_tasks_action(
         logger.error(f"Failed to list tasks for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"خطا در دریافت لیست تسک‌ها: {str(e)}"
+            detail=f"Error fetching task list: {str(e)}"
         )
 
 
@@ -410,7 +413,7 @@ async def complete_task_action(
         if not task:
             raise HTTPException(
                 status_code=404,
-                detail=f"تسک یافت نشد"
+                detail="Task not found"
             )
 
         # Mark as done
@@ -424,7 +427,7 @@ async def complete_task_action(
 
         return ActionResponse(
             success=True,
-            message=f"تسک «{task.title}» به عنوان انجام شده علامت‌گذاری شد",
+            message=f"Marked '{task.title}' as completed",
             data={
                 "id": task.id,
                 "title": task.title,
@@ -440,5 +443,5 @@ async def complete_task_action(
         logger.error(f"Failed to complete task for user {current_user.id}: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"خطا در تکمیل تسک: {str(e)}"
+            detail=f"Error completing task: {str(e)}"
         )

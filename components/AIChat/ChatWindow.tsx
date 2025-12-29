@@ -29,6 +29,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingContext, setIsLoadingContext] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -131,6 +132,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
 
     try {
       // Step 1: Detect user intent first
+      setStatusMessage('Detecting intent...');
       const { detectIntent, isActionIntent } = await import('@/services/ai-intent');
       const detectedIntent = await detectIntent(userMessage.content);
 
@@ -138,6 +140,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
 
       // Step 2: If it's an action intent, execute the action
       if (isActionIntent(detectedIntent.intent)) {
+        setStatusMessage('Executing action...');
         const {
           createTaskAction,
           createGoalAction,
@@ -171,10 +174,32 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               actionResult = await updateTaskAction(detectedIntent.entities as any);
               break;
-            case 'COMPLETE_TASK':
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await completeTaskAction((detectedIntent.entities as any).taskId);
+            case 'COMPLETE_TASK': {
+              const entities = detectedIntent.entities as any;
+              let taskId = entities.taskId;
+
+              // If AI didn't find the ID but found a title, try to find the task in today's context
+              if (!taskId && entities.title) {
+                const { getTasks } = await import('@/storage/task');
+                const today = new Date().toISOString().split('T')[0];
+                const todayTasks = await getTasks(today, userId);
+                const match = todayTasks.find(t =>
+                  t.title.toLowerCase().includes(entities.title.toLowerCase()) ||
+                  entities.title.toLowerCase().includes(t.title.toLowerCase())
+                );
+                if (match) taskId = match.id;
+              }
+
+              if (taskId) {
+                actionResult = await completeTaskAction(taskId);
+              } else {
+                actionResult = {
+                  success: false,
+                  message: entities.title ? `Could not find a task named "${entities.title}"` : "Could not identify which task to complete"
+                };
+              }
               break;
+            }
           }
 
           // Display action result
@@ -220,6 +245,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
       let systemPrompt = '';
 
       if (shouldLoadFullContext()) {
+        setStatusMessage('Gathering context...');
         setIsLoadingContext(true);
         const context = await gatherUserContext(userId);
         systemPrompt = generateSystemPrompt(context, languageInstruction);
@@ -237,6 +263,7 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
         userMessage,
       ];
 
+      setStatusMessage('Generating response...');
       const response = await sendChatMessage(messagesToSend);
 
       if (response.error) {
@@ -274,6 +301,7 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
     } finally {
       setIsLoading(false);
       setIsLoadingContext(false);
+      setStatusMessage(null);
     }
   };
 
@@ -378,8 +406,8 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
                           key={session.id}
                           onClick={() => handleSelectSession(session.id)}
                           className={`group relative p-4 rounded-2xl border cursor-pointer transition-all ${currentSessionId === session.id
-                              ? 'bg-white/10 border-indigo-500/50 text-white shadow-inner'
-                              : 'bg-transparent border-transparent text-white/60 hover:bg-white/5 hover:text-white'
+                            ? 'bg-white/10 border-indigo-500/50 text-white shadow-inner'
+                            : 'bg-transparent border-transparent text-white/60 hover:bg-white/5 hover:text-white'
                             }`}
                         >
                           <div className="pr-10">
@@ -484,7 +512,9 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
                         className="w-2 h-2 bg-pink-500 rounded-full"
                       />
                     </div>
-                    <span className="text-xs font-bold text-gray-500 dark:text-indigo-300 uppercase tracking-widest">Processing</span>
+                    <span className="text-xs font-bold text-gray-500 dark:text-indigo-300 uppercase tracking-widest">
+                      {statusMessage || 'Processing'}
+                    </span>
                   </div>
                 </motion.div>
               )}

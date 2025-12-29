@@ -150,11 +150,22 @@ export async function detectIntent(userMessage: string): Promise<DetectedIntent>
   };
 
   // Check patterns
+  console.log(`[Intent Detection] Starting detection for message: "${userMessage}"`);
+
   for (const [intent, regexList] of Object.entries(patterns)) {
     for (const regex of regexList) {
       if (regex.test(lowerMessage)) {
+        console.log(`[Intent Detection] Pattern match found: ${intent} (Regex: ${regex})`);
+
         // Found a match! Now extract entities based on intent
         const entities = await extractEntities(userMessage, intent as IntentType);
+
+        console.log(`[Intent Detection] Detection complete:`, {
+          intent: intent as IntentType,
+          confidence: 0.85,
+          entities
+        });
+
         return {
           intent: intent as IntentType,
           confidence: 0.85,
@@ -164,12 +175,26 @@ export async function detectIntent(userMessage: string): Promise<DetectedIntent>
     }
   }
 
+  console.log(`[Intent Detection] No pattern match, defaulting to CHAT`);
+
   // If no pattern matched, it's a regular chat
   return {
     intent: 'CHAT',
     confidence: 1.0,
     entities: {}
   };
+}
+
+/**
+ * Helper to clean up titles from AI noise and emojis
+ */
+function normalizeTitle(title: string): string {
+  return title
+    .replace(/(تسک|هدف|یادداشت|کار|جدید|اضافه|شد|برام|برایم|واسم|بنویس|ثبت|کن|done|new|task|goal|note|added|completed)/gi, '')
+    .replace(/[✅✔️☑️✨🚀📝📌]/g, '')
+    .replace(/«|»/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -195,32 +220,38 @@ async function extractEntities(
   switch (intent) {
     case 'CREATE_TASK':
       systemPrompt = `You are an entity extraction assistant. Extract task details from Persian/English text.
-Current date (Jalali): ${currentYear}/${currentMonth}/${currentDay}
+Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
 
 Extract and return ONLY a JSON object with these fields:
 {
-  "title": "task title in Persian or English",
+  "title": "CLEAN task title in Persian or English. REMOVE all conversational filler, emojis (like ✅), and checkmarks.",
   "date": "YYYY-MM-DD in Jalali format",
   "estimatedTime": optional number in minutes
 }
 
+Title rules:
+- Bad: "✅ « بدنسی» 1404/10/08 شد"
+- Good: "بدنسازی"
+- Bad: "تسک انجام شد: خرید نان"
+- Good: "خرید نان"
+
 Date conversion rules:
-- "امروز" or "today" → ${currentYear}/${String(currentMonth).padStart(2, '0')}/${String(currentDay).padStart(2, '0')}
+- "امروز" or "today" → ${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}
 - "فردا" or "tomorrow" → add 1 day to current date
 - "پس‌فردا" or "day after tomorrow" → add 2 days
 - If no date mentioned, use today
-- Format must be Jalali YYYY/MM/DD
+- Format must be Jalali YYYY-MM-DD
 
 Return ONLY the JSON, no other text.`;
       break;
 
     case 'CREATE_GOAL':
       systemPrompt = `You are an entity extraction assistant. Extract goal details from Persian/English text.
-Current date (Jalali): ${currentYear}/${currentMonth}/${currentDay}
+Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
 
 Extract and return ONLY a JSON object:
 {
-  "title": "goal title",
+  "title": "CLEAN goal title. REMOVE all conversational filler and emojis.",
   "type": "yearly|quarterly|monthly|weekly",
   "year": ${currentYear},
   "quarter": 1-4 (if quarterly),
@@ -243,7 +274,7 @@ Return ONLY the JSON, no other text.`;
 
     case 'CREATE_NOTE':
       systemPrompt = `You are an entity extraction assistant. Extract calendar note from Persian/English text.
-Current date (Jalali): ${currentYear}/${currentMonth}/${currentDay}
+Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
 
 Extract and return ONLY a JSON object:
 {
@@ -255,11 +286,40 @@ Date rules same as task creation.
 Return ONLY the JSON, no other text.`;
       break;
 
+    case 'LIST_TASKS':
+      systemPrompt = `You are an entity extraction assistant. Extract filtering criteria for listing tasks.
+Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
+
+Extract and return ONLY a JSON object:
+{
+  "date": "YYYY-MM-DD in Jalali format (if mentioned, otherwise null)",
+  "status": "todo|in-progress|done|null"
+}
+Return ONLY the JSON.`;
+      break;
+
+    case 'COMPLETE_TASK':
+    case 'UPDATE_TASK':
+      // For these, we don't have task IDs easily here, 
+      // but we can extract the title the user wants to act on.
+      systemPrompt = `You are an entity extraction assistant.
+Current date (Jalali): ${currentYear}-${currentMonth}-${currentDay}
+
+Extract and return ONLY a JSON object:
+{
+  "title": "The title of the task the user is referring to",
+  "status": "done (if completing) or todo|in-progress"
+}
+Return ONLY the JSON.`;
+      break;
+
     default:
       return {};
   }
 
   try {
+    console.log('[Intent] Extracting entities from user message:', userMessage);
+
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage }
@@ -272,22 +332,34 @@ Return ONLY the JSON, no other text.`;
 
     if (response.error) {
       console.error('[Intent] Entity extraction failed:', response.error);
+      console.log('[Intent] Falling back to regex extraction');
       return fallbackExtraction(userMessage, intent, jalaliToday);
     }
+
+    console.log(`[Intent Extraction] RAW AI Response for ${intent}: "${response.message}"`);
 
     // Parse JSON from AI response
     const jsonMatch = response.message.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      const entities = JSON.parse(jsonMatch[0]);
-      console.log('[Intent] Extracted entities:', entities);
-      return entities;
+      try {
+        const entities = JSON.parse(jsonMatch[0]);
+
+        // Clean up titles if present
+        if (entities.title) entities.title = normalizeTitle(entities.title);
+
+        console.log(`[Intent Extraction] Successfully parsed ${intent} entities:`, entities);
+        return entities;
+      } catch (parseError) {
+        console.error(`[Intent Extraction] JSON Parse error for ${intent}:`, parseError);
+      }
     }
 
+    console.warn(`[Intent Extraction] No valid JSON found for ${intent}, falling back to regex`);
     // Fallback if JSON parsing failed
     return fallbackExtraction(userMessage, intent, jalaliToday);
 
   } catch (error) {
-    console.error('[Intent] Entity extraction error:', error);
+    console.error(`[Intent Extraction] Fatal error in extractEntities for ${intent}:`, error);
     return fallbackExtraction(userMessage, intent, jalaliToday);
   }
 }
@@ -302,7 +374,7 @@ function fallbackExtraction(
 ): Record<string, any> {
 
   const { jy, jm, jd } = jalaliToday;
-  let date = `${jy}/${String(jm).padStart(2, '0')}/${String(jd).padStart(2, '0')}`;
+  let date = `${jy}-${String(jm).padStart(2, '0')}-${String(jd).padStart(2, '0')}`;
 
   // Detect "tomorrow"
   if (/فردا|tomorrow/i.test(message)) {
@@ -314,32 +386,34 @@ function fallbackExtraction(
       tomorrowDate.getMonth() + 1,
       tomorrowDate.getDate()
     );
-    date = `${jalaliTomorrow.jy}/${String(jalaliTomorrow.jm).padStart(2, '0')}/${String(jalaliTomorrow.jd).padStart(2, '0')}`;
+    date = `${jalaliTomorrow.jy}-${String(jalaliTomorrow.jm).padStart(2, '0')}-${String(jalaliTomorrow.jd).padStart(2, '0')}`;
   }
 
   switch (intent) {
     case 'CREATE_TASK':
       // Extract title (everything after keywords)
       let title = message
-        .replace(/(برام|برایم|واسم|واسه‌ام|یک|یه|یکی|یدونه|را|رو|از|به|تو|در|تسک|تسکم|کار|کارم|اضافه|بساز|درست|بنویس|کن|بکن|یادآور|یادآوری|میخوام|می‌خوام|خواهش|لطفا|لطفاً|برای|برا|واسه|واسهٔ|فردا|امروز|پس‌فردا|صبح|عصر|شب|ساعت|دارم|داشته|باشم|باشه)/gi, '')
+        .replace(/(برام|برایم|واسم|واسه‌ام|یک|یه|یکی|یدونه|را|رو|از|به|تو|در|تسک|تسکم|کار|کارم|اضافه|بساز|درست|بنویس|کن|بکن|یادآور|یادآوری|میخوام|می‌خوام|خواهش|لطفا|لطفاً|برای|برا|واسه|واسهٔ|فردا|امروز|پس‌فردا|صبح|عصر|شب|ساعت|دارم|داشته|باشم|باشه|add|create|task|new|tomorrow|today|reminder|please|write|make)/gi, '')
+        .replace(/[✅✔️☑️]/g, '') // Remove emojis
         .replace(/\s+/g, ' ')  // Remove extra spaces
         .trim();
 
-      if (!title) title = 'تسک جدید';
+      if (!title) title = 'New Task';
 
       return {
-        title,
+        title: normalizeTitle(title),
         date,
         estimatedTime: null
       };
 
     case 'CREATE_GOAL':
       let goalTitle = message
-        .replace(/(برام|برایم|واسم|یک|یه|یکی|را|رو|به|هدف|هدفم|ماهانه|سالانه|سال|هفتگی|هفته|فصلی|فصل|اضافه|بساز|درست|تعیین|کن|بکن|میخوام|می‌خوام|لطفا|لطفاً|برای|برا|واسه|این|ماه|امسال|قرار|بذار|بزار|بده)/gi, '')
+        .replace(/(برام|برایم|واسم|یک|یه|یکی|را|رو|به|هدف|هدفم|ماهانه|سالانه|سال|هفتگی|هفته|فصلی|فصل|اضافه|بساز|درست|تعیین|کن|بکن|میخوام|می‌خوام|لطفا|لطفاً|برای|برا|واسه|این|ماه|امسال|قرار|بذار|بزار|بده|goal|new|yearly|monthly|weekly|quarterly|set|add|create)/gi, '')
+        .replace(/[✅✔️☑️]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
 
-      if (!goalTitle) goalTitle = 'هدف جدید';
+      if (!goalTitle) goalTitle = 'New Goal';
 
       // Detect numbers for targetValue
       const numberMatch = message.match(/\d+/);
@@ -352,7 +426,7 @@ function fallbackExtraction(
       if (/فصلی|quarterly/i.test(message)) type = 'quarterly';
 
       return {
-        title: goalTitle,
+        title: normalizeTitle(goalTitle),
         type,
         year: jy,
         month: type === 'monthly' ? jm : undefined,
@@ -362,15 +436,35 @@ function fallbackExtraction(
 
     case 'CREATE_NOTE':
       let note = message
-        .replace(/(برام|واسم|یک|یه|را|رو|به|تو|در|داخل|تقویم|تقویمم|بنویس|یادداشت|یادداشتی|نوشت|ثبت|اضافه|کن|بکن|میخوام|می‌خوام|لطفا|لطفاً|برای|برا|واسه|فردا|امروز|پس‌فردا|که|بذار|بزار|قرار)/gi, '')
+        .replace(/(برام|واسم|یک|یه|را|رو|به|تو|در|داخل|تقویم|تقویمم|بنویس|یادداشت|یادداشتی|نوشت|ثبت|اضافه|کن|بکن|میخوام|می‌خوام|لطفا|لطفاً|برای|برا|واسه|فردا|امروز|پس‌فردا|که|بذار|بزار|قرار|note|calendar|write|add|save)/gi, '')
+        .replace(/[✅✔️☑️]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
 
-      if (!note) note = 'یادداشت جدید';
+      if (!note) note = 'New Note';
 
       return {
         date,
         note
+      };
+
+    case 'LIST_TASKS':
+      const isTomorrow = /فردا|tomorrow/i.test(message);
+      const isToday = /امروز|today/i.test(message);
+      return {
+        date: isTomorrow ? (fallbackExtraction(message, 'CREATE_TASK', jalaliToday).date) : (isToday ? date : null),
+        status: /انجام|done|complete|کامل/i.test(message) ? 'done' : null
+      };
+
+    case 'COMPLETE_TASK':
+    case 'UPDATE_TASK':
+      let updateTitle = message
+        .replace(/(تسک|کار|رو|را|انجام|کامل|تمام|کن|بده|باشه|done|complete|finish)/gi, '')
+        .replace(/[✅✔️☑️]/g, '')
+        .trim();
+      return {
+        title: normalizeTitle(updateTitle),
+        status: 'done'
       };
 
     default:
