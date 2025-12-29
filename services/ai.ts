@@ -75,7 +75,7 @@ export async function sendChatMessage(
     }
 
     // If it's a rate limit error, try next key
-    if (result.error.includes('Rate limit') || result.error.includes('محدودیت')) {
+    if (result.error.includes('Rate limit')) {
       console.log(`[AI Service] Rate limited, trying next key...`);
       lastError = result.error;
       continue;
@@ -88,7 +88,7 @@ export async function sendChatMessage(
   // All retries failed
   return {
     message: '',
-    error: lastError || 'All API keys are rate limited. Please try again later. (تمام کلیدها محدود شدند. لطفاً بعداً امتحان کنید.)',
+    error: lastError || 'All API keys are rate limited. Please try again later.',
   };
 }
 
@@ -133,7 +133,7 @@ async function sendChatMessageWithKey(
 
       return {
         message: '',
-        error: `Rate limit reached. Trying next API key... (محدودیت درخواست. در حال امتحان کلید بعدی...)`,
+        error: `Rate limit reached. Trying next API key...`,
       };
     }
 
@@ -150,7 +150,7 @@ async function sendChatMessageWithKey(
 
         // Check if it's a rate limit error in the message
         if (errorMessage.toLowerCase().includes('rate limit') ||
-            errorMessage.toLowerCase().includes('too many requests')) {
+          errorMessage.toLowerCase().includes('too many requests')) {
           markKeyAsRateLimited(provider, keyIndex, 60);
         }
 

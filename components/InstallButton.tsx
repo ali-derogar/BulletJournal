@@ -32,7 +32,15 @@ export default function InstallButton() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (isInstalled) {
+      alert("This app is already installed.");
+      return;
+    }
+
+    if (!deferredPrompt) {
+      alert("Install feature is not available right now. If on iOS, use 'Add to Home Screen' from the Share menu.");
+      return;
+    }
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -45,33 +53,36 @@ export default function InstallButton() {
     setDeferredPrompt(null);
   };
 
-  // Don't show button if app is already installed
-  if (isInstalled) return null;
-
-  // Don't show button if install prompt is not available
-  if (!deferredPrompt) return null;
-
   return (
     <button
       onClick={handleInstall}
-      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
-      title="Install app for offline access"
+      className={`flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${isInstalled
+        ? "from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+        : "from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+        } text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]`}
+      title={isInstalled ? "App is installed" : "Install app for offline access"}
     >
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-        />
-      </svg>
-      <span className="hidden sm:inline">Install App</span>
-      <span className="sm:hidden">Install</span>
+      {isInstalled ? (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+          />
+        </svg>
+      )}
+      <span className="hidden sm:inline">{isInstalled ? "App Installed" : "Install App"}</span>
+      <span className="sm:hidden">{isInstalled ? "Installed" : "Install"}</span>
     </button>
   );
 }
