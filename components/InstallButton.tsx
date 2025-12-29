@@ -61,83 +61,94 @@ export default function InstallButton() {
 
 
   return (
-    <button
-      onClick={handleInstall}
-      className={`flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${isInstalled
-        ? "from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-        : "from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-        } text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]`}
-      title={isInstalled ? "App is installed" : "Install app for offline access"}
-    >
-      {isInstalled ? (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-      ) : (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-          />
-        </svg>
-      )}
-      <span className="hidden sm:inline">{isInstalled ? "App Installed" : "Install App"}</span>
-      <span className="sm:hidden">{isInstalled ? "Installed" : "Install"}</span>
+    <>
+      <button
+        onClick={handleInstall}
+        className={`flex items-center gap-1.5 px-3 py-1.5 ${isInstalled
+          ? "bg-slate-100 dark:bg-slate-800 text-slate-500"
+          : "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+          } rounded-full text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95`}
+        title={isInstalled ? "App is installed" : "Install app"}
+      >
+        {isInstalled ? (
+          <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+        )}
+        <span>{isInstalled ? "Installed" : "Install App"}</span>
+      </button>
 
       {showGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl transform animate-in zoom-in duration-300">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Install on iOS</h3>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setShowGuide(false)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 max-w-sm w-full shadow-2xl transform animate-in zoom-in slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Install App</h3>
               <button
-                onClick={(e) => { e.stopPropagation(); setShowGuide(false); }}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                onClick={() => setShowGuide(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                aria-label="Close"
               >
-                <svg className="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div className="space-y-6 text-slate-600 dark:text-slate-300">
-              <div className="flex items-start gap-4">
-                <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <div className="flex-shrink-0 bg-blue-500 p-2.5 rounded-xl text-white">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6a3 3 0 100 2.684m6.632-3.316a3 3 0 110 2.684m0 2.684l-6.632-3.316" />
                   </svg>
                 </div>
-                <p>1. Tap the <span className="font-bold text-blue-600 dark:text-blue-400">Share</span> button in Safari&apos;s bottom menu.</p>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Step 1</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Tap the <span className="text-blue-500 font-bold">Share</span> button in Safari&apos;s bottom menu.</p>
+                </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-lg">
-                  <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <div className="flex-shrink-0 bg-emerald-500 p-2.5 rounded-xl text-white">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <p>2. Scroll down and select <span className="font-bold text-emerald-600 dark:text-emerald-400">&quot;Add to Home Screen&quot;</span>.</p>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Step 2</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Scroll down and select <span className="text-emerald-500 font-bold">&quot;Add to Home Screen&quot;</span>.</p>
+                </div>
               </div>
 
-              <div className="pt-4">
-                <button
-                  onClick={() => setShowGuide(false)}
-                  className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold transition-all active:scale-95 shadow-lg"
-                >
-                  Got it!
-                </button>
-              </div>
+              <button
+                onClick={() => setShowGuide(false)}
+                className="w-full mt-2 py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold transition-all active:scale-[0.98] shadow-lg"
+              >
+                Got it
+              </button>
             </div>
           </div>
         </div>
       )}
-    </button>
-
+    </>
   );
 }
