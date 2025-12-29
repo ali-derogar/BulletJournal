@@ -17,17 +17,7 @@ def get_period_dates(period_type: str, year: int, period: int) -> tuple[datetime
     """Get start and end dates for a period."""
     if period_type == 'weekly':
         # ISO week: Monday is start of week
-        # Find the first day of the year
-        first_day = datetime(year, 1, 1)
-        # Find Monday of week 1
-        days_to_monday = (first_day.weekday() - 0) % 7  # 0 = Monday
-        if days_to_monday > 3:  # If more than 3 days before Monday, it's week 53 of previous year
-            first_monday = first_day - timedelta(days=days_to_monday - 7)
-        else:
-            first_monday = first_day - timedelta(days=days_to_monday)
-
-        # Calculate start of requested week
-        start_date = first_monday + timedelta(weeks=period-1)
+        start_date = datetime.fromisocalendar(year, period, 1)
         end_date = start_date + timedelta(days=6, hours=23, minutes=59, seconds=59)
 
     elif period_type == 'monthly':

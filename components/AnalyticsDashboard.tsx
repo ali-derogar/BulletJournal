@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { AnalyticsData, Period, PeriodType } from '@/domain/analytics';
 import { getAnalytics } from '@/services/analytics';
-import { getCurrentPeriod, getPreviousPeriod, getPeriodDates } from '@/utils/analytics';
+import { getCurrentPeriod, getPreviousPeriod, getNextPeriod, getPeriodDates } from '@/utils/analytics';
 import { useUser } from '@/app/context/UserContext';
 
 interface AnalyticsDashboardProps {
@@ -100,8 +100,8 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
                 {isAuthError
                   ? 'Analytics requires authentication. Please log in to view your productivity data.'
                   : error.includes('Network error') || error.includes('fetch')
-                  ? 'Unable to load analytics data. Please ensure the backend server is running and try again.'
-                  : error
+                    ? 'Unable to load analytics data. Please ensure the backend server is running and try again.'
+                    : error
                 }
               </p>
             </div>
@@ -538,30 +538,11 @@ function formatPeriodDisplay(period: Period): string {
   }
 }
 
-function getNextPeriod(period: Period): Period {
-  if (period.type === 'weekly') {
-    const maxWeeks = getWeeksInYear(period.year);
-    if (period.period >= maxWeeks) {
-      return { type: 'weekly', year: period.year + 1, period: 1 };
-    } else {
-      return { type: 'weekly', year: period.year, period: period.period + 1 };
-    }
-  } else {
-    if (period.period >= 12) {
-      return { type: 'monthly', year: period.year + 1, period: 1 };
-    } else {
-      return { type: 'monthly', year: period.year, period: period.period + 1 };
-    }
-  }
-}
+// Helper functions moved to utils/analytics.ts or using imported ones
 
 function isCurrentPeriod(period: Period): boolean {
   const current = getCurrentPeriod(period.type);
   return period.year === current.year && period.period === current.period;
 }
 
-function getWeeksInYear(year: number): number {
-  const d = new Date(year, 11, 31);
-  const dayNum = d.getDay() || 7;
-  return Math.ceil((((d.getTime() - new Date(year, 0, 1).getTime()) / 86400000) + 1) / 7);
-}
+// getWeeksInYear removed, using imported version

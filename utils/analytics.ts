@@ -4,13 +4,12 @@ import type { Goal } from '@/domain/goal';
 
 export function getCurrentPeriod(type: PeriodType): Period {
   const now = new Date();
-  const year = now.getFullYear();
 
   if (type === 'weekly') {
-    // Get ISO week number
-    const weekNumber = getISOWeek(now);
-    return { type: 'weekly', year, period: weekNumber };
+    const { week, year } = getISOWeek(now);
+    return { type: 'weekly', year, period: week };
   } else {
+    const year = now.getFullYear();
     const month = now.getMonth() + 1; // getMonth() returns 0-11
     return { type: 'monthly', year, period: month };
   }
@@ -59,12 +58,30 @@ export function getPeriodDates(period: Period): { start: Date; end: Date; days: 
   }
 }
 
-function getISOWeek(date: Date): number {
+export function getISOWeek(date: Date): { week: number; year: number } {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return { week, year: d.getUTCFullYear() };
+}
+
+export function getNextPeriod(period: Period): Period {
+  if (period.type === 'weekly') {
+    const maxWeeks = getWeeksInYear(period.year);
+    if (period.period >= maxWeeks) {
+      return { type: 'weekly', year: period.year + 1, period: 1 };
+    } else {
+      return { type: 'weekly', year: period.year, period: period.period + 1 };
+    }
+  } else {
+    if (period.period >= 12) {
+      return { type: 'monthly', year: period.year + 1, period: 1 };
+    } else {
+      return { type: 'monthly', year: period.year, period: period.period + 1 };
+    }
+  }
 }
 
 function getDateOfISOWeek(week: number, year: number): Date {
@@ -79,9 +96,9 @@ function getDateOfISOWeek(week: number, year: number): Date {
   return ISOweekStart;
 }
 
-function getWeeksInYear(year: number): number {
+export function getWeeksInYear(year: number): number {
   const d = new Date(year, 11, 31);
-  return getISOWeek(d);
+  return getISOWeek(d).week;
 }
 
 function formatDate(date: Date): string {
