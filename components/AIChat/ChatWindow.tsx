@@ -130,7 +130,79 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
     setIsLoading(true);
 
     try {
-      // Check if we need to load full context (first interaction of the day)
+      // Step 1: Detect user intent first
+      const { detectIntent, isActionIntent } = await import('@/services/ai-intent');
+      const detectedIntent = await detectIntent(userMessage.content);
+
+      console.log('[ChatWindow] Detected intent:', detectedIntent);
+
+      // Step 2: If it's an action intent, execute the action
+      if (isActionIntent(detectedIntent.intent)) {
+        const {
+          createTaskAction,
+          createGoalAction,
+          createCalendarNoteAction,
+          listTasksAction,
+          updateTaskAction,
+          completeTaskAction
+        } = await import('@/services/ai-actions');
+
+        let actionResult;
+
+        try {
+          switch (detectedIntent.intent) {
+            case 'CREATE_TASK':
+              actionResult = await createTaskAction(detectedIntent.entities);
+              break;
+            case 'CREATE_GOAL':
+              actionResult = await createGoalAction(detectedIntent.entities);
+              break;
+            case 'CREATE_NOTE':
+              actionResult = await createCalendarNoteAction(detectedIntent.entities);
+              break;
+            case 'LIST_TASKS':
+              actionResult = await listTasksAction(detectedIntent.entities);
+              break;
+            case 'UPDATE_TASK':
+              actionResult = await updateTaskAction(detectedIntent.entities);
+              break;
+            case 'COMPLETE_TASK':
+              actionResult = await completeTaskAction(detectedIntent.entities.taskId);
+              break;
+          }
+
+          // Display action result
+          if (actionResult) {
+            const actionMessage: ChatMessage = {
+              role: 'assistant',
+              content: actionResult.success
+                ? `✅ ${actionResult.message}`
+                : `❌ ${actionResult.message}`,
+            };
+
+            // Save to DB
+            if (currentSessionId) {
+              const dbActionMessage: AIMessage = {
+                id: generateId(),
+                sessionId: currentSessionId,
+                role: 'assistant',
+                content: actionMessage.content,
+                timestamp: new Date().toISOString(),
+              };
+              await saveAIMessage(dbActionMessage);
+            }
+
+            setMessages(prev => [...prev, actionMessage]);
+            setIsLoading(false);
+            return; // Don't continue to regular chat
+          }
+        } catch (actionError) {
+          console.error('[ChatWindow] Action execution error:', actionError);
+          // Fall through to regular chat if action fails
+        }
+      }
+
+      // Step 3: Regular chat flow (if not an action or action failed)
       const { shouldLoadFullContext, gatherUserContext, generateSystemPrompt } = await import('@/services/ai-context');
       const { sendChatMessage } = await import('@/services/ai');
       const { detectLanguage, getLanguagePromptEnhancementFromHistory } = await import('@/utils/languageDetection');
