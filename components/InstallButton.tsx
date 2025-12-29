@@ -113,7 +113,7 @@ export default function InstallButton() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6a3 3 0 100 2.684m6.632-3.316a3 3 0 110 2.684m0 2.684l-6.632-3.316" />
                   </svg>
                 </div>
-                <p>1. Tap the <span className="font-bold text-blue-600 dark:text-blue-400">Share</span> button in Safari's bottom menu.</p>
+                <p>1. Tap the <span className="font-bold text-blue-600 dark:text-blue-400">Share</span> button in Safari&apos;s bottom menu.</p>
               </div>
 
               <div className="flex items-start gap-4">
@@ -122,7 +122,7 @@ export default function InstallButton() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <p>2. Scroll down and select <span className="font-bold text-emerald-600 dark:text-emerald-400">"Add to Home Screen"</span>.</p>
+                <p>2. Scroll down and select <span className="font-bold text-emerald-600 dark:text-emerald-400">&quot;Add to Home Screen&quot;</span>.</p>
               </div>
 
               <div className="pt-4">
