@@ -7,7 +7,7 @@ import ProfileForm from "@/components/Profile/ProfileForm";
 import Icon from "@/components/Icon";
 import { UserProfile } from "@/domain/user";
 import { getStoredToken, clearStoredToken } from "@/services/auth";
-import { getLevelBorder, getLevelColor } from "@/utils/gamification";
+import { getLevelColor } from "@/utils/gamification";
 
 export default function ProfilePage() {
     const router = useRouter();

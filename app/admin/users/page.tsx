@@ -12,7 +12,7 @@
  * - Role management (SUPERUSER only)
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import AdminGuard from '@/components/AdminGuard';
 import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/app/context/AuthContext';
@@ -23,6 +23,7 @@ import {
   updateUserGamification,
   AdminUser,
   UserRole,
+  UserListParams,
   getRoleDisplayName,
   getRoleBadgeColor,
   hasSuperuserAccess,
@@ -47,15 +48,11 @@ export default function AdminUsersPage() {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showGamificationModal, setShowGamificationModal] = useState(false);
 
-  useEffect(() => {
-    loadUsers();
-  }, [page, search, roleFilter, bannedFilter]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const params: any = { page, size: pageSize };
+      const params: UserListParams = { page, size: pageSize };
       if (search) params.search = search;
       if (roleFilter) params.role = roleFilter;
       if (bannedFilter !== 'all') {
@@ -70,7 +67,11 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, search, roleFilter, bannedFilter]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleBanToggle = async (user: AdminUser) => {
     if (!confirm(`Are you sure you want to ${user.is_banned ? 'unban' : 'ban'} ${user.name}?`)) {
@@ -333,6 +334,7 @@ function UserRow({
         <div className="flex items-center">
           <div className="flex-shrink-0 h-10 w-10">
             {user.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.avatar_url}
                 alt={user.name}
