@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import AdminGuard from '@/components/AdminGuard';
 import AdminLayout from '@/components/AdminLayout';
+import UserSelector from '@/components/UserSelector';
 import {
   sendBulkNotification,
   getAdminNotificationStats,
@@ -31,7 +32,7 @@ export default function AdminNotificationsPage() {
   const [link, setLink] = useState('');
   const [targetType, setTargetType] = useState<'all' | 'role' | 'specific'>('all');
   const [selectedRole, setSelectedRole] = useState<'USER' | 'ADMIN' | 'SUPERUSER'>('USER');
-  const [userIds, setUserIds] = useState('');
+  const [userIds, setUserIds] = useState<string[]>([]);
 
   // Load stats and recent notifications
   const loadData = async () => {
@@ -75,12 +76,11 @@ export default function AdminNotificationsPage() {
       if (targetType === 'role') {
         request.role = selectedRole;
       } else if (targetType === 'specific') {
-        const ids = userIds.split(',').map((id) => id.trim()).filter(Boolean);
-        if (ids.length === 0) {
-          alert('Please enter at least one user ID');
+        if (userIds.length === 0) {
+          alert('Please select at least one user');
           return;
         }
-        request.user_ids = ids;
+        request.user_ids = userIds;
       }
 
       const result = await sendBulkNotification(request);
@@ -92,7 +92,7 @@ export default function AdminNotificationsPage() {
       setType('info');
       setLink('');
       setTargetType('all');
-      setUserIds('');
+      setUserIds([]);
 
       // Reload stats
       await loadData();
@@ -261,15 +261,14 @@ export default function AdminNotificationsPage() {
                       className="mr-2 mt-1"
                     />
                     <div className="flex-1">
-                      <span>Specific Users (comma-separated IDs):</span>
+                      <span>Specific Users:</span>
                       {targetType === 'specific' && (
-                        <input
-                          type="text"
-                          value={userIds}
-                          onChange={(e) => setUserIds(e.target.value)}
-                          placeholder="user-id-1, user-id-2, user-id-3"
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
+                        <div className="mt-2">
+                          <UserSelector
+                            selectedUserIds={userIds}
+                            onSelectionChange={setUserIds}
+                          />
+                        </div>
                       )}
                     </div>
                   </label>
@@ -281,7 +280,7 @@ export default function AdminNotificationsPage() {
                 <div className="text-sm text-gray-600">
                   {targetType === 'all' && 'Will send to all users'}
                   {targetType === 'role' && `Will send to all ${selectedRole}s`}
-                  {targetType === 'specific' && userIds && `Will send to ${userIds.split(',').length} user(s)`}
+                  {targetType === 'specific' && userIds.length > 0 && `Will send to ${userIds.length} user(s)`}
                 </div>
                 <button
                   type="submit"
