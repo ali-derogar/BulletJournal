@@ -53,8 +53,13 @@ export default function AuthButton() {
         className="px-4 py-2 bg-card border border-border rounded-lg hover:bg-accent transition-colors flex items-center gap-2"
       >
         {/* User Avatar */}
-        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-semibold">
-          {user?.name.charAt(0).toUpperCase()}
+        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border border-primary/20">
+          {user?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="font-semibold">{user?.name.charAt(0).toUpperCase()}</span>
+          )}
         </div>
 
         {/* User Info */}

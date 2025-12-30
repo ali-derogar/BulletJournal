@@ -1,6 +1,8 @@
 export interface UserProfile {
   id: string;
   name: string;
+  username?: string;
+  avatar_url?: string;
   email: string; // Added email as it aligns with backend
   createdAt: string;
   // Professional Profile Fields

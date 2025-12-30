@@ -8,6 +8,8 @@ import type { UserProfile } from '@/domain';
 export interface AuthUser {
   id: string;
   name: string;
+  username?: string;
+  avatar_url?: string;
   email: string;
 }
 
@@ -17,7 +19,7 @@ interface AuthContextType {
   isLoading: boolean;
   isOnline: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, username: string, email: string, password: string) => Promise<void>;
   logout: (clearData?: boolean) => Promise<void>;
   updateUserName: (name: string) => Promise<void>;
   error: string | null;
@@ -56,6 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userProfile: UserProfile = {
         id: authUser.id,
         name: authUser.name,
+        username: authUser.username,
+        avatar_url: authUser.avatar_url,
         email: authUser.email,
         createdAt: existingUser?.createdAt || new Date().toISOString(),
       };
@@ -78,6 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const authUser = {
             id: userInfo.id,
             name: userInfo.name,
+            username: userInfo.username,
+            avatar_url: userInfo.avatar_url,
             email: userInfo.email,
           };
           setUser(authUser);
@@ -123,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   // Register new user
-  const register = useCallback(async (name: string, email: string, password: string) => {
+  const register = useCallback(async (name: string, username: string, email: string, password: string) => {
     setError(null);
     setIsLoading(true);
 
@@ -136,6 +142,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Name is required');
       }
 
+      if (!username.trim()) {
+        throw new Error('Username is required');
+      }
+
       if (!authService.validateEmail(email)) {
         throw new Error('Invalid email address');
       }
@@ -145,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(passwordValidation.message);
       }
 
-      await authService.register({ name, email, password });
+      await authService.register({ name, username, email, password });
       const { user: userInfo } = await authService.login({ email, password });
 
       const authUser = {
@@ -244,6 +254,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authUser = {
         id: updatedUser.id,
         name: updatedUser.name,
+        username: updatedUser.username,
+        avatar_url: updatedUser.avatar_url,
         email: updatedUser.email,
       };
 

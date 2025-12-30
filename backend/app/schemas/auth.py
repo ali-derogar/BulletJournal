@@ -3,6 +3,7 @@ from typing import Optional
 
 class UserCreate(BaseModel):
     name: str
+    username: str
     email: EmailStr
     password: str
 
@@ -19,6 +20,8 @@ class TokenData(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
+    username: Optional[str] = None
+    avatar_url: Optional[str] = None
     education_level: Optional[str] = None
     job_title: Optional[str] = None
     general_goal: Optional[str] = None

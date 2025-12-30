@@ -62,6 +62,10 @@ def get_user_by_email(db: Session, email: str) -> Optional[User]:
     """Get user by email"""
     return db.query(User).filter(User.email == email).first()
 
+def get_user_by_username(db: Session, username: str) -> Optional[User]:
+    """Get user by username"""
+    return db.query(User).filter(User.username == username).first()
+
 def create_user(db: Session, user: UserCreate) -> User:
     """Create a new user"""
     user_id = str(uuid.uuid4())
@@ -70,6 +74,7 @@ def create_user(db: Session, user: UserCreate) -> User:
         id=user_id,
         userId=user_id,  # For consistency
         name=user.name,
+        username=user.username,
         email=user.email,
         password_hash=hashed_password
     )

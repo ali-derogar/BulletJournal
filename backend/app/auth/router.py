@@ -12,6 +12,7 @@ from app.auth.auth import (
     authenticate_user,
     create_access_token,
     get_user_by_email,
+    get_user_by_username,
     create_user,
     ACCESS_TOKEN_EXPIRE_MINUTES,
     SECRET_KEY,
@@ -47,11 +48,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     # Check if user already exists
-    db_user = get_user_by_email(db, user.email)
-    if db_user:
+    if get_user_by_email(db, user.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
+        )
+    
+    if get_user_by_username(db, user.username):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already taken"
         )
 
     # Create new user
@@ -101,6 +107,25 @@ async def update_user_profile(
                 detail="Name cannot be empty"
             )
         current_user.name = user_update.name.strip()
+
+    if user_update.username is not None:
+        username = user_update.username.strip()
+        if not username:
+             raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username cannot be empty"
+            )
+        # Check uniqueness if changed
+        if username != current_user.username:
+            if get_user_by_username(db, username):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Username already taken"
+                )
+            current_user.username = username
+
+    if user_update.avatar_url is not None:
+        current_user.avatar_url = user_update.avatar_url
     
     # Update profile fields
     if user_update.education_level is not None:

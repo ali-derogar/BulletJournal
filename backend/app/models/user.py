@@ -15,6 +15,8 @@ class User(Base):
     deletedAt = Column(DateTime(timezone=True), nullable=True)
 
     # Profile fields
+    username = Column(String, unique=True, index=True, nullable=True) # Nullable for now for migration safety
+    avatar_url = Column(Text, nullable=True)
     education_level = Column(String, nullable=True)
     job_title = Column(String, nullable=True)
     general_goal = Column(Text, nullable=True)  # Using Text for potentially longer content

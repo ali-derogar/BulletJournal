@@ -7,6 +7,7 @@ import { get, post, postForm, patch, ApiError } from './api';
 
 export interface RegisterData {
   name: string;
+  username: string;
   email: string;
   password: string;
 }
@@ -25,6 +26,8 @@ export interface UserInfo {
   id: string;
   userId: string;
   name: string;
+  username?: string;
+  avatar_url?: string;
   email: string;
   created_at: string;
   updatedAt: string;

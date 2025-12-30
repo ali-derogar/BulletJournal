@@ -13,6 +13,7 @@ interface ProfileFormProps {
 export default function ProfileForm({ user, token }: ProfileFormProps) {
     const router = useRouter();
     const [formData, setFormData] = useState<Partial<UserProfile>>({
+        avatar_url: user.avatar_url || "",
         education_level: user.education_level || "",
         job_title: user.job_title || "",
         general_goal: user.general_goal || "",
@@ -64,6 +65,78 @@ export default function ProfileForm({ user, token }: ProfileFormProps) {
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* Avatar Section */}
+                <div className="md:col-span-2 space-y-4">
+                    <h3 className="text-lg font-semibold text-white/90 border-b border-white/10 pb-2">Profile Avatar</h3>
+                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                        {/* Current/Preview */}
+                        <div className="flex-shrink-0">
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/10 bg-gray-800 relative">
+                                {formData.avatar_url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-500">
+                                        {formData.name?.charAt(0) || "?"}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Controls */}
+                        <div className="flex-1 space-y-4 w-full">
+                            {/* Presets */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Choose a preset</label>
+                                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                                    {Array.from({ length: 15 }).map((_, i) => {
+                                        const seed = `avatar_${i}`;
+                                        const url = `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+                                        return (
+                                            <button
+                                                key={i}
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, avatar_url: url }))}
+                                                className={`flex-shrink-0 w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${formData.avatar_url === url ? 'border-indigo-500 scale-110' : 'border-transparent hover:border-gray-500'}`}
+                                            >
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={url} alt={`Preset ${i}`} className="w-full h-full object-cover" />
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Upload */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Or upload your own</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                setFormData(prev => ({ ...prev, avatar_url: reader.result as string }));
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }}
+                                    className="block w-full text-sm text-gray-400
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-full file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-indigo-600 file:text-white
+                                      hover:file:bg-indigo-700
+                                      cursor-pointer"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Image will be cropped to a circle automatically.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Personal Details */}
                 <div className="space-y-4">
