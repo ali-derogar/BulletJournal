@@ -15,7 +15,7 @@ import {
   getNotificationTypeIcon,
   formatNotificationTime,
 } from '@/services/notifications';
-import { getUser } from '@/services/auth';
+import { getCurrentUser } from '@/services/auth';
 
 export default function NotificationBell() {
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function NotificationBell() {
     // Connect to WebSocket for real-time notifications
     const initializeWebSocket = async () => {
       try {
-        const user = await getUser();
+        const user = await getCurrentUser();
         if (user?.id) {
           notificationWebSocket.connect(user.id);
 
