@@ -135,7 +135,12 @@ export default function ProfilePage() {
 
                             <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-indigo-500 to-purple-500 mb-6 relative">
                                 <div className="w-full h-full rounded-full bg-[#1a1a24] flex items-center justify-center overflow-hidden">
-                                    <span className="text-4xl font-bold text-white/20">{user?.name?.charAt(0)}</span>
+                                    {user.avatar_url ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-4xl font-bold text-white/20">{user.name?.charAt(0)}</span>
+                                    )}
                                 </div>
                                 <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-[#1a1a24] rounded-full" />
                             </div>

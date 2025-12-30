@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserProfile } from "@/domain/user";
 import { motion } from "framer-motion";
+import Icon from "../Icon";
 
 interface ProfileFormProps {
     user: UserProfile;
@@ -85,11 +86,11 @@ export default function ProfileForm({ user, token }: ProfileFormProps) {
                         </div>
 
                         {/* Controls */}
-                        <div className="flex-1 space-y-4 w-full">
+                        <div className="flex-1 space-y-6 w-full">
                             {/* Presets */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Choose a preset</label>
-                                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                                <label className="block text-sm font-medium text-gray-400 mb-3">Choose a preset</label>
+                                <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
                                     {Array.from({ length: 15 }).map((_, i) => {
                                         const seed = `avatar_${i}`;
                                         const url = `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
@@ -98,7 +99,7 @@ export default function ProfileForm({ user, token }: ProfileFormProps) {
                                                 key={i}
                                                 type="button"
                                                 onClick={() => setFormData(prev => ({ ...prev, avatar_url: url }))}
-                                                className={`flex-shrink-0 w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${formData.avatar_url === url ? 'border-indigo-500 scale-110' : 'border-transparent hover:border-gray-500'}`}
+                                                className={`aspect-square rounded-full overflow-hidden border-2 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${formData.avatar_url === url ? 'border-indigo-500 scale-110 ring-2 ring-indigo-500/50' : 'border-transparent hover:border-gray-500'}`}
                                             >
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img src={url} alt={`Preset ${i}`} className="w-full h-full object-cover" />
@@ -111,28 +112,30 @@ export default function ProfileForm({ user, token }: ProfileFormProps) {
                             {/* Upload */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-2">Or upload your own</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                                setFormData(prev => ({ ...prev, avatar_url: reader.result as string }));
-                                            };
-                                            reader.readAsDataURL(file);
-                                        }
-                                    }}
-                                    className="block w-full text-sm text-gray-400
-                                      file:mr-4 file:py-2 file:px-4
-                                      file:rounded-full file:border-0
-                                      file:text-sm file:font-semibold
-                                      file:bg-indigo-600 file:text-white
-                                      hover:file:bg-indigo-700
-                                      cursor-pointer"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Image will be cropped to a circle automatically.</p>
+                                <div className="flex items-center gap-4">
+                                    <label className="cursor-pointer bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg border border-white/10 transition-colors flex items-center gap-2">
+                                        <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                        </Icon>
+                                        <span>Select Image</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setFormData(prev => ({ ...prev, avatar_url: reader.result as string }));
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                    <span className="text-xs text-gray-500">JPG, PNG or GIF. Max 5MB.</span>
+                                </div>
                             </div>
                         </div>
                     </div>
