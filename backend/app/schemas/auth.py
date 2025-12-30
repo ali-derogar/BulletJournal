@@ -19,3 +19,11 @@ class TokenData(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
+    education_level: Optional[str] = None
+    job_title: Optional[str] = None
+    general_goal: Optional[str] = None
+    income_level: Optional[str] = None
+    mbti_type: Optional[str] = None
+    bio: Optional[str] = None
+    skills: Optional[str] = None
+    location: Optional[str] = None

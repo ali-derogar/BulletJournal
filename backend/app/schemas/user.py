@@ -5,6 +5,14 @@ class UserBase(BaseModel):
     id: str
     name: str
     email: EmailStr
+    education_level: str | None = None
+    job_title: str | None = None
+    general_goal: str | None = None
+    income_level: str | None = None
+    mbti_type: str | None = None
+    bio: str | None = None
+    skills: str | None = None
+    location: str | None = None
 
 class UserCreate(UserBase):
     password: str

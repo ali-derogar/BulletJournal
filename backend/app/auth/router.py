@@ -101,6 +101,24 @@ async def update_user_profile(
                 detail="Name cannot be empty"
             )
         current_user.name = user_update.name.strip()
+    
+    # Update profile fields
+    if user_update.education_level is not None:
+        current_user.education_level = user_update.education_level
+    if user_update.job_title is not None:
+        current_user.job_title = user_update.job_title
+    if user_update.general_goal is not None:
+        current_user.general_goal = user_update.general_goal
+    if user_update.income_level is not None:
+        current_user.income_level = user_update.income_level
+    if user_update.mbti_type is not None:
+        current_user.mbti_type = user_update.mbti_type
+    if user_update.bio is not None:
+        current_user.bio = user_update.bio
+    if user_update.skills is not None:
+        current_user.skills = user_update.skills
+    if user_update.location is not None:
+        current_user.location = user_update.location
 
     try:
         db.commit()
