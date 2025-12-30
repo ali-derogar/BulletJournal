@@ -136,6 +136,7 @@ export function UserProvider({ children }: UserProviderProps) {
       const newUser: UserProfile = {
         id: `user-${Date.now()}`,
         name: name.trim(),
+        email: "", // Placeholder as this is a local user
         createdAt: new Date().toISOString(),
       };
 
