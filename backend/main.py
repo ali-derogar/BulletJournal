@@ -8,6 +8,8 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import time
 import logging
+from alembic.config import Config
+from alembic import command
 
 from app.api.main import api_router
 from app.auth.router import router as auth_router
@@ -21,8 +23,16 @@ from app.db.session import Base
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Run database migrations automatically on startup
+try:
+    logger.info("Running database migrations...")
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+    logger.info("Database migrations completed successfully")
+except Exception as e:
+    logger.error(f"Failed to run migrations: {e}")
+    # Still create tables as fallback
+    Base.metadata.create_all(bind=engine)
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
