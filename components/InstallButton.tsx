@@ -68,7 +68,7 @@ export default function InstallButton() {
           ? "bg-slate-100 dark:bg-slate-800 text-slate-500"
           : "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
           } rounded-full text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95`}
-        title={isInstalled ? "App is installed" : "Install app"}
+        title={isInstalled ? "App is installed" : "app"}
       >
         {isInstalled ? (
           <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@ export default function InstallButton() {
             />
           </svg>
         )}
-        <span>{isInstalled ? "Installed" : "Install App"}</span>
+        <span>{isInstalled ? "Installed" : "App"}</span>
       </button>
 
       {showGuide && (
@@ -102,7 +102,7 @@ export default function InstallButton() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Install App</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">App</h3>
               <button
                 onClick={() => setShowGuide(false)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
