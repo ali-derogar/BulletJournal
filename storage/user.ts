@@ -141,6 +141,7 @@ export async function initializeDefaultUser(): Promise<UserProfile> {
     const newDefaultUser: UserProfile = {
       id: "default",
       name: "Default User",
+      email: "", // Placeholder for default user
       createdAt: new Date().toISOString(),
     };
 
