@@ -19,10 +19,13 @@ import ThemeToggle from "@/components/ThemeToggle";
 import LoginPage from "@/components/LoginPage";
 import AIChat from "@/components/AIChat";
 import InstallButton from "@/components/InstallButton";
+import NotificationBell from "@/components/NotificationBell";
+import { useAuth } from "./context/AuthContext";
 
 export default function Home() {
   const { currentDate, setCurrentDate } = useDate();
   const { currentUser } = useUser();
+  const { isAuthenticated } = useAuth();
   const userId = currentUser?.id || "default";
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar' | 'ai' | 'login'>('daily');
@@ -59,6 +62,7 @@ export default function Home() {
             <ThemeToggle />
             <InstallButton />
             <UploadDownloadButtons />
+            {isAuthenticated && <NotificationBell />}
             <AuthButton />
           </motion.div>
         </div>
