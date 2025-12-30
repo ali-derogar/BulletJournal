@@ -9,11 +9,12 @@ import { getToken } from './auth';
 /**
  * Get API base URL dynamically
  * Uses environment variable if available, otherwise infers from current location
+ * Note: Returns base URL WITHOUT /api (e.g., http://localhost:8000)
  */
 function getApiBaseUrl(): string {
   // Try environment variable first (NEXT_PUBLIC_API_URL)
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL + '/api';
+    return process.env.NEXT_PUBLIC_API_URL;
   }
 
   // In browser, construct from window.location
@@ -23,24 +24,25 @@ function getApiBaseUrl(): string {
 
     // If running on localhost, assume backend is on port 8000
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${hostname}:8000/api`;
+      return `${protocol}//${hostname}:8000`;
     }
 
     // For production, assume API is on same host
-    return `${protocol}//${hostname}/api`;
+    return `${protocol}//${hostname}`;
   }
 
   // Fallback for SSR
-  return 'http://localhost:8000/api';
+  return 'http://localhost:8000';
 }
 
 /**
  * Get WebSocket base URL dynamically
+ * Returns WebSocket URL with /api path (e.g., ws://localhost:8000/api)
  */
 function getWebSocketBaseUrl(): string {
   const apiUrl = getApiBaseUrl();
-  // Replace http/https with ws/wss
-  return apiUrl.replace(/^http/, 'ws');
+  // Replace http/https with ws/wss and add /api
+  return apiUrl.replace(/^http/, 'ws') + '/api';
 }
 
 const API_BASE_URL = getApiBaseUrl();
