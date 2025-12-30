@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text
+from sqlalchemy import Column, String, DateTime, Text, Integer
 from sqlalchemy.sql import func
 from app.db.session import Base
 
@@ -25,3 +25,7 @@ class User(Base):
     bio = Column(Text, nullable=True)
     skills = Column(Text, nullable=True)  # JSON or comma-separated string
     location = Column(String, nullable=True)
+    
+    # Gamification
+    level = Column(String, default="Iron")
+    xp = Column(Integer, default=0)

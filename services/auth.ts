@@ -29,6 +29,8 @@ export interface UserInfo {
   username?: string;
   avatar_url?: string;
   email: string;
+  level?: string;
+  xp?: number;
   created_at: string;
   updatedAt: string;
 }

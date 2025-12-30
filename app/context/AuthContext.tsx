@@ -11,6 +11,8 @@ export interface AuthUser {
   username?: string;
   avatar_url?: string;
   email: string;
+  level?: string;
+  xp?: number;
 }
 
 interface AuthContextType {
@@ -61,6 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         username: authUser.username,
         avatar_url: authUser.avatar_url,
         email: authUser.email,
+        level: authUser.level,
+        xp: authUser.xp,
         createdAt: existingUser?.createdAt || new Date().toISOString(),
       };
 
@@ -85,6 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             username: userInfo.username,
             avatar_url: userInfo.avatar_url,
             email: userInfo.email,
+            level: userInfo.level,
+            xp: userInfo.xp,
           };
           setUser(authUser);
           await syncAuthUserToLocal(authUser);
@@ -257,6 +263,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         username: updatedUser.username,
         avatar_url: updatedUser.avatar_url,
         email: updatedUser.email,
+        level: updatedUser.level,
+        xp: updatedUser.xp,
       };
 
       setUser(authUser);

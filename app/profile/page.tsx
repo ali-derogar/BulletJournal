@@ -7,6 +7,7 @@ import ProfileForm from "@/components/Profile/ProfileForm";
 import Icon from "@/components/Icon";
 import { UserProfile } from "@/domain/user";
 import { getStoredToken, clearStoredToken } from "@/services/auth";
+import { getLevelBorder, getLevelColor } from "@/utils/gamification";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -133,8 +134,8 @@ export default function ProfilePage() {
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5" />
 
-                            <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-indigo-500 to-purple-500 mb-6 relative">
-                                <div className="w-full h-full rounded-full bg-[#1a1a24] flex items-center justify-center overflow-hidden">
+                            <div className={`w-32 h-32 rounded-full p-1 bg-gradient-to-br mb-6 relative ${getLevelColor(user.level)}`}>
+                                <div className="w-full h-full rounded-full bg-[#1a1a24] flex items-center justify-center overflow-hidden border-2 border-[#1a1a24]">
                                     {user.avatar_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
@@ -142,7 +143,10 @@ export default function ProfilePage() {
                                         <span className="text-4xl font-bold text-white/20">{user.name?.charAt(0)}</span>
                                     )}
                                 </div>
-                                <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-[#1a1a24] rounded-full" />
+                                <div className="absolute bottom-1 right-1 w-8 h-8 bg-[#1a1a24] rounded-full flex items-center justify-center border border-white/10 group cursor-help" title={`Level: ${user.level || 'Iron'}`}>
+                                    {/* Level Badge Icon/Text. Using first char for now or maybe an icon */}
+                                    <span className="text-xs font-bold text-white uppercase">{user.level?.charAt(0) || 'I'}</span>
+                                </div>
                             </div>
 
                             <h2 className="text-2xl font-bold text-white mb-2">{user.name}</h2>
@@ -160,7 +164,7 @@ export default function ProfilePage() {
                             <div className="w-full grid grid-cols-2 gap-4">
                                 <div className="bg-white/5 rounded-2xl p-3 text-center">
                                     <span className="block text-xs text-gray-400 uppercase tracking-widest mb-1">XP Points</span>
-                                    <span className="text-xl font-bold text-white">1,240</span>
+                                    <span className="text-xl font-bold text-white">{user.xp || 0}</span>
                                 </div>
                                 <div className="bg-white/5 rounded-2xl p-3 text-center">
                                     <span className="block text-xs text-gray-400 uppercase tracking-widest mb-1">Goals</span>

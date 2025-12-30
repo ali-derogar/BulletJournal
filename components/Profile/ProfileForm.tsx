@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { UserProfile } from "@/domain/user";
 import { motion } from "framer-motion";
 import Icon from "../Icon";
+import { getLevelColor } from "@/utils/gamification";
 
 interface ProfileFormProps {
     user: UserProfile;
@@ -73,15 +74,17 @@ export default function ProfileForm({ user, token }: ProfileFormProps) {
                     <div className="flex flex-col md:flex-row gap-6 items-start">
                         {/* Current/Preview */}
                         <div className="flex-shrink-0">
-                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white/10 bg-gray-800 relative">
-                                {formData.avatar_url ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-500">
-                                        {formData.name?.charAt(0) || "?"}
-                                    </div>
-                                )}
+                            <div className={`w-24 h-24 md:w-32 md:h-32 rounded-full p-1 bg-gradient-to-br relative ${getLevelColor(user.level)}`}>
+                                <div className="w-full h-full rounded-full bg-[#1a1a24] flex items-center justify-center overflow-hidden border-2 border-[#1a1a24]">
+                                    {formData.avatar_url ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-500">
+                                            {formData.name?.charAt(0) || "?"}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

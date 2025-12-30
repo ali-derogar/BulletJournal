@@ -15,6 +15,8 @@ class UserBase(BaseModel):
     bio: str | None = None
     skills: str | None = None
     location: str | None = None
+    level: str = "Iron"
+    xp: int = 0
 
 class UserCreate(UserBase):
     password: str
