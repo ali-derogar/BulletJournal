@@ -12,6 +12,7 @@ import logging
 from app.api.main import api_router
 from app.auth.router import router as auth_router
 from app.routers.admin import router as admin_router
+from app.routers.content import router as content_router
 from app.db.session import engine, is_sqlite
 from app.db.session import Base
 
@@ -86,6 +87,7 @@ async def security_headers(request: Request, call_next):
 app.include_router(api_router, prefix="/api")
 app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 app.include_router(admin_router) # Prefix is defined in the router itself
+app.include_router(content_router) # Admin content management
 
 @app.get("/health")
 @limiter.limit("10/minute")  # Rate limit health checks

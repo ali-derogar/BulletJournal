@@ -160,6 +160,26 @@ export async function patch<T>(
 }
 
 /**
+ * DELETE request
+ */
+export async function del<T>(
+  endpoint: string,
+  data?: unknown,
+  token?: string
+): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return apiRequest<T>(endpoint, {
+    method: 'DELETE',
+    headers,
+    body: data ? JSON.stringify(data) : undefined,
+  });
+}
+
+/**
  * Check if backend is reachable
  */
 export async function healthCheck(): Promise<boolean> {
