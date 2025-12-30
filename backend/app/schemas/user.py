@@ -17,6 +17,8 @@ class UserBase(BaseModel):
     location: str | None = None
     level: str = "Iron"
     xp: int = 0
+    role: str = "USER"
+    is_banned: bool = False
 
 class UserCreate(UserBase):
     password: str

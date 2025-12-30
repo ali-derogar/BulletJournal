@@ -21,28 +21,9 @@ from app.auth.auth import (
 
 router = APIRouter()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+from app.auth.dependencies import get_current_user, get_current_active_user
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    """Get current user from JWT token"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-        token_data = TokenData(user_id=user_id)
-    except JWTError:
-        raise credentials_exception
-
-    user = db.query(User).filter(User.id == token_data.user_id).first()
-    if user is None:
-        raise credentials_exception
-    return user
+router = APIRouter()
 
 @router.post("/register", response_model=UserSchema)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -155,10 +136,3 @@ async def update_user_profile(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update user: {str(e)}"
         )
-
-# Dependency to get current user
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
-    """Get current active user (not deleted)"""
-    if current_user.deletedAt is not None:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user

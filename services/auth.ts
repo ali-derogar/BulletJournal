@@ -31,6 +31,8 @@ export interface UserInfo {
   email: string;
   level?: string;
   xp?: number;
+  role?: string;
+  is_banned?: boolean;
   created_at: string;
   updatedAt: string;
 }

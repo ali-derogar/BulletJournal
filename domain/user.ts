@@ -6,6 +6,8 @@ export interface UserProfile {
   email: string; // Added email as it aligns with backend
   level?: string;
   xp?: number;
+  role?: string;
+  is_banned?: boolean;
   createdAt: string;
   // Professional Profile Fields
   education_level?: string;

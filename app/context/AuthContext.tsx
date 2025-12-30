@@ -13,6 +13,8 @@ export interface AuthUser {
   email: string;
   level?: string;
   xp?: number;
+  role?: string;
+  is_banned?: boolean;
 }
 
 interface AuthContextType {
@@ -65,6 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: authUser.email,
         level: authUser.level,
         xp: authUser.xp,
+        role: authUser.role,
+        is_banned: authUser.is_banned,
         createdAt: existingUser?.createdAt || new Date().toISOString(),
       };
 
@@ -91,6 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: userInfo.email,
             level: userInfo.level,
             xp: userInfo.xp,
+            role: userInfo.role,
+            is_banned: userInfo.is_banned,
           };
           setUser(authUser);
           await syncAuthUserToLocal(authUser);
@@ -265,6 +271,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: updatedUser.email,
         level: updatedUser.level,
         xp: updatedUser.xp,
+        role: updatedUser.role,
+        is_banned: updatedUser.is_banned,
       };
 
       setUser(authUser);

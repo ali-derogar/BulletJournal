@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Text, Integer
+from sqlalchemy import Column, String, DateTime, Text, Integer, Boolean
 from sqlalchemy.sql import func
 from app.db.session import Base
 
@@ -29,3 +29,7 @@ class User(Base):
     # Gamification
     level = Column(String, default="Iron")
     xp = Column(Integer, default=0)
+
+    # Admin / Security
+    role = Column(String, default="USER") # USER, ADMIN, SUPERUSER
+    is_banned = Column(Boolean, default=False)
