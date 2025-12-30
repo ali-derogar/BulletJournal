@@ -13,6 +13,7 @@ interface AuthModalProps {
 export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,6 +25,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
   useEffect(() => {
     if (isOpen) {
       setName('');
+      setUsername('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
@@ -49,13 +51,18 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         return;
       }
 
+      if (!username.trim()) {
+        setLocalError('Username is required');
+        return;
+      }
+
       if (password !== confirmPassword) {
         setLocalError('Passwords do not match');
         return;
       }
 
       try {
-        await register(name, email, password);
+        await register(name, username, email, password);
         // Only close modal if registration succeeds
         onClose();
       } catch {
@@ -155,6 +162,25 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
                 placeholder="Enter your full name"
+                required
+                disabled={isLoading || !isOnline}
+              />
+            </div>
+          )}
+
+          {/* Username field (register only) */}
+          {mode === 'register' && (
+            <div>
+              <label htmlFor="username" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                placeholder="Choose a unique username"
                 required
                 disabled={isLoading || !isOnline}
               />
