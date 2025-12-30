@@ -6,8 +6,45 @@
 import { get, post, patch, del } from './api';
 import { getToken } from './auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
-const WS_BASE_URL = API_BASE_URL.replace('http', 'ws');
+/**
+ * Get API base URL dynamically
+ * Uses environment variable if available, otherwise infers from current location
+ */
+function getApiBaseUrl(): string {
+  // Try environment variable first (NEXT_PUBLIC_API_URL)
+  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL + '/api';
+  }
+
+  // In browser, construct from window.location
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+
+    // If running on localhost, assume backend is on port 8000
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//${hostname}:8000/api`;
+    }
+
+    // For production, assume API is on same host
+    return `${protocol}//${hostname}/api`;
+  }
+
+  // Fallback for SSR
+  return 'http://localhost:8000/api';
+}
+
+/**
+ * Get WebSocket base URL dynamically
+ */
+function getWebSocketBaseUrl(): string {
+  const apiUrl = getApiBaseUrl();
+  // Replace http/https with ws/wss
+  return apiUrl.replace(/^http/, 'ws');
+}
+
+const API_BASE_URL = getApiBaseUrl();
+const WS_BASE_URL = getWebSocketBaseUrl();
 
 export interface Notification {
   id: string;
@@ -389,7 +426,10 @@ class NotificationWebSocket {
     }
 
     try {
-      const wsUrl = `${WS_BASE_URL}/notifications/ws/${userId}?token=${token}`;
+      // Get WebSocket URL dynamically based on current location
+      const wsBaseUrl = getWebSocketBaseUrl();
+      const wsUrl = `${wsBaseUrl}/notifications/ws/${userId}?token=${token}`;
+      console.log('Connecting to WebSocket:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
