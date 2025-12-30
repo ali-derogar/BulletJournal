@@ -121,8 +121,13 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
    */
   const handleUpdateTask = async (updatedTask: Task) => {
     try {
-      await saveTask(updatedTask);
-      setTasks(tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+      // Ensure updatedAt is updated so sync detects the change
+      const taskToSave = {
+        ...updatedTask,
+        updatedAt: new Date().toISOString()
+      };
+      await saveTask(taskToSave);
+      setTasks(tasks.map((t) => (t.id === taskToSave.id ? taskToSave : t)));
     } catch (error) {
       console.error("Failed to update task:", error);
     }
@@ -413,8 +418,8 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
 
             {/* Reflection Indicator */}
             <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${emotionalScore.indicators.reflectionPresent
-                ? 'text-green-700 bg-green-100'
-                : 'text-muted-foreground bg-muted'
+              ? 'text-green-700 bg-green-100'
+              : 'text-muted-foreground bg-muted'
               }`}>
               <span className="text-lg">
                 {emotionalScore.indicators.reflectionPresent ? '📝' : '❓'}
@@ -436,8 +441,8 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
 
             {/* Mood Indicator */}
             <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap ${emotionalScore.indicators.hasMoodData
-                ? 'text-blue-700 bg-blue-100'
-                : 'text-muted-foreground bg-muted'
+              ? 'text-blue-700 bg-blue-100'
+              : 'text-muted-foreground bg-muted'
               }`}>
               <span className="text-lg">
                 {emotionalScore.indicators.hasMoodData ? '😊' : '❓'}
