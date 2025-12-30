@@ -1,18 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_, or_
 from typing import List, Optional
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
+import logging
 
 from app.db.session import get_db
 from app.models.user import User
 from app.models.notification import Notification, PushSubscription
 from app.auth.dependencies import get_current_active_user, get_current_admin
 from app.core.roles import Role
+from app.core.config import settings
+from app.services.push_notifications import send_web_push, send_web_push_to_multiple_users
+from app.services.websocket_manager import manager
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+logger = logging.getLogger(__name__)
 
 
 # ===== SCHEMAS =====
@@ -114,7 +119,7 @@ async def mark_as_read(
         raise HTTPException(status_code=404, detail="Notification not found")
 
     notification.is_read = True
-    notification.read_at = datetime.utcnow()
+    notification.read_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"message": "Notification marked as read"}
@@ -128,7 +133,7 @@ async def mark_all_as_read(
     """Mark all notifications as read"""
     db.query(Notification).filter(
         and_(Notification.user_id == current_user.id, Notification.is_read == False)
-    ).update({"is_read": True, "read_at": datetime.utcnow()})
+    ).update({"is_read": True, "read_at": datetime.now(timezone.utc)})
     db.commit()
 
     return {"message": "All notifications marked as read"}
@@ -174,7 +179,77 @@ async def delete_notification(
     return {"message": "Notification deleted"}
 
 
+# ===== WEBSOCKET ENDPOINT =====
+
+@router.websocket("/ws/{user_id}")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    user_id: str,
+    token: str
+):
+    """
+    WebSocket endpoint for real-time notifications
+
+    Usage: ws://localhost:8000/api/notifications/ws/{user_id}?token={jwt_token}
+    """
+    # Authenticate the user via token
+    try:
+        # We need to validate the token manually since WebSocket doesn't support Depends
+        from jose import jwt, JWTError
+        from app.auth.auth import SECRET_KEY, ALGORITHM
+
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            token_user_id: str = payload.get("sub")
+
+            if token_user_id is None or token_user_id != user_id:
+                await websocket.close(code=1008, reason="Unauthorized")
+                return
+        except JWTError:
+            await websocket.close(code=1008, reason="Invalid token")
+            return
+
+    except Exception as e:
+        logger.error(f"WebSocket authentication error: {e}")
+        await websocket.close(code=1011, reason="Authentication failed")
+        return
+
+    # Connect the user
+    await manager.connect(websocket, user_id)
+
+    try:
+        # Send initial connection confirmation
+        await websocket.send_json({
+            "type": "connected",
+            "message": "WebSocket connection established"
+        })
+
+        # Keep connection alive and listen for messages
+        while True:
+            try:
+                # Receive messages from client (ping/pong for keepalive)
+                data = await websocket.receive_text()
+
+                if data == "ping":
+                    await websocket.send_json({"type": "pong"})
+
+            except WebSocketDisconnect:
+                break
+            except Exception as e:
+                logger.error(f"Error in WebSocket receive loop: {e}")
+                break
+
+    finally:
+        manager.disconnect(websocket, user_id)
+
+
 # ===== PUSH SUBSCRIPTION ENDPOINTS =====
+
+@router.get("/vapid-public-key")
+async def get_vapid_public_key():
+    """Get VAPID public key for push notifications"""
+    return {"publicKey": settings.VAPID_PUBLIC_KEY}
+
 
 @router.post("/subscribe")
 async def subscribe_to_push(
@@ -192,7 +267,7 @@ async def subscribe_to_push(
         # Update user_id if changed
         if existing.user_id != current_user.id:
             existing.user_id = current_user.id
-        existing.last_used = datetime.utcnow()
+        existing.last_used = datetime.now(timezone.utc)
         db.commit()
         return {"message": "Subscription updated", "id": existing.id}
 
@@ -269,10 +344,39 @@ async def send_notification(
 
     db.commit()
 
+    # Send real-time WebSocket notifications to connected users
+    websocket_sent = 0
+    for user in target_users:
+        try:
+            await manager.send_notification_update(
+                user_id=user.id,
+                notification_id=notifications_created[target_users.index(user)],
+                title=notification.title,
+                message=notification.message,
+                notification_type=notification.type,
+                link=notification.link
+            )
+            websocket_sent += 1
+        except Exception as e:
+            logger.error(f"Error sending WebSocket notification to user {user.id}: {e}")
+
+    # Send web push notifications to all target users
+    user_ids = [user.id for user in target_users]
+    push_result = send_web_push_to_multiple_users(
+        db=db,
+        user_ids=user_ids,
+        title=notification.title,
+        message=notification.message,
+        notification_type=notification.type,
+        link=notification.link
+    )
+
     return {
         "message": f"Notification sent to {len(target_users)} users",
         "count": len(target_users),
-        "notification_ids": notifications_created
+        "notification_ids": notifications_created,
+        "websocket_sent": websocket_sent,
+        "push_notifications": push_result
     }
 
 

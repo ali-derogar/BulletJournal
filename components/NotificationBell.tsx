@@ -9,11 +9,13 @@ import {
   markAllAsRead,
   muteNotification,
   deleteNotification,
+  notificationWebSocket,
   type Notification,
   type NotificationStats,
   getNotificationTypeIcon,
   formatNotificationTime,
 } from '@/services/notifications';
+import { getUser } from '@/services/auth';
 
 export default function NotificationBell() {
   const router = useRouter();
@@ -40,13 +42,49 @@ export default function NotificationBell() {
     }
   };
 
-  // Load on mount and set up polling
+  // Load on mount and set up WebSocket for real-time updates
   useEffect(() => {
     loadData();
 
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
+    // Connect to WebSocket for real-time notifications
+    const initializeWebSocket = async () => {
+      try {
+        const user = await getUser();
+        if (user?.id) {
+          notificationWebSocket.connect(user.id);
+
+          // Subscribe to new notifications
+          const unsubscribeNotification = notificationWebSocket.onNotification((notification) => {
+            console.log('New notification received via WebSocket:', notification);
+            // Reload data to get updated notifications and stats
+            loadData();
+          });
+
+          // Subscribe to stats updates
+          const unsubscribeStats = notificationWebSocket.onStatsUpdate((newStats) => {
+            console.log('Stats update received via WebSocket:', newStats);
+            setStats(newStats);
+          });
+
+          // Cleanup on unmount
+          return () => {
+            unsubscribeNotification();
+            unsubscribeStats();
+            notificationWebSocket.disconnect();
+          };
+        }
+      } catch (error) {
+        console.error('Failed to initialize WebSocket:', error);
+        // Fallback to polling if WebSocket fails
+        const interval = setInterval(loadData, 30000);
+        return () => clearInterval(interval);
+      }
+    };
+
+    const cleanup = initializeWebSocket();
+    return () => {
+      cleanup.then((fn) => fn && fn());
+    };
   }, []);
 
   // Close dropdown when clicking outside

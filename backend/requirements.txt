@@ -13,3 +13,5 @@ slowapi==0.1.9
 psycopg2-binary==2.9.9
 httpx==0.25.2
 jdatetime==5.0.0
+pywebpush==1.14.1
+websockets==12.0

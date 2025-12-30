@@ -6,6 +6,9 @@
 import { get, post, patch, del } from './api';
 import { getToken } from './auth';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
+const WS_BASE_URL = API_BASE_URL.replace('http', 'ws');
+
 export interface Notification {
   id: string;
   user_id: string;
@@ -122,6 +125,19 @@ export async function requestPushPermission(): Promise<NotificationPermission> {
 }
 
 /**
+ * Get VAPID public key from backend
+ */
+export async function getVapidPublicKey(): Promise<string> {
+  try {
+    const response = await get<{ publicKey: string }>('/notifications/vapid-public-key');
+    return response.publicKey;
+  } catch (error) {
+    console.error('Failed to get VAPID public key:', error);
+    throw error;
+  }
+}
+
+/**
  * Subscribe to push notifications
  */
 export async function subscribeToPush(): Promise<boolean> {
@@ -144,12 +160,13 @@ export async function subscribeToPush(): Promise<boolean> {
     const registration = await navigator.serviceWorker.register('/sw.js');
     await navigator.serviceWorker.ready;
 
+    // Get VAPID public key from backend
+    const vapidPublicKey = await getVapidPublicKey();
+
     // Get push subscription
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-      ) as BufferSource,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
     });
 
     // Send subscription to backend
@@ -340,3 +357,200 @@ export function formatNotificationTime(dateString: string): string {
 
   return date.toLocaleDateString();
 }
+
+// ===== WEBSOCKET FOR REAL-TIME NOTIFICATIONS =====
+
+type NotificationCallback = (notification: Notification) => void;
+type StatsCallback = (stats: NotificationStats) => void;
+type ConnectionCallback = (connected: boolean) => void;
+
+class NotificationWebSocket {
+  private ws: WebSocket | null = null;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private pingTimer: NodeJS.Timeout | null = null;
+  private notificationCallbacks: Set<NotificationCallback> = new Set();
+  private statsCallbacks: Set<StatsCallback> = new Set();
+  private connectionCallbacks: Set<ConnectionCallback> = new Set();
+  private shouldReconnect: boolean = true;
+
+  /**
+   * Connect to WebSocket for real-time notifications
+   */
+  connect(userId: string): void {
+    const token = getToken();
+    if (!token || !userId) {
+      console.error('Cannot connect to WebSocket: missing token or userId');
+      return;
+    }
+
+    // Close existing connection
+    if (this.ws) {
+      this.disconnect();
+    }
+
+    try {
+      const wsUrl = `${WS_BASE_URL}/notifications/ws/${userId}?token=${token}`;
+      this.ws = new WebSocket(wsUrl);
+
+      this.ws.onopen = () => {
+        console.log('WebSocket connected');
+        this.notifyConnectionCallbacks(true);
+        this.startPing();
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'connected') {
+            console.log('WebSocket connection confirmed:', data.message);
+          } else if (data.type === 'notification') {
+            // New notification received
+            this.notifyNotificationCallbacks(data.data);
+          } else if (data.type === 'stats_update') {
+            // Stats update received
+            this.notifyStatsCallbacks(data.data);
+          } else if (data.type === 'pong') {
+            // Pong received
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      this.ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        this.notifyConnectionCallbacks(false);
+        this.stopPing();
+
+        // Auto-reconnect after 5 seconds
+        if (this.shouldReconnect) {
+          this.reconnectTimer = setTimeout(() => {
+            console.log('Attempting to reconnect WebSocket...');
+            this.connect(userId);
+          }, 5000);
+        }
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error);
+    }
+  }
+
+  /**
+   * Disconnect from WebSocket
+   */
+  disconnect(): void {
+    this.shouldReconnect = false;
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    this.stopPing();
+
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+
+  /**
+   * Start sending ping messages to keep connection alive
+   */
+  private startPing(): void {
+    this.stopPing();
+    this.pingTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send('ping');
+      }
+    }, 30000); // Send ping every 30 seconds
+  }
+
+  /**
+   * Stop sending ping messages
+   */
+  private stopPing(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
+    }
+  }
+
+  /**
+   * Subscribe to new notifications
+   */
+  onNotification(callback: NotificationCallback): () => void {
+    this.notificationCallbacks.add(callback);
+    return () => this.notificationCallbacks.delete(callback);
+  }
+
+  /**
+   * Subscribe to stats updates
+   */
+  onStatsUpdate(callback: StatsCallback): () => void {
+    this.statsCallbacks.add(callback);
+    return () => this.statsCallbacks.delete(callback);
+  }
+
+  /**
+   * Subscribe to connection status changes
+   */
+  onConnectionChange(callback: ConnectionCallback): () => void {
+    this.connectionCallbacks.add(callback);
+    return () => this.connectionCallbacks.delete(callback);
+  }
+
+  /**
+   * Notify all notification callbacks
+   */
+  private notifyNotificationCallbacks(notification: Notification): void {
+    this.notificationCallbacks.forEach((callback) => {
+      try {
+        callback(notification);
+      } catch (error) {
+        console.error('Error in notification callback:', error);
+      }
+    });
+  }
+
+  /**
+   * Notify all stats callbacks
+   */
+  private notifyStatsCallbacks(stats: NotificationStats): void {
+    this.statsCallbacks.forEach((callback) => {
+      try {
+        callback(stats);
+      } catch (error) {
+        console.error('Error in stats callback:', error);
+      }
+    });
+  }
+
+  /**
+   * Notify all connection callbacks
+   */
+  private notifyConnectionCallbacks(connected: boolean): void {
+    this.connectionCallbacks.forEach((callback) => {
+      try {
+        callback(connected);
+      } catch (error) {
+        console.error('Error in connection callback:', error);
+      }
+    });
+  }
+
+  /**
+   * Check if WebSocket is connected
+   */
+  isConnected(): boolean {
+    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+}
+
+// Global WebSocket instance
+export const notificationWebSocket = new NotificationWebSocket();
