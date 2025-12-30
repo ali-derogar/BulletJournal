@@ -13,11 +13,13 @@ export default function ProfilePage() {
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         // Check auth
         const storedToken = localStorage.getItem("token");
         if (!storedToken) {
-            router.push("/login");
+            router.push("/");
             return;
         }
         setToken(storedToken);
@@ -28,16 +30,28 @@ export default function ProfilePage() {
                 "Authorization": `Bearer ${storedToken}`
             }
         })
-            .then(res => {
-                if (!res.ok) throw new Error("Unauthorized");
+            .then(async res => {
+                if (res.status === 401) {
+                    throw new Error("Unauthorized");
+                }
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || "Server Error");
+                }
                 return res.json();
             })
             .then(data => {
                 setUser(data);
+                setError(null);
             })
-            .catch(() => {
-                localStorage.removeItem("token");
-                router.push("/login");
+            .catch((err) => {
+                console.error("Profile fetch error:", err);
+                if (err.message === "Unauthorized") {
+                    localStorage.removeItem("token");
+                    router.push("/");
+                } else {
+                    setError("Failed to load profile. Please check your connection.");
+                }
             })
             .finally(() => setLoading(false));
     }, [router]);
@@ -46,6 +60,26 @@ export default function ProfilePage() {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
+                <div className="bg-white/10 p-8 rounded-2xl text-center border border-white/10 max-w-md mx-4">
+                    <Icon className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </Icon>
+                    <h3 className="text-xl font-bold mb-2">Connection Error</h3>
+                    <p className="text-gray-400 mb-6">{error}</p>
+                    <button
+                        onClick={() => router.push("/")}
+                        className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
+                    >
+                        Go Home
+                    </button>
+                </div>
             </div>
         );
     }
