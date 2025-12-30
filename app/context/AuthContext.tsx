@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userProfile: UserProfile = {
         id: authUser.id,
         name: authUser.name,
+        email: authUser.email,
         createdAt: existingUser?.createdAt || new Date().toISOString(),
       };
 
