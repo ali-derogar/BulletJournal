@@ -142,7 +142,7 @@ export default function ProfilePage() {
                                     <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">Psychology</span>
                                     <h3 className="text-3xl font-bold text-white mt-1 mb-2">{user.mbti_type}</h3>
                                     <p className="text-sm text-gray-400 leading-relaxed">
-                                        Strategic thinker with a plan for everything. Known as "The Architect".
+                                        Strategic thinker with a plan for everything. Known as &quot;The Architect&quot;.
                                     </p>
                                 </div>
                             </motion.div>

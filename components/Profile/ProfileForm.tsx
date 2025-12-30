@@ -50,7 +50,7 @@ export default function ProfileForm({ user, token }: ProfileFormProps) {
                 throw new Error("Failed to update profile");
             }
 
-            const updatedUser = await response.json();
+            await response.json(); // Consume body but ignore result
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
             router.refresh(); // Refresh server components
         } catch (error) {
