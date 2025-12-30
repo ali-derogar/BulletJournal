@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import ProfileForm from "@/components/Profile/ProfileForm";
 import Icon from "@/components/Icon";
 import { UserProfile } from "@/domain/user";
+import { getStoredToken, clearStoredToken } from "@/services/auth";
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -17,7 +18,7 @@ export default function ProfilePage() {
 
     useEffect(() => {
         // Check auth
-        const storedToken = localStorage.getItem("token");
+        const storedToken = getStoredToken();
         if (!storedToken) {
             router.push("/");
             return;
@@ -47,7 +48,7 @@ export default function ProfilePage() {
             .catch((err) => {
                 console.error("Profile fetch error:", err);
                 if (err.message === "Unauthorized") {
-                    localStorage.removeItem("token");
+                    clearStoredToken();
                     router.push("/");
                 } else {
                     setError("Failed to load profile. Please check your connection.");
