@@ -40,6 +40,10 @@ export interface JournalItem {
   userId: string;
   user_email?: string;
   user_name?: string;
+  tasks: string;
+  expenses: string;
+  sleep_id?: string;
+  mood_id?: string;
   date: string;
   created_at: string;
 }
@@ -55,11 +59,15 @@ export interface GoalItem {
   year: number;
   quarter?: number;
   month?: number;
+  week?: number;
   status: string;
   targetValue: number;
   currentValue: number;
   unit: string;
+  progress?: number;
   createdAt: string;
+  created_at: string;
+  milestones?: string[];
 }
 
 export interface ReportItem {
