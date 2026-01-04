@@ -7,12 +7,14 @@ interface DateNavigatorProps {
   currentDate: string;
   onDateChange: (date: string) => void;
   onOpenCalendar: () => void;
+  onOpenChat?: () => void;
 }
 
 export default function DateNavigator({
   currentDate,
   onDateChange,
   onOpenCalendar,
+  onOpenChat,
 }: DateNavigatorProps) {
   const handlePrevDay = () => {
     onDateChange(addDays(currentDate, -1));
@@ -96,26 +98,42 @@ export default function DateNavigator({
               </span>
             </div>
           </motion.button>
-          <motion.button
-            onClick={handleToday}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Go to today"
-            disabled={isToday}
-            className={`relative px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${isToday
-              ? "bg-green-500/20 text-green-600 cursor-not-allowed"
-              : "bg-gradient-to-r from-primary to-purple-600 text-white hover:shadow-lg hover:shadow-primary/50"
-              }`}
-          >
-            {isToday ? (
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                You are here
-              </span>
-            ) : (
-              "Jump to Today"
+          <div className="flex items-center gap-2">
+            <motion.button
+              onClick={handleToday}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Go to today"
+              disabled={isToday}
+              className={`relative px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${isToday
+                ? "bg-green-500/20 text-green-600 cursor-not-allowed"
+                : "bg-gradient-to-r from-primary to-purple-600 text-white hover:shadow-lg hover:shadow-primary/50"
+                }`}
+            >
+              {isToday ? (
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  Today
+                </span>
+              ) : (
+                "Today"
+              )}
+            </motion.button>
+
+            {onOpenChat && (
+              <motion.button
+                onClick={onOpenChat}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:shadow-lg transition-all flex items-center gap-1"
+              >
+                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                Chat
+              </motion.button>
             )}
-          </motion.button>
+          </div>
         </div>
 
         <motion.button

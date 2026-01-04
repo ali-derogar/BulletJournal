@@ -82,6 +82,7 @@ export default function Home() {
               currentDate={currentDate}
               onDateChange={setCurrentDate}
               onOpenCalendar={() => setShowCalendar(true)}
+              onOpenChat={() => setCurrentView('ai')}
             />
 
             <DayView date={currentDate} />
