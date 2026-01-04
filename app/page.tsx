@@ -191,15 +191,51 @@ export default function Home() {
             <LoginPage />
           </motion.div>
         ) : currentView === 'chatroom' ? (
-          <motion.div
-            key="chatroom"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ChatRoom />
-          </motion.div>
+          isAuthenticated ? (
+            <motion.div
+              key="chatroom"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChatRoom />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="chatroom-login-required"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="max-w-4xl mx-auto p-8 text-center">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="bg-card rounded-2xl p-12 shadow-lg border border-border"
+                >
+                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-foreground mb-4">Chatroom</h2>
+                  <p className="text-muted-foreground mb-6">
+                    برای استفاده از چت روم، لطفاً وارد شوید
+                    <br />
+                    Please login to use the Chatroom
+                  </p>
+                  <button
+                    onClick={() => setCurrentView('login')}
+                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                  >
+                    ورود / Login
+                  </button>
+                </motion.div>
+              </div>
+            </motion.div>
+          )
         ) : (
           <motion.div
             key="calendar"
@@ -395,28 +431,30 @@ export default function Home() {
                       </svg>
                       <span className="text-sm font-semibold">Calendar</span>
                     </motion.button>
-                    <motion.button
-                      onClick={() => {
-                        setCurrentView('chatroom');
-                        setShowMenuDropdown(false);
-                      }}
-                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all border-t border-border ${currentView === 'chatroom'
-                        ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary'
-                        : 'text-foreground hover:bg-muted/50'
-                        }`}
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    {isAuthenticated && (
+                      <motion.button
+                        onClick={() => {
+                          setCurrentView('chatroom');
+                          setShowMenuDropdown(false);
+                        }}
+                        whileHover={{ scale: 1.02, backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all border-t border-border ${currentView === 'chatroom'
+                          ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary'
+                          : 'text-foreground hover:bg-muted/50'
+                          }`}
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      <span className="text-sm font-semibold">Chatroom</span>
-                    </motion.button>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <span className="text-sm font-semibold">Chatroom</span>
+                      </motion.button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

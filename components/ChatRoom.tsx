@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/app/context/AuthContext';
 
 // Types
 interface User {
   id: string;
   nickname: string;
+  avatar_url?: string;
   color: string;
   joinedAt: number;
 }
@@ -15,6 +17,7 @@ interface Message {
   id: string;
   userId: string;
   nickname: string;
+  avatar_url?: string;
   color: string;
   text: string;
   timestamp: number;
@@ -41,34 +44,39 @@ const formatTime = (timestamp: number) => {
 const getUserInitial = (name: string) => name ? name.charAt(0).toUpperCase() : 'U';
 
 export default function ChatRoom() {
+  const { user: authUser } = useAuth();
+  
   // State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<Map<string, User>>(new Map());
   const [inputText, setInputText] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showNicknameModal, setShowNicknameModal] = useState(false);
-  const [nicknameInput, setNicknameInput] = useState('');
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Initialize user from auth
+  useEffect(() => {
+    if (authUser) {
+      const userColor = generateUserColor();
+      const chatUser: User = {
+        id: authUser.id,
+        nickname: authUser.username || authUser.name,
+        avatar_url: authUser.avatar_url,
+        color: userColor,
+        joinedAt: Date.now()
+      };
+      setCurrentUser(chatUser);
+      localStorage.setItem('chatroom_user', JSON.stringify(chatUser));
+    }
+  }, [authUser]);
+
   // Initialize
   useEffect(() => {
-    // Load from storage
-    const savedUser = localStorage.getItem('chatroom_user');
     const savedMessages = localStorage.getItem('chatroom_messages');
-
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      setCurrentUser(user);
-      setNicknameInput(user.nickname);
-    } else {
-      setShowNicknameModal(true);
-    }
-
     if (savedMessages) {
       setMessages(JSON.parse(savedMessages));
     }
@@ -120,23 +128,6 @@ export default function ChatRoom() {
   }, [messages]);
 
   // Handlers
-  const handleNicknameSubmit = () => {
-    const nickname = nicknameInput.trim();
-    if (!nickname) return;
-
-    const newUser: User = currentUser || {
-      id: generateUserId(),
-      nickname,
-      color: generateUserColor(),
-      joinedAt: Date.now()
-    };
-
-    newUser.nickname = nickname;
-    setCurrentUser(newUser);
-    localStorage.setItem('chatroom_user', JSON.stringify(newUser));
-    setShowNicknameModal(false);
-  };
-
   const handleSendMessage = () => {
     if (!inputText.trim() || !currentUser) return;
 
@@ -144,6 +135,7 @@ export default function ChatRoom() {
       id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       userId: currentUser.id,
       nickname: currentUser.nickname,
+      avatar_url: currentUser.avatar_url,
       color: currentUser.color,
       text: inputText.trim(),
       timestamp: Date.now()
@@ -235,8 +227,24 @@ export default function ChatRoom() {
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex gap-3 max-w-[85%] ${isOwn ? 'self-end flex-row-reverse' : 'self-start'}`}
                   >
+                    {msg.avatar_url ? (
+                      <img
+                        src={msg.avatar_url}
+                        alt={msg.nickname}
+                        className="w-10 h-10 rounded-full object-cover shadow-md shrink-0 border-2"
+                        style={{ borderColor: msg.color }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) {
+                            fallback.style.display = 'flex';
+                          }
+                        }}
+                      />
+                    ) : null}
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md shrink-0"
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md shrink-0 ${msg.avatar_url ? 'hidden' : ''}`}
                       style={{ backgroundColor: msg.color }}
                     >
                       {getUserInitial(msg.nickname)}
@@ -272,8 +280,23 @@ export default function ChatRoom() {
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
             {onlineUsers.map((user) => (
               <div key={user.id} className="flex items-center gap-3 p-2 bg-[#141937] rounded-lg border border-slate-700/50 hover:bg-[#1e2449] transition-colors">
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.nickname}
+                    className="w-9 h-9 rounded-full object-cover shadow-sm border-2"
+                    style={{ borderColor: user.color }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      if (target.nextElementSibling) {
+                        (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                      }
+                    }}
+                  />
+                ) : null}
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm"
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${user.avatar_url ? 'hidden' : ''}`}
                   style={{ backgroundColor: user.color }}
                 >
                   {getUserInitial(user.nickname)}
@@ -309,8 +332,24 @@ export default function ChatRoom() {
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {onlineUsers.map((user) => (
                   <div key={user.id} className="flex items-center gap-3 p-2 bg-[#141937] rounded-lg border border-slate-700/50">
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.nickname}
+                        className="w-9 h-9 rounded-full object-cover shadow-sm border-2"
+                        style={{ borderColor: user.color }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) {
+                            fallback.style.display = 'flex';
+                          }
+                        }}
+                      />
+                    ) : null}
                     <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm"
+                      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${user.avatar_url ? 'hidden' : ''}`}
                       style={{ backgroundColor: user.color }}
                     >
                       {getUserInitial(user.nickname)}
@@ -329,90 +368,49 @@ export default function ChatRoom() {
 
       {/* Input Area */}
       <div className="p-4 bg-[#1e2449]/60 backdrop-blur-xl border-t border-slate-700/50 z-20">
-        <div className="max-w-4xl mx-auto flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md transition-transform hover:scale-105 cursor-pointer"
-              style={{ backgroundColor: currentUser?.color || '#6366f1' }}
-              onClick={() => setShowNicknameModal(true)}
-            >
-              {getUserInitial(currentUser?.nickname || '')}
-            </div>
-            <input
-              type="text"
-              value={currentUser?.nickname || ''}
-              readOnly
-              onClick={() => setShowNicknameModal(true)}
-              className="flex-1 bg-[#141937] border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer hover:bg-[#1e2449] transition-colors"
-              placeholder="نام شما..."
+        <div className="max-w-4xl mx-auto flex gap-3 items-end">
+          {currentUser?.avatar_url ? (
+            <img
+              src={currentUser.avatar_url}
+              alt={currentUser.nickname}
+              className="w-10 h-10 rounded-full object-cover shadow-md border-2 shrink-0"
+              style={{ borderColor: currentUser.color }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                if (target.nextElementSibling) {
+                  (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                }
+              }}
             />
+          ) : null}
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md shrink-0 ${currentUser?.avatar_url ? 'hidden' : ''}`}
+            style={{ backgroundColor: currentUser?.color || '#6366f1' }}
+          >
+            {getUserInitial(currentUser?.nickname || '')}
           </div>
-          <div className="flex gap-3 items-end">
-            <textarea
-              ref={textareaRef}
-              value={inputText}
-              onChange={handleTextareaInput}
-              onKeyDown={handleKeyDown}
-              placeholder="پیام خود را بنویسید..."
-              rows={1}
-              className="flex-1 bg-[#141937] border border-slate-700 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-indigo-500 resize-none max-h-32 custom-scrollbar"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputText.trim()}
-              className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl flex items-center justify-center shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
-          </div>
+          <textarea
+            ref={textareaRef}
+            value={inputText}
+            onChange={handleTextareaInput}
+            onKeyDown={handleKeyDown}
+            placeholder="پیام خود را بنویسید..."
+            rows={1}
+            className="flex-1 bg-[#141937] border border-slate-700 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-indigo-500 resize-none max-h-32 custom-scrollbar"
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={!inputText.trim()}
+            className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl flex items-center justify-center shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
         </div>
       </div>
-
-      {/* Nickname Modal */}
-      <AnimatePresence>
-        {showNicknameModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#1e2449] border border-slate-700 rounded-2xl p-8 w-full max-w-md shadow-2xl"
-            >
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                  به چت روم خوش آمدید! 👋
-                </h2>
-                <p className="text-slate-400">لطفاً نام خود را وارد کنید</p>
-              </div>
-              <input
-                type="text"
-                value={nicknameInput}
-                onChange={(e) => setNicknameInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleNicknameSubmit()}
-                placeholder="نام شما..."
-                maxLength={20}
-                autoFocus
-                className="w-full bg-[#141937] border border-slate-700 rounded-xl p-4 text-center text-lg text-white mb-6 focus:outline-none focus:border-indigo-500 transition-colors"
-              />
-              <button
-                onClick={handleNicknameSubmit}
-                disabled={!nicknameInput.trim()}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold text-lg shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50"
-              >
-                شروع گفتگو
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
