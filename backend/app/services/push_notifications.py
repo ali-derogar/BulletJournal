@@ -45,6 +45,11 @@ def send_web_push(
         logger.info(f"No push subscriptions found for user {user_id}")
         return {"sent": 0, "failed": 0, "expired": 0}
 
+    # Validate VAPID keys
+    if not settings.VAPID_PRIVATE_KEY or not settings.VAPID_PUBLIC_KEY:
+        logger.error("VAPID keys not configured. Push notifications will not be sent.")
+        return {"sent": 0, "failed": len(subscriptions), "expired": 0, "error": "VAPID keys not configured"}
+
     # Prepare push payload
     payload = {
         "title": title,

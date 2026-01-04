@@ -3,11 +3,19 @@
  * Handles base configuration and request/response formatting
  */
 
-let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Note: NEXT_PUBLIC_API_URL should be set correctly in .env.local
 // Development: http://localhost:8000
 // Production: http://your-server-ip:8000
+
+/**
+ * Get WebSocket base URL
+ * Converts http/https to ws/wss
+ */
+export function getWebSocketBaseUrl(): string {
+  return API_BASE_URL.replace(/^http/, 'ws');
+}
 
 export interface ApiError {
   message: string;

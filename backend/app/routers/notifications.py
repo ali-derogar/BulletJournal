@@ -203,9 +203,11 @@ async def websocket_endpoint(
             token_user_id: str = payload.get("sub")
 
             if token_user_id is None or token_user_id != user_id:
+                logger.warning(f"WebSocket auth failed: token user_id {token_user_id} != requested {user_id}")
                 await websocket.close(code=1008, reason="Unauthorized")
                 return
-        except JWTError:
+        except JWTError as e:
+            logger.warning(f"WebSocket JWT validation failed: {e}")
             await websocket.close(code=1008, reason="Invalid token")
             return
 

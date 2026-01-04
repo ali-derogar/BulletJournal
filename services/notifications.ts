@@ -3,50 +3,8 @@
  * Handles in-app and push notifications
  */
 
-import { get, post, patch, del } from './api';
+import { get, post, patch, del, API_BASE_URL, getWebSocketBaseUrl } from './api';
 import { getToken } from './auth';
-
-/**
- * Get API base URL dynamically
- * Uses environment variable if available, otherwise infers from current location
- * Note: Returns base URL WITHOUT /api (e.g., http://localhost:8000)
- */
-function getApiBaseUrl(): string {
-  // Try environment variable first (NEXT_PUBLIC_API_URL)
-  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-
-  // In browser, construct from window.location
-  if (typeof window !== 'undefined') {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-
-    // If running on localhost, assume backend is on port 8000
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${hostname}:8000`;
-    }
-
-    // For production, assume API is on same host
-    return `${protocol}//${hostname}`;
-  }
-
-  // Fallback for SSR
-  return 'http://localhost:8000';
-}
-
-/**
- * Get WebSocket base URL dynamically
- * Returns WebSocket URL with /api path (e.g., ws://localhost:8000/api)
- */
-function getWebSocketBaseUrl(): string {
-  const apiUrl = getApiBaseUrl();
-  // Replace http/https with ws/wss and add /api
-  return apiUrl.replace(/^http/, 'ws') + '/api';
-}
-
-const API_BASE_URL = getApiBaseUrl();
-const WS_BASE_URL = getWebSocketBaseUrl();
 
 export interface Notification {
   id: string;
@@ -96,7 +54,7 @@ export async function getNotifications(
     unread_only: unreadOnly.toString(),
   });
 
-  return get<Notification[]>(`/notifications?${params}`, token);
+  return get<Notification[]>(`/api/notifications?${params}`, token);
 }
 
 /**
@@ -106,7 +64,7 @@ export async function getNotificationStats(): Promise<NotificationStats> {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  return get<NotificationStats>('/notifications/stats', token);
+  return get<NotificationStats>('/api/notifications/stats', token);
 }
 
 /**
@@ -116,7 +74,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  await patch(`/notifications/${notificationId}/read`, {}, token);
+  await patch(`/api/notifications/${notificationId}/read`, {}, token);
 }
 
 /**
@@ -126,7 +84,7 @@ export async function markAllAsRead(): Promise<void> {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  await patch('/notifications/read-all', {}, token);
+  await patch('/api/notifications/read-all', {}, token);
 }
 
 /**
@@ -136,7 +94,7 @@ export async function muteNotification(notificationId: string): Promise<void> {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  await patch(`/notifications/${notificationId}/mute`, {}, token);
+  await patch(`/api/notifications/${notificationId}/mute`, {}, token);
 }
 
 /**
@@ -146,7 +104,13 @@ export async function deleteNotification(notificationId: string): Promise<void> 
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  await del(`/notifications/${notificationId}`, undefined, token);
+  try {
+    await del(`/api/notifications/${notificationId}`, undefined, token);
+    console.log(`Notification ${notificationId} deleted successfully`);
+  } catch (error) {
+    console.error('Failed to delete notification:', error);
+    throw error;
+  }
 }
 
 // ===== PUSH NOTIFICATION FUNCTIONS =====
@@ -168,7 +132,7 @@ export async function requestPushPermission(): Promise<NotificationPermission> {
  */
 export async function getVapidPublicKey(): Promise<string> {
   try {
-    const response = await get<{ publicKey: string }>('/notifications/vapid-public-key');
+    const response = await get<{ publicKey: string }>('/api/notifications/vapid-public-key');
     return response.publicKey;
   } catch (error) {
     console.error('Failed to get VAPID public key:', error);
@@ -211,7 +175,7 @@ export async function subscribeToPush(): Promise<boolean> {
     // Send subscription to backend
     const subscriptionJSON = subscription.toJSON();
     await post(
-      '/notifications/subscribe',
+      '/api/notifications/subscribe',
       {
         endpoint: subscriptionJSON.endpoint,
         p256dh: subscriptionJSON.keys?.p256dh,
@@ -245,7 +209,7 @@ export async function unsubscribeFromPush(): Promise<boolean> {
 
     // Unsubscribe from backend
     await del(
-      `/notifications/unsubscribe?endpoint=${encodeURIComponent(subscription.endpoint)}`,
+      `/api/notifications/unsubscribe?endpoint=${encodeURIComponent(subscription.endpoint)}`,
       undefined,
       token
     );
@@ -294,7 +258,7 @@ export async function sendBulkNotification(
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  return post('/notifications/send', notification, token);
+  return post('/api/notifications/send', notification, token);
 }
 
 /**
@@ -315,7 +279,7 @@ export async function getAllNotifications(
 
   if (userId) params.append('user_id', userId);
 
-  return get(`/notifications/admin/all?${params}`, token);
+  return get(`/api/notifications/admin/all?${params}`, token);
 }
 
 /**
@@ -330,7 +294,7 @@ export async function getAdminNotificationStats(): Promise<{
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  return get('/notifications/admin/stats', token);
+  return get('/api/notifications/admin/stats', token);
 }
 
 // ===== HELPER FUNCTIONS =====
@@ -428,9 +392,9 @@ class NotificationWebSocket {
     }
 
     try {
-      // Get WebSocket URL dynamically based on current location
+      // Get WebSocket URL - includes /api prefix
       const wsBaseUrl = getWebSocketBaseUrl();
-      const wsUrl = `${wsBaseUrl}/notifications/ws/${userId}?token=${token}`;
+      const wsUrl = `${wsBaseUrl}/api/notifications/ws/${userId}?token=${token}`;
       console.log('Connecting to WebSocket:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
       this.ws = new WebSocket(wsUrl);
 
