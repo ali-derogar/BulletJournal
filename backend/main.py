@@ -14,6 +14,7 @@ from app.auth.router import router as auth_router
 from app.routers.admin import router as admin_router
 from app.routers.content import router as content_router
 from app.routers.notifications import router as notifications_router
+from app.routers.chatroom import router as chatroom_router
 from app.db.session import engine, is_sqlite
 from app.db.session import Base
 
@@ -90,6 +91,7 @@ app.include_router(auth_router, prefix="/auth", tags=["authentication"])
 app.include_router(admin_router) # Prefix is defined in the router itself
 app.include_router(content_router) # Admin content management
 app.include_router(notifications_router, prefix="/api") # Notifications
+app.include_router(chatroom_router, prefix="/api") # Chatroom
 
 @app.get("/health")
 @limiter.limit("10/minute")  # Rate limit health checks

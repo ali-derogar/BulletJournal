@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthContext';
+import { sendChatMessage, getChatMessages, createChatroomWebSocket, type ChatMessage as ApiChatMessage } from '@/services/chatroom';
 
 // Types
 interface User {
@@ -55,8 +56,9 @@ export default function ChatRoom() {
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const broadcastChannelRef = useRef<BroadcastChannel | null>(null);
+  const websocketRef = useRef<WebSocket | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesLoadedRef = useRef(false);
 
   // Initialize user from auth
   useEffect(() => {
@@ -70,57 +72,60 @@ export default function ChatRoom() {
         joinedAt: Date.now()
       };
       setCurrentUser(chatUser);
-      localStorage.setItem('chatroom_user', JSON.stringify(chatUser));
     }
   }, [authUser]);
 
-  // Initialize
+  // Initialize messages and WebSocket
   useEffect(() => {
-    const savedMessages = localStorage.getItem('chatroom_messages');
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
-    }
+    if (!authUser || messagesLoadedRef.current) return;
 
-    // Initialize BroadcastChannel
-    try {
-      const bc = new BroadcastChannel('chatroom_channel');
-      broadcastChannelRef.current = bc;
+    // Load messages from API
+    getChatMessages(100)
+      .then(response => {
+        const apiMessages: Message[] = response.messages.map(msg => ({
+          id: msg.id,
+          userId: msg.userId,
+          nickname: msg.nickname,
+          avatar_url: msg.avatar_url,
+          color: msg.color,
+          text: msg.text,
+          timestamp: msg.timestamp
+        }));
+        setMessages(apiMessages);
+        messagesLoadedRef.current = true;
 
-      bc.onmessage = (event) => {
-        const { type, message, user } = event.data;
-
-        if (type === 'new_message') {
+        // Create WebSocket connection
+        const ws = createChatroomWebSocket((message: ApiChatMessage) => {
           setMessages(prev => {
-            const newMessages = [...prev, message];
-            localStorage.setItem('chatroom_messages', JSON.stringify(newMessages));
-            return newMessages;
+            // Check if message already exists
+            if (prev.some(m => m.id === message.id)) {
+              return prev;
+            }
+            const newMessage: Message = {
+              id: message.id,
+              userId: message.userId,
+              nickname: message.nickname,
+              avatar_url: message.avatar_url,
+              color: message.color,
+              text: message.text,
+              timestamp: message.timestamp
+            };
+            return [...prev, newMessage];
           });
-        } else if (type === 'user_update') {
-          setUsers(prev => {
-            const newUsers = new Map(prev);
-            newUsers.set(user.id, user);
-            return newUsers;
-          });
-        }
-      };
-    } catch (error) {
-      console.error('BroadcastChannel not supported:', error);
-    }
+        });
+        websocketRef.current = ws;
+      })
+      .catch(error => {
+        console.error('Error loading chat messages:', error);
+      });
 
     return () => {
-      broadcastChannelRef.current?.close();
+      if (websocketRef.current) {
+        websocketRef.current.close();
+        websocketRef.current = null;
+      }
     };
-  }, []);
-
-  // Broadcast user update when current user changes
-  useEffect(() => {
-    if (currentUser && broadcastChannelRef.current) {
-      broadcastChannelRef.current.postMessage({
-        type: 'user_update',
-        user: currentUser
-      });
-    }
-  }, [currentUser]);
+  }, [authUser]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -128,33 +133,43 @@ export default function ChatRoom() {
   }, [messages]);
 
   // Handlers
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim() || !currentUser) return;
 
-    const newMessage: Message = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: currentUser.id,
-      nickname: currentUser.nickname,
-      avatar_url: currentUser.avatar_url,
-      color: currentUser.color,
-      text: inputText.trim(),
-      timestamp: Date.now()
-    };
-
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
-    localStorage.setItem('chatroom_messages', JSON.stringify(updatedMessages));
+    const messageText = inputText.trim();
     setInputText('');
 
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
 
-    // Broadcast
-    broadcastChannelRef.current?.postMessage({
-      type: 'new_message',
-      message: newMessage
-    });
+    try {
+      // Send message to API
+      const sentMessage = await sendChatMessage(messageText);
+      
+      // Add message to local state (WebSocket will also receive it, but this makes UI more responsive)
+      const newMessage: Message = {
+        id: sentMessage.id,
+        userId: sentMessage.userId,
+        nickname: sentMessage.nickname,
+        avatar_url: sentMessage.avatar_url,
+        color: sentMessage.color,
+        text: sentMessage.text,
+        timestamp: sentMessage.timestamp
+      };
+      
+      setMessages(prev => {
+        // Check if message already exists (from WebSocket)
+        if (prev.some(m => m.id === newMessage.id)) {
+          return prev;
+        }
+        return [...prev, newMessage];
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Restore input text on error
+      setInputText(messageText);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
