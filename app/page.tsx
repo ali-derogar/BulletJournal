@@ -35,16 +35,17 @@ export default function Home() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuDropdownRef.current && !menuDropdownRef.current.contains(event.target as Node)) {
+    if (!showMenuDropdown) return;
+
+    function handleClickOutside(event: Event) {
+      const target = event.target as Node;
+      if (menuDropdownRef.current && target && !menuDropdownRef.current.contains(target)) {
         setShowMenuDropdown(false);
       }
     }
 
-    if (showMenuDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, [showMenuDropdown]);
 
   return (
@@ -338,7 +339,10 @@ export default function Home() {
 
             <div className="relative flex-1 min-w-0" ref={menuDropdownRef}>
               <motion.button
-                onClick={() => setShowMenuDropdown(!showMenuDropdown)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenuDropdown(!showMenuDropdown);
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 w-full ${(currentView === 'calendar' || currentView === 'chatroom' || showMenuDropdown)
