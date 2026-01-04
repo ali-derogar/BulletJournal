@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDate } from "@/app/context/DateContext";
 import { useUser } from "@/app/context/UserContext";
@@ -20,6 +20,7 @@ import LoginPage from "@/components/LoginPage";
 import AIChat from "@/components/AIChat";
 import InstallButton from "@/components/InstallButton";
 import NotificationBell from "@/components/NotificationBell";
+import ChatRoom from "@/components/ChatRoom";
 import { useAuth } from "./context/AuthContext";
 
 export default function Home() {
@@ -28,7 +29,23 @@ export default function Home() {
   const { isAuthenticated } = useAuth();
   const userId = currentUser?.id || "default";
   const [showCalendar, setShowCalendar] = useState(false);
-  const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar' | 'ai' | 'login'>('daily');
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+  const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar' | 'ai' | 'login' | 'chatroom'>('daily');
+  const menuDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuDropdownRef.current && !menuDropdownRef.current.contains(event.target as Node)) {
+        setShowMenuDropdown(false);
+      }
+    }
+
+    if (showMenuDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showMenuDropdown]);
 
   return (
     <div className="min-h-screen bg-background isolation-auto">
@@ -172,6 +189,16 @@ export default function Home() {
           >
             <LoginPage />
           </motion.div>
+        ) : currentView === 'chatroom' ? (
+          <motion.div
+            key="chatroom"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ChatRoom />
+          </motion.div>
         ) : (
           <motion.div
             key="calendar"
@@ -206,7 +233,8 @@ export default function Home() {
                 left: currentView === 'daily' ? '0%' :
                   currentView === 'analytics' ? '20%' :
                     currentView === 'goals' ? '40%' :
-                      currentView === 'ai' ? '60%' : '80%'
+                      currentView === 'ai' ? '60%' : 
+                        (currentView === 'calendar' || currentView === 'chatroom') ? '80%' : '80%'
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
@@ -308,27 +336,87 @@ export default function Home() {
               <span className="text-[10px] sm:text-xs font-bold">AI</span>
             </motion.button>
 
-            <motion.button
-              onClick={() => setCurrentView('calendar')}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 flex-1 ${currentView === 'calendar'
-                ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                }`}
-            >
-              <motion.svg
-                className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                animate={{ rotate: currentView === 'calendar' ? [0, 5, -5, 0] : 0 }}
-                transition={{ duration: 0.5 }}
+            <div className="relative flex-1 min-w-0" ref={menuDropdownRef}>
+              <motion.button
+                onClick={() => setShowMenuDropdown(!showMenuDropdown)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-0 w-full ${(currentView === 'calendar' || currentView === 'chatroom' || showMenuDropdown)
+                  ? 'bg-gradient-to-br from-primary/20 to-purple-500/20 text-primary scale-105 shadow-lg'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </motion.svg>
-              <span className="text-[10px] sm:text-xs font-bold">Calendar</span>
-            </motion.button>
+                <motion.svg
+                  className="w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  animate={{ rotate: showMenuDropdown ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </motion.svg>
+                <span className="text-[10px] sm:text-xs font-bold">More</span>
+              </motion.button>
+
+              {/* Dropdown Menu */}
+              <AnimatePresence>
+                {showMenuDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden"
+                  >
+                    <motion.button
+                      onClick={() => {
+                        setCurrentView('calendar');
+                        setShowMenuDropdown(false);
+                      }}
+                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${currentView === 'calendar'
+                        ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary'
+                        : 'text-foreground hover:bg-muted/50'
+                        }`}
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-sm font-semibold">Calendar</span>
+                    </motion.button>
+                    <motion.button
+                      onClick={() => {
+                        setCurrentView('chatroom');
+                        setShowMenuDropdown(false);
+                      }}
+                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all border-t border-border ${currentView === 'chatroom'
+                        ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary'
+                        : 'text-foreground hover:bg-muted/50'
+                        }`}
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <span className="text-sm font-semibold">Chatroom</span>
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </motion.div>
