@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.api.auth import get_current_active_user
+from app.auth.dependencies import get_current_active_user
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIModel
 from openai import AsyncOpenAI
