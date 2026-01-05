@@ -22,6 +22,7 @@ from app.models.sleep import SleepInfo
 from app.models.reflection import Reflection
 from app.models.user import User
 from app.core.config import settings
+from app.services.ai_service import ai_service
 
 logger = logging.getLogger(__name__)
 
@@ -331,13 +332,6 @@ async def update_task(
 
 
 # Models to try in order of preference
-MODELS_TO_TRY = [
-    'google/gemma-3-27b-it:free',
-    'google/gemma-2-9b-it:free',
-    'meta-llama/llama-3.1-8b-instruct:free',
-    'mistralai/mistral-7b-instruct:free'
-]
-
 @router.post("/chat")
 async def chat_with_agent(
     request: AIChatRequest,
@@ -353,133 +347,13 @@ async def chat_with_agent(
             "data": {}
         }
 
-    last_error = None
+    # Delegate execution to the robust AI Service
+    # This handles key rotation, model fallback, validation retries, and raw fallback
+    output = await ai_service.execute_agent(agent, request.message, deps)
     
-
-
-    # Try each key in sequence
-    for api_key_index, api_key in enumerate(settings.NEXT_PUBLIC_OPENROUTER_API_KEYS):
-        try:
-            # Create explicit client matching t.py configuration
-            client = AsyncOpenAI(
-                api_key=api_key,
-                base_url='https://openrouter.ai/api/v1',
-            )
-            
-            # Try each model in sequence for this key
-            for model_name in MODELS_TO_TRY:
-                try:
-                    logger.info(f"Attempting AI chat with Key #{api_key_index+1} and Model '{model_name}'")
-                    # Use explicit client injection
-                    provider = OpenAIProvider(openai_client=client)
-                    current_model = OpenAIChatModel(
-                        model_name,
-                        provider=provider
-                    )
-                    
-                    # Run the agent with this model override
-                    result = await agent.run(request.message, deps=deps, model=current_model)
-                    return {
-                        "success": True,
-                        "message": result.output,
-                        "data": {}
-                    }
-                except Exception as e:
-                    last_error = e
-                    error_str = str(e).lower()
-                    
-                    # Case 1: Rate limit or Quota issue (Key specific)
-                    # Case 1: Quota exhaustion (Key dead)
-                    if "insufficient_quota" in error_str:
-                         logger.warning(f"Key #{api_key_index+1} Exhausted (Insufficient Quota): {str(e)}. Switching to next key.")
-                         break
-
-                    # Case 2: Rate limit (Model busy, upstream 429) - Try next model, keep key
-                    if any(indicator in error_str for indicator in ["429", "rate limit", "too many requests"]):
-                        logger.warning(f"Model '{model_name}' Rate limited via Key #{api_key_index+1}: {str(e)}. Trying next model.")
-                        continue
-                    
-                    # Case 2: Model not found or Policy issue (Model specific)
-                    if "404" in error_str or "not found" in error_str or "policy" in error_str:
-                        logger.warning(f"Model '{model_name}' failed with 404/Policy for Key #{api_key_index+1}. Trying next model. Error: {str(e)}")
-                        continue # Continue to NEXT MODEL with same key
-                    
-                    # Case 3: Validation Error (Pydantic) - Malformed response
-                    if "validation error" in error_str or "invalid response" in error_str:
-                         logger.error(f"Validation error with Model '{model_name}': {str(e)}. This implies the model returned a bad response.")
-                         continue
-
-                    # Case 4: Other errors
-                    logger.error(f"Error with Key #{api_key_index+1} and Model '{model_name}': {str(e)}. Trying next model/key.")
-                    continue
-        except Exception as key_e:
-             logger.error(f"Critical error initializing client for Key #{api_key_index+1}: {str(key_e)}")
-             continue
-                
-                
-    # If we reached here, it means all combinations failed (or Pydantic validation blocked them)
-    logger.error(f"All AI tokens/models exhausted via standard client. Last error: {str(last_error)}. Attempting raw HTTP fallback.")
-    
-    # Fallback: Try raw HTTP request (bypassing strict Pydantic validation)
-    try:
-        fallback_result = await fallback_raw_chat(request.message, system_prompt=SYSTEM_PROMPT)
-        return {
-            "success": True,
-            "message": fallback_result,
-            "data": {"note": "Response generated via fallback mode (commands unavailable)."}
-        }
-    except Exception as fallback_error:
-        logger.error(f"Fallback also failed: {str(fallback_error)}")
-        return {
-            "success": False,
-            "message": f"متأسفانه در حال حاضر تمام ظرفیت‌های هوش مصنوعی تکمیل شده است. لطفاً دقایقی دیگر دوباره تلاش کنید. (خطا: {str(last_error)} | Fallback: {str(fallback_error)})",
-            "data": {}
-        }
-
-
-async def fallback_raw_chat(user_message: str, system_prompt: str) -> str:
-    """
-    Direct HTTP fallback for when the Pydantic/OpenAI client is too strict or failing.
-    This bypasses the agent tools and just gets a completion.
-    """
-    import httpx
-    
-    last_exception = None
-
-    for api_key in settings.NEXT_PUBLIC_OPENROUTER_API_KEYS:
-        for model in MODELS_TO_TRY:
-            try:
-                headers = {
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://bulletjournal.local", # Optional
-                }
-                payload = {
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_message}
-                    ]
-                }
-                
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    resp = await client.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        # Flexible parsing: try standard path, then loose path
-                        content = None
-                        if "choices" in data and len(data["choices"]) > 0:
-                            content = data["choices"][0].get("message", {}).get("content")
-                        
-                        if content:
-                            return content
-                    else:
-                        logger.warning(f"Fallback HTTP error {resp.status_code} for {model}: {resp.text}")
-                        last_exception = f"HTTP {resp.status_code}: {resp.text[:100]}"
-            except Exception as e:
-                logger.warning(f"Fallback attempt failed for {model}: {e}")
-                last_exception = str(e)
-                continue
-    
-    raise Exception(f"All fallback attempts failed. Last error: {last_exception}")
+    return {
+        "success": True, 
+        "message": output,
+        "data": {}
+    }
 
