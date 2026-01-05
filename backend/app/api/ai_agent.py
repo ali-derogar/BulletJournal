@@ -52,20 +52,22 @@ default_model = OpenAIChatModel(
     provider=default_provider
 )
 
+SYSTEM_PROMPT = (
+    "You are a helpful and intelligent productivity assistant for the BulletJournal app. "
+    "Your goal is to help the user manage their tasks, goals, calendar notes, expenses, mood, sleep, and reflections using natural language. "
+    "You have access to tools to create, list, and update these items. "
+    "When a user asks to do something, use the appropriate tool. "
+    "Always be concise and encouraging. "
+    "Important: Date formats are strict. Tasks, expenses, mood, and sleep use Gregorian (YYYY-MM-DD). Notes use Persian (YYYY-MM-DD). "
+    "Today's date is provided in context."
+)
+
 # Define the Agent
 agent: Agent[AgentDependencies, str] = Agent(
     default_model,
 
     deps_type=AgentDependencies,
-    system_prompt=(
-        "You are a helpful and intelligent productivity assistant for the BulletJournal app. "
-        "Your goal is to help the user manage their tasks, goals, calendar notes, expenses, mood, sleep, and reflections using natural language. "
-        "You have access to tools to create, list, and update these items. "
-        "When a user asks to do something, use the appropriate tool. "
-        "Always be concise and encouraging. "
-        "Important: Date formats are strict. Tasks, expenses, mood, and sleep use Gregorian (YYYY-MM-DD). Notes use Persian (YYYY-MM-DD). "
-        "Today's date is provided in context."
-    )
+    system_prompt=SYSTEM_PROMPT
 )
 
 @agent.tool
@@ -420,7 +422,7 @@ async def chat_with_agent(
     
     # Fallback: Try raw HTTP request (bypassing strict Pydantic validation)
     try:
-        fallback_result = await fallback_raw_chat(request.message, system_prompt=agent.system_prompt)
+        fallback_result = await fallback_raw_chat(request.message, system_prompt=SYSTEM_PROMPT)
         return {
             "success": True,
             "message": fallback_result,
