@@ -44,7 +44,7 @@ default_client = AsyncOpenAI(
 
 default_model = OpenAIModel(
     'google/gemma-3-27b-it:free',
-    openai_client=default_client
+    client=default_client
 )
 
 # Define the Agent
@@ -212,7 +212,7 @@ async def chat_with_agent(
             )
             current_model = OpenAIModel(
                 'google/gemma-3-27b-it:free',
-                openai_client=current_client
+                client=current_client
             )
             
             # Run the agent with this model override
