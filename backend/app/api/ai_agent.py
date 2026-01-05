@@ -1,3 +1,5 @@
+from fastapi import APIRouter, Depends, HTTPException
+from app.api.auth import get_current_active_user
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIModel
 from openai import AsyncOpenAI
@@ -18,6 +20,13 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+router = APIRouter()
+
+class AIChatRequest(BaseModel):
+    message: str
+    currentDate: str
+
+
 
 class AgentDependencies:
     def __init__(self, db: Session, user: User, current_date: str):
@@ -25,21 +34,23 @@ class AgentDependencies:
         self.user = user
         self.current_date = current_date
 
-# Configure OpenRouter model
-# Use a custom AsyncOpenAI client for the base_url
-client = AsyncOpenAI(
+# Configure default model (will be overridden during rotation)
+# Use the first available key, or a placeholder
+first_key = settings.NEXT_PUBLIC_OPENROUTER_API_KEYS[0] if settings.NEXT_PUBLIC_OPENROUTER_API_KEYS else "no-key"
+default_client = AsyncOpenAI(
     base_url='https://openrouter.ai/api/v1',
-    api_key=settings.OPENROUTER_API_KEY
+    api_key=first_key
 )
 
-model = OpenAIModel(
+default_model = OpenAIModel(
     'google/gemma-3-27b-it:free',
-    openai_client=client
+    openai_client=default_client
 )
 
 # Define the Agent
 agent: Agent[AgentDependencies, str] = Agent(
-    model,
+    default_model,
+
     deps_type=AgentDependencies,
     system_prompt=(
         "You are a helpful and intelligent productivity assistant for the BulletJournal app. "
@@ -173,3 +184,60 @@ async def list_calendar_notes(ctx: RunContext[AgentDependencies], date: Optional
         CalendarNote.date == target_date
     ).all()
     return [{"date": n.date, "note": n.note} for n in notes]
+
+
+@router.post("/chat")
+async def chat_with_agent(
+    request: AIChatRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    deps = AgentDependencies(db=db, user=current_user, current_date=request.currentDate)
+    
+    if not settings.NEXT_PUBLIC_OPENROUTER_API_KEYS:
+        return {
+            "success": False,
+            "message": "AI API Key is not configured on the server. (NEXT_PUBLIC_OPENROUTER_API_KEYS is empty)",
+            "data": {}
+        }
+
+    last_error = None
+    # Try each key in sequence
+    for api_key in settings.NEXT_PUBLIC_OPENROUTER_API_KEYS:
+        try:
+            # Create a localized client and model for this attempt
+            current_client = AsyncOpenAI(
+                base_url='https://openrouter.ai/api/v1',
+                api_key=api_key
+            )
+            current_model = OpenAIModel(
+                'google/gemma-3-27b-it:free',
+                openai_client=current_client
+            )
+            
+            # Run the agent with this model override
+            result = await agent.run(request.message, deps=deps, model=current_model)
+            return {
+                "success": True,
+                "message": result.output,
+                "data": {}
+            }
+        except Exception as e:
+            last_error = e
+            error_str = str(e).lower()
+            # If it's a rate limit or quota error, try the next key
+            if any(indicator in error_str for indicator in ["429", "rate limit", "insufficient_quota", "too many requests"]):
+                logger.warning(f"AI Rate limit hit for a token. Trying next one. Error: {str(e)}")
+                continue
+            else:
+                # For other errors, we might still want to try another key just in case
+                logger.error(f"AI Agent error with token: {str(e)}. Trying next token if available.")
+                continue
+                
+    # If we reached here, it means all keys failed
+    logger.error(f"All AI tokens exhausted or failed. Last error: {str(last_error)}")
+    return {
+        "success": False,
+        "message": f"متأسفانه در حال حاضر تمام ظرفیت‌های هوش مصنوعی تکمیل شده است. لطفاً دقایقی دیگر دوباره تلاش کنید. (خطا: {str(last_error)})",
+        "data": {}
+    }

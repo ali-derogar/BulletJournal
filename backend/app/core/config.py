@@ -22,7 +22,12 @@ class Settings:
     }
 
     # AI Settings
-    OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
+    _keys_str: str = os.getenv("NEXT_PUBLIC_OPENROUTER_API_KEYS", "")
+    NEXT_PUBLIC_OPENROUTER_API_KEYS: list[str] = [
+        key.strip() for key in _keys_str.split(",") if key.strip()
+    ]
+
+    # WebSocket settings
 
     # WebSocket settings
     WS_HEARTBEAT_INTERVAL: int = int(os.getenv("WS_HEARTBEAT_INTERVAL", "30"))

@@ -11,6 +11,7 @@ services:
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - ALGORITHM=${ALGORITHM:-HS256}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - NEXT_PUBLIC_OPENROUTER_API_KEYS=${NEXT_PUBLIC_OPENROUTER_API_KEYS}
     volumes:
       - ./backend/data:/app/data
       - ./backend:/app
