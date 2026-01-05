@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.auth.dependencies import get_current_active_user
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
@@ -46,7 +46,7 @@ default_provider = OpenAIProvider(
     base_url='https://openrouter.ai/api/v1'
 )
 
-default_model = OpenAIModel(
+default_model = OpenAIChatModel(
     'google/gemma-3-27b-it:free',
     provider=default_provider
 )
@@ -353,23 +353,17 @@ async def chat_with_agent(
     last_error = None
     # Try each key in sequence
     for api_key_index, api_key in enumerate(settings.NEXT_PUBLIC_OPENROUTER_API_KEYS):
-        # Create a localized provider for this key with OpenRouter headers
+        # Create a localized provider for this key
         current_provider = OpenAIProvider(
             api_key=api_key,
-            base_url='https://openrouter.ai/api/v1',
-            http_client_settings={
-                "headers": {
-                    "HTTP-Referer": "https://bulletjournal.local",
-                    "X-Title": "BulletJournal AI"
-                }
-            }
+            base_url='https://openrouter.ai/api/v1'
         )
 
         # Try each model in sequence for this key
         for model_name in MODELS_TO_TRY:
             try:
                 logger.info(f"Attempting AI chat with Key #{api_key_index+1} and Model '{model_name}'")
-                current_model = OpenAIModel(
+                current_model = OpenAIChatModel(
                     model_name,
                     provider=current_provider
                 )
