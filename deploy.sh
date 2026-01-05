@@ -95,11 +95,13 @@ docker compose down
 print_success "Containers stopped"
 
 # Build and start containers
-print_info "Cleaning docker build cache..."
-docker builder prune -f
-
 print_info "Building and starting containers..."
-docker compose up -d --build
+if ! docker compose up -d --build; then
+    print_error "Build failed. Attempting to fix by clearing aggressive build cache..."
+    docker builder prune -af
+    print_info "Retrying build..."
+    docker compose up -d --build
+fi
 
 # Wait for services to be healthy
 print_info "Waiting for services to become healthy..."
