@@ -181,107 +181,32 @@ export default function UploadDownloadButtons() {
       {/* Sync Status Indicator - Always visible to show background activity */}
       <SyncStatus syncPhase={currentPhase} lastSyncError={lastSyncError} compact />
 
-      {/* Download Button - Kept for manual data retrieval */}
-      <div className="relative">
-        <button
-          onClick={handleDownload}
-          disabled={!syncCheck.allowed || isUploading || isDownloading}
-          className={`
-            px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-2
-            ${downloadPhase === 'loading'
-              ? 'bg-blue-600 text-white cursor-wait'
-              : downloadPhase === 'saving'
-                ? 'bg-purple-600 text-white cursor-wait'
-                : syncCheck.allowed && !isUploading
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }
-          `}
-          title={syncCheck.reason || 'Download latest data from server'}
-        >
-          {/* Download Icon */}
-          {downloadPhase === 'loading' ? (
-            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-          ) : downloadPhase === 'saving' ? (
-            <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-          )}
-          <span className="text-sm hidden sm:inline">
-            {downloadPhase === 'loading' ? 'Downloading...' : downloadPhase === 'saving' ? 'Saving...' : 'Download'}
-          </span>
-        </button>
-
-        {/* Sync Result Notification - Only shown for manual Download or if an error occurs */}
-        {showNotification && syncResult && (
+      {/* Sync Result Notification - Only shown if an error occurs during auto-sync */}
+      {showNotification && syncResult && !syncResult.success && (
+        <div className="relative">
           <div
             className={`
               absolute top-full right-0 mt-2 w-80 max-w-sm rounded-lg shadow-lg p-4 z-50 animate-in slide-in-from-top-2 duration-200
-              ${syncResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}
+              bg-red-50 border border-red-200
             `}
           >
             <div className="flex items-start gap-3">
               {/* Icon */}
               <div className="flex-shrink-0">
-                {syncResult.success ? (
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                )}
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <h4 className={`font-semibold text-sm ${syncResult.success ? 'text-green-800' : 'text-red-800'}`}>
+                <h4 className="font-semibold text-sm text-red-800">
                   {syncResult.message}
                 </h4>
 
-                {syncResult.success && syncResult.stats && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs text-green-700">
-                      {formatSyncStats(syncResult.stats)}
-                    </p>
-                    {syncResult.stats.conflictsResolved > 0 && (
-                      <p className="text-xs text-green-600 flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        {syncResult.stats.conflictsResolved} conflict{syncResult.stats.conflictsResolved > 1 ? 's' : ''} resolved
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {!syncResult.success && syncResult.error && (
+                {syncResult.error && (
                   <p className="text-xs text-red-700 mt-1 break-words">
                     {typeof syncResult.error === 'string' ? syncResult.error : JSON.stringify(syncResult.error)}
                   </p>
@@ -291,8 +216,7 @@ export default function UploadDownloadButtons() {
               {/* Close Button */}
               <button
                 onClick={() => setShowNotification(false)}
-                className={`flex-shrink-0 ${syncResult.success ? 'text-green-400 hover:text-green-600' : 'text-red-400 hover:text-red-600'
-                  } transition-colors`}
+                className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors"
                 aria-label="Close"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,8 +225,8 @@ export default function UploadDownloadButtons() {
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
