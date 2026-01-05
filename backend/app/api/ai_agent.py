@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.auth.dependencies import get_current_active_user
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIModel
-from openai import AsyncOpenAI
+from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 from sqlalchemy.orm import Session
@@ -37,14 +37,14 @@ class AgentDependencies:
 # Configure default model (will be overridden during rotation)
 # Use the first available key, or a placeholder
 first_key = settings.NEXT_PUBLIC_OPENROUTER_API_KEYS[0] if settings.NEXT_PUBLIC_OPENROUTER_API_KEYS else "no-key"
-default_client = AsyncOpenAI(
-    base_url='https://openrouter.ai/api/v1',
-    api_key=first_key
+default_provider = OpenAIProvider(
+    api_key=first_key,
+    base_url='https://openrouter.ai/api/v1'
 )
 
 default_model = OpenAIModel(
     'google/gemma-3-27b-it:free',
-    client=default_client
+    provider=default_provider
 )
 
 # Define the Agent
@@ -205,14 +205,14 @@ async def chat_with_agent(
     # Try each key in sequence
     for api_key in settings.NEXT_PUBLIC_OPENROUTER_API_KEYS:
         try:
-            # Create a localized client and model for this attempt
-            current_client = AsyncOpenAI(
-                base_url='https://openrouter.ai/api/v1',
-                api_key=api_key
+            # Create a localized provider and model for this attempt
+            current_provider = OpenAIProvider(
+                api_key=api_key,
+                base_url='https://openrouter.ai/api/v1'
             )
             current_model = OpenAIModel(
                 'google/gemma-3-27b-it:free',
-                client=current_client
+                provider=current_provider
             )
             
             # Run the agent with this model override
