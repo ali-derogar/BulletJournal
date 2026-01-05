@@ -11,7 +11,7 @@ requests==2.32.5
 python-dateutil==2.8.2
 slowapi==0.1.9
 psycopg2-binary==2.9.9
-httpx==0.25.2
+httpx==0.27.2
 jdatetime==5.0.0
 pywebpush==1.14.1
 websockets==12.0
