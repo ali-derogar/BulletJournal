@@ -21,6 +21,9 @@ class Settings:
         "sub": os.getenv("VAPID_CLAIMS_EMAIL", "mailto:admin@bulletjournal.local")
     }
 
+    # AI Settings
+    OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
+
     # WebSocket settings
     WS_HEARTBEAT_INTERVAL: int = int(os.getenv("WS_HEARTBEAT_INTERVAL", "30"))
     WS_MESSAGE_QUEUE_SIZE: int = int(os.getenv("WS_MESSAGE_QUEUE_SIZE", "100"))

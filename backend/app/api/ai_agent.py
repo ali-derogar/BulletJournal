@@ -1,18 +1,22 @@
 from pydantic_ai import Agent, RunContext
+from pydantic_ai.models.openai import OpenAIModel
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 from sqlalchemy.orm import Session
 import uuid
 from datetime import datetime, timezone
 import logging
+import os
 
 from app.db.session import get_db
 from app.models.task import Task
 from app.models.goal import Goal
 from app.models.calendar_note import CalendarNote
 from app.models.user import User
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
 
 class AgentDependencies:
     def __init__(self, db: Session, user: User, current_date: str):
@@ -20,9 +24,17 @@ class AgentDependencies:
         self.user = user
         self.current_date = current_date
 
+# Configure OpenRouter model
+# If api_key is None, it will look for OPENAI_API_KEY env var
+model = OpenAIModel(
+    'google/gemma-2-9b-it:free',
+    base_url='https://openrouter.ai/api/v1',
+    api_key=settings.OPENROUTER_API_KEY
+)
+
 # Define the Agent
-agent = Agent(
-    'openai:google/gemma-2-9b-it:free', # Using OpenRouter via OpenAI compatibility
+agent: Agent[AgentDependencies, str] = Agent(
+    model,
     deps_type=AgentDependencies,
     system_prompt=(
         "You are a helpful and intelligent productivity assistant for the BulletJournal app. "
