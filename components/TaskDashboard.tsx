@@ -341,12 +341,12 @@ export default function TaskDashboard({ date, userId, goalProgress = 0.5 }: Task
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sticky Header with Emotional Score */}
+    <div className="bg-transparent">
+      {/* Section Header with Emotional Score */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-10 bg-card border-b border-border shadow-sm"
+        className="sticky top-0 z-10 bg-card/95 backdrop-blur-md border border-primary/20 rounded-2xl shadow-lg mb-6"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
