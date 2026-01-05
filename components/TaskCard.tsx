@@ -332,14 +332,6 @@ export default function TaskCard({
                         >
                           ⏸ Pause
                         </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => onStopTimer(task)}
-                          className="px-6 py-2.5 bg-destructive text-white text-sm font-black rounded-xl shadow-lg shadow-destructive/20"
-                        >
-                          ⏹ Stop
-                        </motion.button>
                       </div>
                     )}
                   </AnimatePresence>
