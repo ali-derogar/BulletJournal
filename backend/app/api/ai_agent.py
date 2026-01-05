@@ -387,16 +387,22 @@ async def chat_with_agent(
                     error_str = str(e).lower()
                     
                     # Case 1: Rate limit or Quota issue (Key specific)
-                    if any(indicator in error_str for indicator in ["429", "rate limit", "insufficient_quota", "too many requests"]):
-                        logger.warning(f"Key #{api_key_index+1} Rate limited. Switching to next key. Error: {str(e)}")
-                        break # Break model loop to try NEXT KEY
+                    # Case 1: Quota exhaustion (Key dead)
+                    if "insufficient_quota" in error_str:
+                         logger.warning(f"Key #{api_key_index+1} Exhausted (Insufficient Quota): {str(e)}. Switching to next key.")
+                         break
+
+                    # Case 2: Rate limit (Model busy, upstream 429) - Try next model, keep key
+                    if any(indicator in error_str for indicator in ["429", "rate limit", "too many requests"]):
+                        logger.warning(f"Model '{model_name}' Rate limited via Key #{api_key_index+1}: {str(e)}. Trying next model.")
+                        continue
                     
                     # Case 2: Model not found or Policy issue (Model specific)
                     if "404" in error_str or "not found" in error_str or "policy" in error_str:
                         logger.warning(f"Model '{model_name}' failed with 404/Policy for Key #{api_key_index+1}. Trying next model. Error: {str(e)}")
                         continue # Continue to NEXT MODEL with same key
                     
-                    # Case 3: Validation Error (Pydantic) or other
+                    # Case 3: Validation Error (Pydantic) - Malformed response
                     if "validation error" in error_str or "invalid response" in error_str:
                          logger.error(f"Validation error with Model '{model_name}': {str(e)}. This implies the model returned a bad response.")
                          continue
@@ -436,6 +442,8 @@ async def fallback_raw_chat(user_message: str, system_prompt: str) -> str:
     """
     import httpx
     
+    last_exception = None
+
     for api_key in settings.NEXT_PUBLIC_OPENROUTER_API_KEYS:
         for model in MODELS_TO_TRY:
             try:
@@ -463,9 +471,13 @@ async def fallback_raw_chat(user_message: str, system_prompt: str) -> str:
                         
                         if content:
                             return content
+                    else:
+                        logger.warning(f"Fallback HTTP error {resp.status_code} for {model}: {resp.text}")
+                        last_exception = f"HTTP {resp.status_code}: {resp.text[:100]}"
             except Exception as e:
                 logger.warning(f"Fallback attempt failed for {model}: {e}")
+                last_exception = str(e)
                 continue
     
-    raise Exception("All fallback attempts failed.")
+    raise Exception(f"All fallback attempts failed. Last error: {last_exception}")
 
