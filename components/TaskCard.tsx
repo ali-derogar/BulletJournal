@@ -14,18 +14,10 @@ interface TaskCardProps {
   onStatusChange: (task: Task, status: TaskStatus) => void;
   onUsefulnessChange: (task: Task, isUseful: boolean | null) => void;
   onEstimateChange: (task: Task, estimate: number | null) => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
-/**
- * Modern Task Card Component
- *
- * Features:
- * - Clean, minimal design inspired by Linear/Notion
- * - Visual progress bars for time tracking
- * - Subtle animations for timer states
- * - Smooth transitions for all interactions
- * - Apple Fitness-style progress indicators
- */
 export default function TaskCard({
   task,
   onDelete,
@@ -35,6 +27,8 @@ export default function TaskCard({
   onStatusChange,
   onUsefulnessChange,
   onEstimateChange,
+  isExpanded = false,
+  onToggleExpand,
 }: TaskCardProps) {
   const [isEditingEstimate, setIsEditingEstimate] = useState(false);
   const [estimateInput, setEstimateInput] = useState("");
@@ -92,7 +86,7 @@ export default function TaskCard({
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={`
-        relative bg-card rounded-xl border-2 p-6 shadow-sm hover:shadow-md transition-all duration-200
+        relative bg-card rounded-xl border-2 p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer
         ${task.timerRunning
           ? "border-green-200 bg-gradient-to-br from-green-50/50 to-card dark:from-green-900/20 dark:to-card"
           : task.isUseful === true
@@ -102,6 +96,7 @@ export default function TaskCard({
               : "border-border hover:border-primary/50"
         }
       `}
+      onClick={onToggleExpand}
     >
       {/* Running Timer Pulse Animation */}
       <AnimatePresence>
@@ -110,7 +105,7 @@ export default function TaskCard({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"
+            className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full z-10"
           >
             <motion.div
               animate={{ scale: [1, 1.2, 1] }}
@@ -121,294 +116,213 @@ export default function TaskCard({
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1 min-w-0">
-          <motion.h3
-            layout="position"
-            className="text-lg font-semibold text-card-foreground mb-2 truncate"
-          >
-            {task.title}
-          </motion.h3>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Status Badge */}
-            <motion.select
-              layout="position"
-              value={task.status}
-              onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
-              className="px-2 py-1 text-xs font-medium bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-muted-foreground"
-            >
-              <option value="todo">To Do</option>
-              <option value="in-progress">In Progress</option>
-              <option value="done">Done</option>
-            </motion.select>
-
-            {/* Usefulness Badge */}
-            <AnimatePresence>
-              {task.isUseful !== null && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className={`
-                    px-2 py-1 rounded-md text-xs font-medium
-                    ${task.isUseful
-                      ? "bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-                      : "bg-orange-100 text-orange-800 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800"
-                    }
-                  `}
-                >
-                  {task.isUseful ? "👍 Useful" : "👎 Not Useful"}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Delete Button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onDelete(task.id)}
-          className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </motion.button>
-      </div>
-
-      {/* Progress Section */}
-      <div className="mb-4">
-        {/* Progress Bar */}
-        {task.estimatedTime && task.estimatedTime > 0 && (
-          <div className="mb-3">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-card-foreground">Progress</span>
-              <span className="text-sm text-muted-foreground">
-                {Math.round(progressPercentage)}%
-              </span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercentage}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className={`
-                  h-full rounded-full
-                  ${isOverEstimate
-                    ? "bg-gradient-to-r from-red-400 to-red-500 dark:from-red-300 dark:to-red-400"
-                    : "bg-gradient-to-r from-primary to-primary/80"
-                  }
-                `}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Time Display */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Estimated Time */}
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">
-              Estimated
-            </label>
-            {isEditingEstimate ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={estimateInput}
-                  onChange={(e) => setEstimateInput(e.target.value)}
-                  placeholder="min"
-                  className="w-16 px-2 py-1 text-sm border border-input rounded focus:outline-none focus:ring-2 focus:ring-ring"
-                  autoFocus
-                  onKeyPress={(e) => e.key === "Enter" && handleEstimateSave()}
-                />
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleEstimateSave}
-                  className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded hover:bg-primary/90"
-                >
-                  ✓
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    setIsEditingEstimate(false);
-                    setEstimateInput("");
-                  }}
-                  className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded hover:bg-muted/80"
-                >
-                  ✕
-                </motion.button>
-              </div>
-            ) : (
-              <div
-                className="text-lg font-semibold text-foreground cursor-pointer hover:text-primary"
-                onClick={() => {
-                  setEstimateInput(task.estimatedTime?.toString() || "");
-                  setIsEditingEstimate(true);
-                }}
-              >
-                {task.estimatedTime ? formatTime(task.estimatedTime) : "—"}
-              </div>
-            )}
-          </div>
-
-          {/* Actual Time */}
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">
-              {task.timerRunning ? "Current" : "Actual"}
-            </label>
+      {/* Header - Always visible */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <div className="flex-shrink-0">
             <motion.div
-              key={task.timerRunning ? "running" : "stopped"}
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              className={`
-                text-lg font-semibold
-                ${task.timerRunning
-                  ? "text-green-400"
-                  : isOverEstimate
-                    ? "text-destructive"
-                    : "text-foreground"
-                }
-              `}
+              animate={isExpanded ? { rotate: 180 } : { rotate: 0 }}
+              className="p-1 rounded-full bg-muted text-muted-foreground"
             >
-              {task.timerRunning
-                ? formatTime((currentTime - new Date(task.timerStart!).getTime()) / 1000 / 60)
-                : formatTime(task.spentTime)
-              }
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+              </svg>
             </motion.div>
           </div>
+          <div className="flex-1 min-w-0">
+            <motion.h3
+              layout="position"
+              className="text-base sm:text-lg font-bold text-card-foreground truncate leading-tight"
+            >
+              {task.title}
+            </motion.h3>
+
+            <div className="flex items-center gap-2 flex-wrap mt-1">
+              {/* Status Badge */}
+              <motion.div layout="position" onClick={(e) => e.stopPropagation()}>
+                <select
+                  value={task.status}
+                  onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
+                  className="px-2 py-0.5 text-[10px] font-black uppercase bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-muted-foreground tracking-widest"
+                >
+                  <option value="todo">To Do</option>
+                  <option value="in-progress">Doing</option>
+                  <option value="done">Done</option>
+                </select>
+              </motion.div>
+
+              {!isExpanded && (
+                <div className="flex items-center gap-2">
+                  {task.estimatedTime && (
+                    <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">
+                      {formatTime(task.estimatedTime)}
+                    </span>
+                  )}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${task.timerRunning ? 'bg-green-100 text-green-700 animate-pulse' : 'bg-muted text-muted-foreground'}`}>
+                    {formatTime(totalTime)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Delete / Quick Info */}
+        <div className="flex items-center gap-2">
+          {task.isUseful !== null && !isExpanded && (
+            <span className="text-sm">{task.isUseful ? "👍" : "👎"}</span>
+          )}
+          <motion.button
+            layout="position"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task.id);
+            }}
+            className="p-2 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </motion.button>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center justify-between">
-        {/* Timer Controls */}
-        <div className="flex gap-2">
-          <AnimatePresence mode="wait">
-            {!task.timerRunning && task.spentTime === 0 && (
-              <motion.button
-                key="start"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onStartTimer(task)}
-                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-              >
-                ▶ Start
-              </motion.button>
-            )}
+      {/* Expanded Content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pt-6 border-t border-border/50 mt-4 space-y-6">
+              {/* Progress Bar (Visible if estimated) */}
+              {task.estimatedTime && task.estimatedTime > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    <span>Focus Progress</span>
+                    <span>{Math.round(progressPercentage)}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercentage}%` }}
+                      className={`h-full rounded-full ${isOverEstimate ? "bg-red-500" : "bg-primary"}`}
+                    />
+                  </div>
+                </div>
+              )}
 
-            {!task.timerRunning && task.spentTime > 0 && (
-              <motion.div
-                key="resume-reset"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex gap-2"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onStartTimer(task)}
-                  className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  ▶ Resume
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onStopTimer(task)}
-                  className="px-4 py-2 bg-muted text-muted-foreground text-sm font-medium rounded-lg hover:bg-muted/80 transition-colors"
-                >
-                  ⏹ Reset
-                </motion.button>
-              </motion.div>
-            )}
+              {/* Time Details Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-muted/50 rounded-2xl border border-border/50">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Estimation</label>
+                  {isEditingEstimate ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={estimateInput}
+                        onChange={(e) => setEstimateInput(e.target.value)}
+                        className="w-full px-2 py-1 bg-card border border-primary/20 rounded-lg text-sm font-bold focus:ring-1 focus:ring-primary outline-none"
+                        autoFocus
+                        onKeyPress={(e) => e.key === "Enter" && handleEstimateSave()}
+                      />
+                      <button onClick={handleEstimateSave} className="text-primary font-black">✓</button>
+                    </div>
+                  ) : (
+                    <div
+                      className="text-lg font-black text-foreground cursor-pointer hover:text-primary transition-colors flex items-center justify-between"
+                      onClick={() => {
+                        setEstimateInput(task.estimatedTime?.toString() || "");
+                        setIsEditingEstimate(true);
+                      }}
+                    >
+                      {task.estimatedTime ? formatTime(task.estimatedTime) : "—"}
+                      <span className="text-[10px] text-primary">Edit</span>
+                    </div>
+                  )}
+                </div>
 
-            {task.timerRunning && (
-              <motion.div
-                key="pause-stop"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex gap-2"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onPauseTimer(task)}
-                  className="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition-colors"
-                >
-                  ⏸ Pause
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onStopTimer(task)}
-                  className="px-4 py-2 bg-destructive text-destructive-foreground text-sm font-medium rounded-lg hover:bg-destructive/90 transition-colors"
-                >
-                  ⏹ Stop
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <div className="p-3 bg-muted/50 rounded-2xl border border-border/50">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Tracked Time</label>
+                  <div className={`text-lg font-black ${task.timerRunning ? "text-green-500" : "text-foreground"}`}>
+                    {formatTime(totalTime)}
+                  </div>
+                </div>
+              </div>
 
-        {/* Usefulness Controls */}
-        <div className="flex gap-2">
-          <AnimatePresence mode="wait">
-            {task.isUseful === null && (
-              <motion.div
-                key="usefulness-buttons"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex gap-2"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onUsefulnessChange(task, true)}
-                  className="px-3 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors dark:bg-green-900/20 dark:text-green-300 dark:hover:bg-green-900/30"
-                >
-                  👍
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onUsefulnessChange(task, false)}
-                  className="px-3 py-2 bg-orange-100 text-orange-700 text-sm font-medium rounded-lg hover:bg-orange-200 transition-colors dark:bg-orange-900/20 dark:text-orange-300 dark:hover:bg-orange-900/30"
-                >
-                  👎
-                </motion.button>
-              </motion.div>
-            )}
+              {/* Action Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex gap-2">
+                  <AnimatePresence mode="wait">
+                    {!task.timerRunning ? (
+                      <motion.button
+                        key="start"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => onStartTimer(task)}
+                        className="px-6 py-2.5 bg-primary text-white text-sm font-black rounded-xl shadow-lg shadow-primary/20"
+                      >
+                        ▶ {task.spentTime > 0 ? "Resume" : "Start Focus"}
+                      </motion.button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => onPauseTimer(task)}
+                          className="px-6 py-2.5 bg-yellow-500 text-white text-sm font-black rounded-xl shadow-lg shadow-yellow-500/20"
+                        >
+                          ⏸ Pause
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => onStopTimer(task)}
+                          className="px-6 py-2.5 bg-destructive text-white text-sm font-black rounded-xl shadow-lg shadow-destructive/20"
+                        >
+                          ⏹ Stop
+                        </motion.button>
+                      </div>
+                    )}
+                  </AnimatePresence>
 
-            {task.isUseful !== null && (
-              <motion.button
-                key="clear-usefulness"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onUsefulnessChange(task, null)}
-                className="px-3 py-2 bg-muted text-muted-foreground text-sm font-medium rounded-lg hover:bg-muted/80 transition-colors"
-              >
-                Clear
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
+                  {task.spentTime > 0 && !task.timerRunning && (
+                    <button
+                      onClick={() => onStopTimer(task)}
+                      className="px-4 py-2.5 bg-muted text-muted-foreground text-sm font-bold rounded-xl"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+
+                {/* Feedback Icons */}
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-2xl border border-border/50">
+                  <FeedbackBtn isActive={task.isUseful === true} onClick={() => onUsefulnessChange(task, task.isUseful === true ? null : true)}>👍</FeedbackBtn>
+                  <FeedbackBtn isActive={task.isUseful === false} onClick={() => onUsefulnessChange(task, task.isUseful === false ? null : false)}>👎</FeedbackBtn>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
+}
+
+function FeedbackBtn({ children, isActive, onClick }: { children: React.ReactNode; isActive: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`p-2 rounded-xl transition-all ${isActive ? "bg-card shadow-sm scale-110" : "opacity-40 hover:opacity-100 hover:bg-card/50 text-sm"}`}
+    >
+      {children}
+    </button>
+  );
+}
 }

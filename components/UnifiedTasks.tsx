@@ -20,6 +20,7 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
     const [sleepData, setSleepData] = useState<SleepInfo | null>(null);
     const [newTaskTitle, setNewTaskTitle] = useState("");
     const [loading, setLoading] = useState(true);
+    const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
     // Force re-render for timers
     const [, setTick] = useState(0);
@@ -27,6 +28,10 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
         const interval = setInterval(() => setTick(t => t + 1), 1000);
         return () => clearInterval(interval);
     }, []);
+
+    const toggleTaskExpansion = (taskId: string) => {
+        setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
+    };
 
     useEffect(() => {
         async function loadData() {
@@ -186,6 +191,8 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
                             <TaskCard
                                 key={task.id}
                                 task={task}
+                                isExpanded={expandedTaskId === task.id}
+                                onToggleExpand={() => toggleTaskExpansion(task.id)}
                                 onUpdate={handleUpdateTask}
                                 onDelete={handleDeleteTask}
                                 onStartTimer={() => {
