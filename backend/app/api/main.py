@@ -7,11 +7,13 @@ from app.api.sync import router as sync_router
 from app.api.analytics import router as analytics_router
 from app.api.calendar import router as calendar_router
 from app.api.actions import router as actions_router
+from app.api.ai_agent import router as ai_router
 
 api_router.include_router(sync_router, tags=["sync"])
 api_router.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
 api_router.include_router(calendar_router, tags=["calendar"])
 api_router.include_router(actions_router, tags=["ai-actions"])
+api_router.include_router(ai_router, prefix="/ai", tags=["ai-agent"])
 
 # from app.api import users, tasks, expenses, sleep, mood, journals
 

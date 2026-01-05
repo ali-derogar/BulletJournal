@@ -131,164 +131,17 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
     setIsLoading(true);
 
     try {
-      // Step 1: Detect user intent first
-      setStatusMessage('Detecting intent...');
-      const { detectIntent, isActionIntent } = await import('@/services/ai-intent');
-      const detectedIntent = await detectIntent(userMessage.content);
+      // Single Stage: Call the unified backend AI Agent
+      setStatusMessage('Consulting agent...');
+      const { callAgent } = await import('@/services/ai-intent');
+      const actionResult = await callAgent(userMessage.content);
 
-      console.log('[ChatWindow] Detected intent:', detectedIntent);
+      console.log('[ChatWindow] Agent result:', actionResult);
 
-      // Step 2: If it's an action intent, execute the action
-      if (isActionIntent(detectedIntent.intent)) {
-        setStatusMessage('Executing action...');
-        const {
-          createTaskAction,
-          createGoalAction,
-          createCalendarNoteAction,
-          listTasksAction,
-          updateTaskAction,
-          completeTaskAction
-        } = await import('@/services/ai-actions');
-
-        let actionResult;
-
-        try {
-          switch (detectedIntent.intent) {
-            case 'CREATE_TASK':
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await createTaskAction(detectedIntent.entities as never);
-              break;
-            case 'CREATE_GOAL':
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await createGoalAction(detectedIntent.entities as never);
-              break;
-            case 'CREATE_NOTE':
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await createCalendarNoteAction(detectedIntent.entities as never);
-              break;
-            case 'LIST_TASKS':
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              actionResult = await listTasksAction(detectedIntent.entities as never);
-              break;
-            case 'UPDATE_TASK':
-              actionResult = await updateTaskAction(detectedIntent.entities as never);
-              break;
-            case 'COMPLETE_TASK': {
-              const entities = detectedIntent.entities as Record<string, string | number | null | undefined>;
-              let taskId = entities.taskId as string | undefined;
-              const entityTitle = entities.title as string | undefined;
-
-              // If AI didn't find the ID but found a title, try to find the task in today's context
-              if (!taskId && entityTitle) {
-                const { getTasks } = await import('@/storage/task');
-                const today = new Date().toISOString().split('T')[0];
-                const todayTasks = await getTasks(today, userId);
-                const match = todayTasks.find(t =>
-                  t.title.toLowerCase().includes(entityTitle.toLowerCase()) ||
-                  entityTitle.toLowerCase().includes(t.title.toLowerCase())
-                );
-                if (match) taskId = match.id;
-              }
-
-              if (taskId) {
-                actionResult = await completeTaskAction(taskId);
-              } else {
-                actionResult = {
-                  success: false,
-                  message: entityTitle ? `Could not find a task named "${entityTitle}"` : "Could not identify which task to complete"
-                };
-              }
-              break;
-            }
-          }
-
-          // Display action result
-          if (actionResult) {
-            const actionMessage: ChatMessage = {
-              role: 'assistant',
-              content: actionResult.success
-                ? `✅ ${actionResult.message}`
-                : `❌ ${actionResult.message}`,
-            };
-
-            // Save to DB
-            if (currentSessionId) {
-              const dbActionMessage: AIMessage = {
-                id: generateId(),
-                sessionId: currentSessionId,
-                role: 'assistant',
-                content: actionMessage.content,
-                timestamp: new Date().toISOString(),
-              };
-              await saveAIMessage(dbActionMessage);
-            }
-
-            setMessages(prev => [...prev, actionMessage]);
-            setIsLoading(false);
-
-            // Auto-sync after action
-            if (actionResult.success) {
-              console.log('[ChatWindow] Action successful, triggering auto-sync...');
-              setStatusMessage('Syncing changes...');
-              try {
-                await performDownload(userId);
-                console.log('[ChatWindow] Auto-sync completed');
-              } catch (syncError) {
-                console.error('[ChatWindow] Auto-sync failed:', syncError);
-              }
-            }
-
-            return; // Don't continue to regular chat
-          }
-        } catch (actionError) {
-          console.error('[ChatWindow] Action execution error:', actionError);
-          // Fall through to regular chat if action fails
-        }
-      }
-
-      // Step 3: Regular chat flow (if not an action or action failed)
-      const { shouldLoadFullContext, gatherUserContext, generateSystemPrompt } = await import('@/services/ai-context');
-      const { sendChatMessage } = await import('@/services/ai');
-      const { detectLanguage, getLanguagePromptEnhancementFromHistory } = await import('@/utils/languageDetection');
-
-      // Detect language from user's message
-      detectLanguage(userMessage.content);
-      const languageInstruction = getLanguagePromptEnhancementFromHistory([...messages, userMessage]);
-
-      let systemPrompt = '';
-
-      if (shouldLoadFullContext()) {
-        setStatusMessage('Gathering context...');
-        setIsLoadingContext(true);
-        const context = await gatherUserContext(userId);
-        systemPrompt = generateSystemPrompt(context, languageInstruction);
-        setIsLoadingContext(false);
-      } else {
-        // Lightweight prompt for subsequent interactions with language detection
-        systemPrompt = `You are a personal productivity assistant for a Bullet Journal app.
-Keep responses concise (2-4 sentences). Be encouraging and specific.
-ALWAYS respond in the same language as the user's message.${languageInstruction}`;
-      }
-
-      const messagesToSend: ChatMessage[] = [
-        { role: 'system', content: systemPrompt },
-        ...messages,
-        userMessage,
-      ];
-
-      setStatusMessage('Generating response...');
-      const response = await sendChatMessage(messagesToSend);
-
-      if (response.error) {
-        const errorMessage: ChatMessage = {
+      if (actionResult.success) {
+        const agentMessage: ChatMessage = {
           role: 'assistant',
-          content: `Sorry, I encountered an error: ${response.error}. Please try again.`,
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      } else {
-        const assistantMessage: ChatMessage = {
-          role: 'assistant',
-          content: response.message,
+          content: actionResult.message,
         };
 
         // Save assistant message to DB
@@ -297,18 +150,35 @@ ALWAYS respond in the same language as the user's message.${languageInstruction}
             id: generateId(),
             sessionId: currentSessionId,
             role: 'assistant',
-            content: assistantMessage.content,
+            content: agentMessage.content,
             timestamp: new Date().toISOString(),
           };
           await saveAIMessage(dbAssistantMessage);
         }
 
-        setMessages(prev => [...prev, assistantMessage]);
+        setMessages(prev => [...prev, agentMessage]);
+
+        // Auto-sync after successful processing (in case an action was taken)
+        console.log('[ChatWindow] Agent success, triggering auto-sync...');
+        setStatusMessage('Syncing changes...');
+        try {
+          await performDownload(userId);
+          console.log('[ChatWindow] Auto-sync completed');
+        } catch (syncError) {
+          console.error('[ChatWindow] Auto-sync failed:', syncError);
+        }
+      } else {
+        const errorMessage: ChatMessage = {
+          role: 'assistant',
+          content: `❌ ${actionResult.message}`,
+        };
+        setMessages(prev => [...prev, errorMessage]);
       }
-    } catch {
+    } catch (error) {
+      console.error('[ChatWindow] Error in agent communication:', error);
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: 'Sorry, something went wrong. Please try again.',
+        content: 'Sorry, I encountered an error communicating with the agent. Please try again.',
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
