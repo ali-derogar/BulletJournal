@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import DailyInputs from "./DailyInputs";
-import TaskDashboard from "./TaskDashboard";
+import UnifiedTasks from "./UnifiedTasks";
 import ExpenseList from "./ExpenseList";
 import Reflection from "./Reflection";
 import { useUser } from "@/app/context/UserContext";
@@ -100,9 +100,9 @@ export default function DayView({ date }: DayViewProps) {
         </motion.div>
       )}
 
-      {/* Unified Task View - Always using Dashboard mode */}
+      {/* Unified Task View - Dashboard Header + Efficient List */}
       <motion.div variants={itemVariants}>
-        <TaskDashboard date={date} userId={userId} />
+        <UnifiedTasks date={date} userId={userId} />
       </motion.div>
 
       <motion.div variants={itemVariants}>
