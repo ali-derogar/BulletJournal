@@ -270,7 +270,7 @@ export default function Home() {
                 left: currentView === 'daily' ? '0%' :
                   currentView === 'analytics' ? '20%' :
                     currentView === 'goals' ? '40%' :
-                      currentView === 'ai' ? '60%' : 
+                      currentView === 'ai' ? '60%' :
                         (currentView === 'calendar' || currentView === 'chatroom') ? '80%' : '80%'
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -407,54 +407,62 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden"
+                    className="absolute bottom-full right-0 mb-3 w-56 bg-card/98 backdrop-blur-xl border border-primary/20 rounded-2xl shadow-2xl z-50 overflow-hidden ring-1 ring-black/5"
                   >
-                    <motion.button
-                      onClick={() => {
-                        setCurrentView('calendar');
-                        setShowMenuDropdown(false);
-                      }}
-                      whileHover={{ scale: 1.02, backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${currentView === 'calendar'
-                        ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary'
-                        : 'text-foreground hover:bg-muted/50'
-                        }`}
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-sm font-semibold">Calendar</span>
-                    </motion.button>
-                    {isAuthenticated && (
+                    <div className="p-1.5 flex flex-col gap-1">
                       <motion.button
                         onClick={() => {
-                          setCurrentView('chatroom');
+                          setCurrentDate(new Date().toISOString()); // Reset to today as a bonus feature
+                          setCurrentView('calendar');
                           setShowMenuDropdown(false);
                         }}
                         whileHover={{ scale: 1.02, backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
                         whileTap={{ scale: 0.98 }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all border-t border-border ${currentView === 'chatroom'
-                          ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary'
-                          : 'text-foreground hover:bg-muted/50'
+                        className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-left transition-all ${currentView === 'calendar'
+                          ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary font-bold'
+                          : 'text-foreground hover:bg-muted/80'
                           }`}
                       >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <span className="text-sm font-semibold">Chatroom</span>
+                        <div className={`p-2 rounded-lg ${currentView === 'calendar' ? 'bg-primary/20' : 'bg-muted'}`}>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <span className="text-sm font-semibold tracking-tight">Calendar</span>
                       </motion.button>
-                    )}
+
+                      {isAuthenticated && (
+                        <motion.button
+                          onClick={() => {
+                            setCurrentView('chatroom');
+                            setShowMenuDropdown(false);
+                          }}
+                          whileHover={{ scale: 1.02, backgroundColor: 'rgba(139, 92, 246, 0.1)' }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-left transition-all ${currentView === 'chatroom'
+                            ? 'bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary font-bold'
+                            : 'text-foreground hover:bg-muted/80'
+                            }`}
+                        >
+                          <div className={`p-2 rounded-lg ${currentView === 'chatroom' ? 'bg-primary/20' : 'bg-muted'}`}>
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-semibold tracking-tight">Chatroom</span>
+                        </motion.button>
+                      )}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
