@@ -12,7 +12,7 @@ export async function callAgent(message: string): Promise<ActionResponse> {
   const token = getStoredToken();
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/ai/chat`, {
+    const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

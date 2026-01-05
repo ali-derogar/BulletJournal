@@ -15,6 +15,10 @@ from app.db.session import get_db
 from app.models.task import Task
 from app.models.goal import Goal
 from app.models.calendar_note import CalendarNote
+from app.models.expense import Expense
+from app.models.mood import MoodInfo
+from app.models.sleep import SleepInfo
+from app.models.reflection import Reflection
 from app.models.user import User
 from app.core.config import settings
 
@@ -54,11 +58,11 @@ agent: Agent[AgentDependencies, str] = Agent(
     deps_type=AgentDependencies,
     system_prompt=(
         "You are a helpful and intelligent productivity assistant for the BulletJournal app. "
-        "Your goal is to help the user manage their tasks, goals, and calendar notes using natural language. "
+        "Your goal is to help the user manage their tasks, goals, calendar notes, expenses, mood, sleep, and reflections using natural language. "
         "You have access to tools to create, list, and update these items. "
         "When a user asks to do something, use the appropriate tool. "
         "Always be concise and encouraging. "
-        "Important: Date formats are strict. Tasks use Gregorian (YYYY-MM-DD). Notes use Persian (YYYY-MM-DD). "
+        "Important: Date formats are strict. Tasks, expenses, mood, and sleep use Gregorian (YYYY-MM-DD). Notes use Persian (YYYY-MM-DD). "
         "Today's date is provided in context."
     )
 )
@@ -184,6 +188,143 @@ async def list_calendar_notes(ctx: RunContext[AgentDependencies], date: Optional
         CalendarNote.date == target_date
     ).all()
     return [{"date": n.date, "note": n.note} for n in notes]
+
+
+@agent.tool
+async def record_expense(ctx: RunContext[AgentDependencies], title: str, amount: float, date: Optional[str] = None) -> str:
+    """Record a new expense."""
+    target_date = date or ctx.deps.current_date
+    expense_id = str(uuid.uuid4())
+    new_expense = Expense(
+        id=expense_id,
+        userId=ctx.deps.user.id,
+        date=target_date,
+        title=title,
+        amount=amount,
+        created_at=datetime.now(timezone.utc),
+        updatedAt=datetime.now(timezone.utc)
+    )
+    ctx.deps.db.add(new_expense)
+    ctx.deps.db.commit()
+    return f"Recorded expense: '{title}' ({amount}) for {target_date}."
+
+@agent.tool
+async def list_expenses(ctx: RunContext[AgentDependencies], date: Optional[str] = None) -> List[dict]:
+    """List expenses for a specific date."""
+    target_date = date or ctx.deps.current_date
+    expenses = ctx.deps.db.query(Expense).filter(
+        Expense.userId == ctx.deps.user.id,
+        Expense.date == target_date
+    ).all()
+    return [{"title": e.title, "amount": e.amount} for e in expenses]
+
+@agent.tool
+async def record_mood(
+    ctx: RunContext[AgentDependencies], 
+    rating: float, 
+    day_score: float, 
+    notes: str = "", 
+    water_intake: int = 0, 
+    study_minutes: int = 0,
+    date: Optional[str] = None
+) -> str:
+    """Record user's mood and daily metrics."""
+    target_date = date or ctx.deps.current_date
+    mood_id = str(uuid.uuid4())
+    new_mood = MoodInfo(
+        id=mood_id,
+        userId=ctx.deps.user.id,
+        date=target_date,
+        rating=rating,
+        day_score=day_score,
+        notes=notes,
+        water_intake=water_intake,
+        study_minutes=study_minutes,
+        created_at=datetime.now(timezone.utc),
+        updatedAt=datetime.now(timezone.utc)
+    )
+    ctx.deps.db.add(new_mood)
+    ctx.deps.db.commit()
+    return f"Mood recorded for {target_date}."
+
+@agent.tool
+async def record_sleep(
+    ctx: RunContext[AgentDependencies], 
+    hours_slept: float, 
+    quality: int, 
+    sleep_time: Optional[str] = None, 
+    wake_time: Optional[str] = None,
+    date: Optional[str] = None
+) -> str:
+    """Record user's sleep information."""
+    target_date = date or ctx.deps.current_date
+    sleep_id = str(uuid.uuid4())
+    new_sleep = SleepInfo(
+        id=sleep_id,
+        userId=ctx.deps.user.id,
+        date=target_date,
+        hours_slept=hours_slept,
+        quality=quality,
+        sleep_time=sleep_time,
+        wake_time=wake_time,
+        created_at=datetime.now(timezone.utc),
+        updatedAt=datetime.now(timezone.utc)
+    )
+    ctx.deps.db.add(new_sleep)
+    ctx.deps.db.commit()
+    return f"Sleep info recorded for {target_date}."
+
+@agent.tool
+async def record_reflection(
+    ctx: RunContext[AgentDependencies], 
+    notes: str, 
+    water_intake: int = 0, 
+    study_minutes: int = 0,
+    date: Optional[str] = None
+) -> str:
+    """Record user's daily reflection."""
+    target_date = date or ctx.deps.current_date
+    reflection_id = str(uuid.uuid4())
+    new_reflection = Reflection(
+        id=reflection_id,
+        userId=ctx.deps.user.id,
+        date=target_date,
+        notes=notes,
+        water_intake=water_intake,
+        study_minutes=study_minutes,
+        created_at=datetime.now(timezone.utc),
+        updatedAt=datetime.now(timezone.utc)
+    )
+    ctx.deps.db.add(new_reflection)
+    ctx.deps.db.commit()
+    return f"Reflection recorded for {target_date}."
+
+@agent.tool
+async def update_task(
+    ctx: RunContext[AgentDependencies], 
+    task_id: str, 
+    status: Optional[str] = None, 
+    title: Optional[str] = None
+) -> str:
+    """Update an existing task's status or title."""
+    task = ctx.deps.db.query(Task).filter(Task.id == task_id, Task.userId == ctx.deps.user.id).first()
+    if not task:
+        return f"Task with id {task_id} not found."
+    
+    updates = []
+    if status is not None:
+        task.status = status
+        updates.append(f"status to '{status}'")
+    if title is not None:
+        task.title = title
+        updates.append(f"title to '{title}'")
+    
+    if not updates:
+        return "No updates provided."
+    
+    task.updatedAt = datetime.now(timezone.utc)
+    ctx.deps.db.commit()
+    return f"Updated task {task.title}: " + ", ".join(updates)
 
 
 @router.post("/chat")
