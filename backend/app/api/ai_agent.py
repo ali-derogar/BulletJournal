@@ -369,9 +369,10 @@ async def chat_with_agent(
                 try:
                     logger.info(f"Attempting AI chat with Key #{api_key_index+1} and Model '{model_name}'")
                     # Use explicit client injection
+                    provider = OpenAIProvider(openai_client=client)
                     current_model = OpenAIChatModel(
                         model_name,
-                        openai_client=client
+                        provider=provider
                     )
                     
                     # Run the agent with this model override
