@@ -87,6 +87,12 @@ update_env_var "NEXT_PUBLIC_OPENROUTER_API_KEYS" "$NEXT_PUBLIC_OPENROUTER_API_KE
 update_env_var "NEXT_PUBLIC_DEFAULT_AI_PROVIDER" "$NEXT_PUBLIC_DEFAULT_AI_PROVIDER"
 update_env_var "NEXT_PUBLIC_DEFAULT_AI_MODEL" "$NEXT_PUBLIC_DEFAULT_AI_MODEL"
 
+# Set backend OPENROUTER_API_KEY from the first available key in the public list
+if [ -n "$NEXT_PUBLIC_OPENROUTER_API_KEYS" ]; then
+    FIRST_KEY=$(echo "$NEXT_PUBLIC_OPENROUTER_API_KEYS" | cut -d',' -f1)
+    update_env_var "OPENROUTER_API_KEY" "$FIRST_KEY"
+fi
+
 print_success "Environment configured with API URL: http://$SERVER_IP:8000 and AI settings"
 
 # Stop existing containers
@@ -95,6 +101,9 @@ docker compose down
 print_success "Containers stopped"
 
 # Build and start containers
+print_info "Cleaning docker build cache..."
+docker builder prune -f
+
 print_info "Building and starting containers..."
 docker compose up -d --build
 
