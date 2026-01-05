@@ -37,6 +37,34 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
         except:
             client_updated_at = None
 
+    # Map frontend field names to database field names
+    db_task_data = task_data.copy()
+    task_field_mappings = {
+        'createdAt': 'created_at',
+        'timerRunning': 'timer_running',
+        'timerStart': 'timer_start',
+        'estimatedTime': 'estimated_time',
+        'isUseful': 'is_useful',
+        'accumulatedTime': 'accumulated_time',
+    }
+    for frontend_field, db_field in task_field_mappings.items():
+        if frontend_field in db_task_data:
+            db_task_data[db_field] = db_task_data.pop(frontend_field)
+
+    # Convert string datetime fields to datetime objects
+    datetime_fields = ['created_at', 'updatedAt', 'deletedAt', 'timer_start']
+    for field in datetime_fields:
+        if field in db_task_data and isinstance(db_task_data[field], str):
+            try:
+                from dateutil import parser
+                parsed_dt = parser.parse(db_task_data[field])
+                # Ensure timezone-aware (add UTC if naive)
+                if parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                db_task_data[field] = parsed_dt
+            except:
+                db_task_data[field] = None
+
     # Check if task exists AND belongs to the current user
     existing_task = db.query(Task).filter(Task.id == task_id, Task.userId == user_id).first()
 
@@ -49,8 +77,8 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
                 server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
             if client_updated_at > server_updated_at:
                 # Client has newer version, update
-                for key, value in task_data.items():
-                    if hasattr(existing_task, key) and key != "id":
+                for key, value in db_task_data.items():
+                    if hasattr(existing_task, key) and key != "id" and key != "userId":
                         setattr(existing_task, key, value)
                 existing_task.updatedAt = datetime.now(timezone.utc)
                 db.commit()
@@ -60,8 +88,8 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
                 return True  # Conflict resolved by keeping server version
         else:
             # No updatedAt comparison possible, update with client data
-            for key, value in task_data.items():
-                if hasattr(existing_task, key) and key != "id":
+            for key, value in db_task_data.items():
+                if hasattr(existing_task, key) and key != "id" and key != "userId":
                     setattr(existing_task, key, value)
             existing_task.updatedAt = datetime.now(timezone.utc)
             db.commit()
@@ -77,38 +105,6 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
             )
 
         # Create new task
-        # Map frontend field names to database field names
-        db_task_data = task_data.copy()
-        field_mappings = {
-            'createdAt': 'created_at',
-            'updatedAt': 'updatedAt',  # Keep as is for now
-            'deletedAt': 'deletedAt',  # Keep as is for now
-            'spentTime': 'spentTime',  # Keep as is
-            'timeLogs': 'timeLogs',  # Keep as is
-            'accumulatedTime': 'accumulated_time',
-            'timerRunning': 'timer_running',
-            'timerStart': 'timer_start',
-            'estimatedTime': 'estimated_time',
-            'isUseful': 'is_useful',
-        }
-        for frontend_field, db_field in field_mappings.items():
-            if frontend_field in db_task_data:
-                db_task_data[db_field] = db_task_data.pop(frontend_field)
-
-        # Convert string datetime fields to datetime objects
-        datetime_fields = ['created_at', 'updatedAt', 'deletedAt', 'timer_start']
-        for field in datetime_fields:
-            if field in db_task_data and isinstance(db_task_data[field], str):
-                try:
-                    from dateutil import parser
-                    parsed_dt = parser.parse(db_task_data[field])
-                    # Ensure timezone-aware (add UTC if naive)
-                    if parsed_dt.tzinfo is None:
-                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
-                    db_task_data[field] = parsed_dt
-                except:
-                    db_task_data[field] = None
-
         db_task_data["userId"] = user_id
         new_task = Task(**db_task_data)
         new_task.updatedAt = datetime.now(timezone.utc)
@@ -133,6 +129,29 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
         except:
             client_updated_at = None
 
+    # Map frontend field names to database field names
+    db_expense_data = expense_data.copy()
+    expense_mappings = {
+        'createdAt': 'created_at',
+    }
+    for frontend_field, db_field in expense_mappings.items():
+        if frontend_field in db_expense_data:
+            db_expense_data[db_field] = db_expense_data.pop(frontend_field)
+
+    # Convert string datetime fields to datetime objects
+    datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
+    for field in datetime_fields:
+        if field in db_expense_data and isinstance(db_expense_data[field], str):
+            try:
+                from dateutil import parser
+                parsed_dt = parser.parse(db_expense_data[field])
+                # Ensure timezone-aware (add UTC if naive)
+                if parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                db_expense_data[field] = parsed_dt
+            except:
+                db_expense_data[field] = None
+
     existing_expense = db.query(Expense).filter(Expense.id == expense_id, Expense.userId == user_id).first()
 
     if existing_expense:
@@ -142,8 +161,8 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
             if server_updated_at.tzinfo is None:
                 server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
             if client_updated_at > server_updated_at:
-                for key, value in expense_data.items():
-                    if hasattr(existing_expense, key) and key != "id":
+                for key, value in db_expense_data.items():
+                    if hasattr(existing_expense, key) and key != "id" and key != "userId":
                         setattr(existing_expense, key, value)
                 existing_expense.updatedAt = datetime.now(timezone.utc)
                 db.commit()
@@ -151,8 +170,8 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
             else:
                 return True
         else:
-            for key, value in expense_data.items():
-                if hasattr(existing_expense, key) and key != "id":
+            for key, value in db_expense_data.items():
+                if hasattr(existing_expense, key) and key != "id" and key != "userId":
                     setattr(existing_expense, key, value)
             existing_expense.updatedAt = datetime.now(timezone.utc)
             db.commit()
@@ -166,31 +185,6 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
                 status_code=403,
                 detail=f"Cannot modify expense {expense_id} belonging to another user"
             )
-
-        # Map frontend field names to database field names
-        db_expense_data = expense_data.copy()
-        expense_mappings = {
-            'createdAt': 'created_at',
-            'updatedAt': 'updatedAt',
-            'deletedAt': 'deletedAt',
-        }
-        for frontend_field, db_field in expense_mappings.items():
-            if frontend_field in db_expense_data:
-                db_expense_data[db_field] = db_expense_data.pop(frontend_field)
-
-        # Convert string datetime fields to datetime objects
-        datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
-        for field in datetime_fields:
-            if field in db_expense_data and isinstance(db_expense_data[field], str):
-                try:
-                    from dateutil import parser
-                    parsed_dt = parser.parse(db_expense_data[field])
-                    # Ensure timezone-aware (add UTC if naive)
-                    if parsed_dt.tzinfo is None:
-                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
-                    db_expense_data[field] = parsed_dt
-                except:
-                    db_expense_data[field] = None
 
         db_expense_data["userId"] = user_id
         new_expense = Expense(**db_expense_data)
@@ -225,6 +219,20 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
     if "createdAt" in db_journal_data:
         db_journal_data["created_at"] = db_journal_data.pop("createdAt")
 
+    # Convert string datetime fields to datetime objects
+    datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
+    for field in datetime_fields:
+        if field in db_journal_data and isinstance(db_journal_data[field], str):
+            try:
+                from dateutil import parser
+                parsed_dt = parser.parse(db_journal_data[field])
+                # Ensure timezone-aware (add UTC if naive)
+                if parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                db_journal_data[field] = parsed_dt
+            except:
+                db_journal_data[field] = None
+
     existing_journal = db.query(DailyJournal).filter(DailyJournal.id == journal_id, DailyJournal.userId == user_id).first()
 
     if existing_journal:
@@ -235,7 +243,7 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
                 server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
             if client_updated_at > server_updated_at:
                 for key, value in db_journal_data.items():
-                    if hasattr(existing_journal, key) and key != "id":
+                    if hasattr(existing_journal, key) and key != "id" and key != "userId":
                         setattr(existing_journal, key, value)
                 existing_journal.updatedAt = datetime.now(timezone.utc)
                 db.commit()
@@ -244,7 +252,7 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
                 return True
         else:
             for key, value in db_journal_data.items():
-                if hasattr(existing_journal, key) and key != "id":
+                if hasattr(existing_journal, key) and key != "id" and key != "userId":
                     setattr(existing_journal, key, value)
             existing_journal.updatedAt = datetime.now(timezone.utc)
             db.commit()
@@ -258,20 +266,6 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
                 status_code=403,
                 detail=f"Cannot modify journal {journal_id} belonging to another user"
             )
-
-        # Convert string datetime fields to datetime objects
-        datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
-        for field in datetime_fields:
-            if field in db_journal_data and isinstance(db_journal_data[field], str):
-                try:
-                    from dateutil import parser
-                    parsed_dt = parser.parse(db_journal_data[field])
-                    # Ensure timezone-aware (add UTC if naive)
-                    if parsed_dt.tzinfo is None:
-                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
-                    db_journal_data[field] = parsed_dt
-                except:
-                    db_journal_data[field] = None
 
         db_journal_data["userId"] = user_id
         new_journal = DailyJournal(**db_journal_data)
@@ -380,6 +374,21 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
         except:
             client_updated_at = None
 
+    # Convert string datetime fields to datetime objects
+    db_goal_data = goal_data.copy()
+    datetime_fields = ['createdAt', 'updatedAt', 'completedAt']
+    for field in datetime_fields:
+        if field in db_goal_data and isinstance(db_goal_data[field], str):
+            try:
+                from dateutil import parser
+                parsed_dt = parser.parse(db_goal_data[field])
+                # Ensure timezone-aware (add UTC if naive)
+                if parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                db_goal_data[field] = parsed_dt
+            except:
+                db_goal_data[field] = None
+
     existing_goal = db.query(Goal).filter(Goal.id == goal_id, Goal.userId == user_id).first()
 
     if existing_goal:
@@ -389,8 +398,8 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
             if server_updated_at.tzinfo is None:
                 server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
             if client_updated_at > server_updated_at:
-                for key, value in goal_data.items():
-                    if hasattr(existing_goal, key) and key != "id":
+                for key, value in db_goal_data.items():
+                    if hasattr(existing_goal, key) and key != "id" and key != "userId":
                         setattr(existing_goal, key, value)
                 existing_goal.updatedAt = datetime.now(timezone.utc)
                 db.commit()
@@ -398,8 +407,8 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
             else:
                 return True
         else:
-            for key, value in goal_data.items():
-                if hasattr(existing_goal, key) and key != "id":
+            for key, value in db_goal_data.items():
+                if hasattr(existing_goal, key) and key != "id" and key != "userId":
                     setattr(existing_goal, key, value)
             existing_goal.updatedAt = datetime.now(timezone.utc)
             db.commit()
@@ -412,21 +421,6 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
                 status_code=403,
                 detail=f"Cannot modify goal {goal_id} belonging to another user"
             )
-
-        # Convert string datetime fields to datetime objects
-        db_goal_data = goal_data.copy()
-        datetime_fields = ['createdAt', 'updatedAt', 'completedAt']
-        for field in datetime_fields:
-            if field in db_goal_data and isinstance(db_goal_data[field], str):
-                try:
-                    from dateutil import parser
-                    parsed_dt = parser.parse(db_goal_data[field])
-                    # Ensure timezone-aware (add UTC if naive)
-                    if parsed_dt.tzinfo is None:
-                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
-                    db_goal_data[field] = parsed_dt
-                except:
-                    db_goal_data[field] = None
 
         db_goal_data["userId"] = user_id
         new_goal = Goal(**db_goal_data)
@@ -452,6 +446,21 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
         except:
             client_updated_at = None
 
+    # Convert string datetime fields to datetime objects
+    db_note_data = note_data.copy()
+    datetime_fields = ['createdAt', 'updatedAt']
+    for field in datetime_fields:
+        if field in db_note_data and isinstance(db_note_data[field], str):
+            try:
+                from dateutil import parser
+                parsed_dt = parser.parse(db_note_data[field])
+                # Ensure timezone-aware (add UTC if naive)
+                if parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                db_note_data[field] = parsed_dt
+            except:
+                db_note_data[field] = None
+
     existing_note = db.query(CalendarNote).filter(CalendarNote.id == note_id, CalendarNote.userId == user_id).first()
 
     if existing_note:
@@ -461,8 +470,8 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
             if server_updated_at.tzinfo is None:
                 server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
             if client_updated_at > server_updated_at:
-                for key, value in note_data.items():
-                    if hasattr(existing_note, key) and key != "id":
+                for key, value in db_note_data.items():
+                    if hasattr(existing_note, key) and key != "id" and key != "userId":
                         setattr(existing_note, key, value)
                 existing_note.updatedAt = datetime.now(timezone.utc)
                 db.commit()
@@ -470,8 +479,8 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
             else:
                 return True
         else:
-            for key, value in note_data.items():
-                if hasattr(existing_note, key) and key != "id":
+            for key, value in db_note_data.items():
+                if hasattr(existing_note, key) and key != "id" and key != "userId":
                     setattr(existing_note, key, value)
             existing_note.updatedAt = datetime.now(timezone.utc)
             db.commit()
@@ -484,21 +493,6 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
                 status_code=403,
                 detail=f"Cannot modify calendar note {note_id} belonging to another user"
             )
-
-        # Convert string datetime fields to datetime objects
-        db_note_data = note_data.copy()
-        datetime_fields = ['createdAt', 'updatedAt']
-        for field in datetime_fields:
-            if field in db_note_data and isinstance(db_note_data[field], str):
-                try:
-                    from dateutil import parser
-                    parsed_dt = parser.parse(db_note_data[field])
-                    # Ensure timezone-aware (add UTC if naive)
-                    if parsed_dt.tzinfo is None:
-                        parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
-                    db_note_data[field] = parsed_dt
-                except:
-                    db_note_data[field] = None
 
         db_note_data["userId"] = user_id
         new_note = CalendarNote(**db_note_data)
