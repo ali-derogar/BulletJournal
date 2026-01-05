@@ -1,5 +1,6 @@
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIModel
+from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal
 from sqlalchemy.orm import Session
@@ -25,11 +26,15 @@ class AgentDependencies:
         self.current_date = current_date
 
 # Configure OpenRouter model
-# If api_key is None, it will look for OPENAI_API_KEY env var
-model = OpenAIModel(
-    'google/gemma-2-9b-it:free',
+# Use a custom AsyncOpenAI client for the base_url
+client = AsyncOpenAI(
     base_url='https://openrouter.ai/api/v1',
     api_key=settings.OPENROUTER_API_KEY
+)
+
+model = OpenAIModel(
+    'google/gemma-3-27b-it:free',
+    openai_client=client
 )
 
 # Define the Agent
