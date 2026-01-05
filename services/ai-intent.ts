@@ -1,5 +1,5 @@
 import { ActionResponse } from './ai-actions';
-import { getStoredToken } from './auth';
+import { getToken } from './auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -9,7 +9,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export async function callAgent(message: string): Promise<ActionResponse> {
   const today = new Date();
   const currentDateStr = today.toISOString().split('T')[0];
-  const token = getStoredToken();
+  const token = getToken();
+
+  if (!token) {
+    console.error('No auth token found. User must be logged in.');
+    return {
+      success: false,
+      message: 'لطفاً ابتدا وارد حساب کاربری خود شوید.',
+    };
+  }
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {

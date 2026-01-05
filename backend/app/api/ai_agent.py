@@ -327,6 +327,14 @@ async def update_task(
     return f"Updated task {task.title}: " + ", ".join(updates)
 
 
+# Models to try in order of preference
+MODELS_TO_TRY = [
+    'google/gemma-3-27b-it:free',
+    'google/gemma-2-9b-it:free',
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'mistralai/mistral-7b-instruct:free'
+]
+
 @router.post("/chat")
 async def chat_with_agent(
     request: AIChatRequest,
@@ -344,39 +352,55 @@ async def chat_with_agent(
 
     last_error = None
     # Try each key in sequence
-    for api_key in settings.NEXT_PUBLIC_OPENROUTER_API_KEYS:
-        try:
-            # Create a localized provider and model for this attempt
-            current_provider = OpenAIProvider(
-                api_key=api_key,
-                base_url='https://openrouter.ai/api/v1'
-            )
-            current_model = OpenAIModel(
-                'google/gemma-3-27b-it:free',
-                provider=current_provider
-            )
-            
-            # Run the agent with this model override
-            result = await agent.run(request.message, deps=deps, model=current_model)
-            return {
-                "success": True,
-                "message": result.output,
-                "data": {}
+    for api_key_index, api_key in enumerate(settings.NEXT_PUBLIC_OPENROUTER_API_KEYS):
+        # Create a localized provider for this key with OpenRouter headers
+        current_provider = OpenAIProvider(
+            api_key=api_key,
+            base_url='https://openrouter.ai/api/v1',
+            http_client_settings={
+                "headers": {
+                    "HTTP-Referer": "https://bulletjournal.local",
+                    "X-Title": "BulletJournal AI"
+                }
             }
-        except Exception as e:
-            last_error = e
-            error_str = str(e).lower()
-            # If it's a rate limit or quota error, try the next key
-            if any(indicator in error_str for indicator in ["429", "rate limit", "insufficient_quota", "too many requests"]):
-                logger.warning(f"AI Rate limit hit for a token. Trying next one. Error: {str(e)}")
-                continue
-            else:
-                # For other errors, we might still want to try another key just in case
-                logger.error(f"AI Agent error with token: {str(e)}. Trying next token if available.")
+        )
+
+        # Try each model in sequence for this key
+        for model_name in MODELS_TO_TRY:
+            try:
+                logger.info(f"Attempting AI chat with Key #{api_key_index+1} and Model '{model_name}'")
+                current_model = OpenAIModel(
+                    model_name,
+                    provider=current_provider
+                )
+                
+                # Run the agent with this model override
+                result = await agent.run(request.message, deps=deps, model=current_model)
+                return {
+                    "success": True,
+                    "message": result.output,
+                    "data": {}
+                }
+            except Exception as e:
+                last_error = e
+                error_str = str(e).lower()
+                
+                # Case 1: Rate limit or Quota issue (Key specific)
+                if any(indicator in error_str for indicator in ["429", "rate limit", "insufficient_quota", "too many requests"]):
+                    logger.warning(f"Key #{api_key_index+1} Rate limited. Switching to next key. Error: {str(e)}")
+                    break # Break model loop to try NEXT KEY
+                
+                # Case 2: Model not found or Policy issue (Model specific)
+                if "404" in error_str or "not found" in error_str or "policy" in error_str:
+                    logger.warning(f"Model '{model_name}' failed with 404/Policy for Key #{api_key_index+1}. Trying next model. Error: {str(e)}")
+                    continue # Continue to NEXT MODEL with same key
+                
+                # Case 3: Other errors (Context length, server error)
+                logger.error(f"Error with Key #{api_key_index+1} and Model '{model_name}': {str(e)}. Trying next model/key.")
                 continue
                 
-    # If we reached here, it means all keys failed
-    logger.error(f"All AI tokens exhausted or failed. Last error: {str(last_error)}")
+    # If we reached here, it means all combinations failed
+    logger.error(f"All AI tokens/models exhausted. Last error: {str(last_error)}")
     return {
         "success": False,
         "message": f"متأسفانه در حال حاضر تمام ظرفیت‌های هوش مصنوعی تکمیل شده است. لطفاً دقایقی دیگر دوباره تلاش کنید. (خطا: {str(last_error)})",
