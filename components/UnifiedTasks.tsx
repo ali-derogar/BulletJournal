@@ -217,6 +217,19 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
                                 onStatusChange={(t, status) => handleUpdateTask({ ...t, status })}
                                 onUsefulnessChange={(t, isUseful) => handleUpdateTask({ ...t, isUseful })}
                                 onEstimateChange={(t, estimate) => handleUpdateTask({ ...t, estimatedTime: estimate })}
+                                onManualTimeEntry={(t, minutes) => {
+                                    const diff = minutes - t.spentTime;
+                                    handleUpdateTask({
+                                        ...t,
+                                        spentTime: minutes,
+                                        timeLogs: [...(t.timeLogs || []), {
+                                            id: `manual-${Date.now()}`,
+                                            type: 'manual' as const,
+                                            minutes: diff,
+                                            createdAt: new Date().toISOString()
+                                        }]
+                                    });
+                                }}
                             />
                         ))}
                     </AnimatePresence>

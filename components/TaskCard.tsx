@@ -14,6 +14,7 @@ interface TaskCardProps {
   onStatusChange: (task: Task, status: TaskStatus) => void;
   onUsefulnessChange: (task: Task, isUseful: boolean | null) => void;
   onEstimateChange: (task: Task, estimate: number | null) => void;
+  onManualTimeEntry: (task: Task, minutes: number) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
 }
@@ -27,16 +28,22 @@ export default function TaskCard({
   onStatusChange,
   onUsefulnessChange,
   onEstimateChange,
+  onManualTimeEntry,
   isExpanded = false,
   onToggleExpand,
 }: TaskCardProps) {
   const [isEditingEstimate, setIsEditingEstimate] = useState(false);
+  const [isEditingActual, setIsEditingActual] = useState(false);
   const [estimateInput, setEstimateInput] = useState("");
+  const [actualInput, setActualInput] = useState("");
   const [currentTime, setCurrentTime] = useState(Date.now());
 
   // Update current time for timer calculations
   useEffect(() => {
-    if (!task.timerRunning) return;
+    if (!task.timerRunning) {
+      setCurrentTime(Date.now()); // Ensure consistent time when stopped
+      return;
+    }
 
     const interval = setInterval(() => {
       setCurrentTime(Date.now());
@@ -45,10 +52,12 @@ export default function TaskCard({
     return () => clearInterval(interval);
   }, [task.timerRunning]);
 
-  // Calculate progress metrics
-  const totalTime = task.spentTime + (task.timerRunning && task.timerStart
-    ? (currentTime - new Date(task.timerStart).getTime()) / 1000 / 60
+  // Calculate total minutes including running timer
+  const totalMinutes = task.spentTime + (task.timerRunning && task.timerStart
+    ? (currentTime - new Date(task.timerStart).getTime()) / 60000
     : 0);
+
+  const totalTime = Math.max(0, totalMinutes);
 
   const progressPercentage = task.estimatedTime && task.estimatedTime > 0
     ? Math.min((totalTime / task.estimatedTime) * 100, 100)
@@ -56,11 +65,19 @@ export default function TaskCard({
 
   const isOverEstimate = task.estimatedTime && totalTime > task.estimatedTime;
 
-  // Format time helper
-  const formatTime = (minutes: number): string => {
-    if (minutes < 1) return "0m";
-    const hours = Math.floor(minutes / 60);
-    const mins = Math.floor(minutes % 60);
+  // Format time helper (HH:MM:SS format when running)
+  const formatTime = (minutes: number, showSeconds = false): string => {
+    if (minutes <= 0) return showSeconds ? "00:00" : "0m";
+    const totalSeconds = Math.floor(minutes * 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    if (showSeconds) {
+      if (hours > 0) return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
     if (hours > 0) return `${hours}h ${mins}m`;
     return `${mins}m`;
   };
@@ -76,6 +93,19 @@ export default function TaskCard({
     onEstimateChange(task, minutes);
     setIsEditingEstimate(false);
     setEstimateInput("");
+  };
+
+  // Handle actual time save
+  const handleActualSave = () => {
+    const minutes = parseFloat(actualInput);
+    if (isNaN(minutes) || minutes < 0) {
+      setIsEditingActual(false);
+      setActualInput("");
+      return;
+    }
+    onManualTimeEntry(task, minutes);
+    setIsEditingActual(false);
+    setActualInput("");
   };
 
   return (
@@ -249,9 +279,32 @@ export default function TaskCard({
 
                 <div className="p-3 bg-muted/50 rounded-2xl border border-border/50">
                   <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Tracked Time</label>
-                  <div className={`text-lg font-black ${task.timerRunning ? "text-green-500" : "text-foreground"}`}>
-                    {formatTime(totalTime)}
-                  </div>
+                  {isEditingActual ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={actualInput}
+                        onChange={(e) => setActualInput(e.target.value)}
+                        className="w-full px-2 py-1 bg-card border border-primary/20 rounded-lg text-sm font-bold focus:ring-1 focus:ring-primary outline-none"
+                        autoFocus
+                        onKeyPress={(e) => e.key === "Enter" && handleActualSave()}
+                      />
+                      <button onClick={handleActualSave} className="text-primary font-black">✓</button>
+                    </div>
+                  ) : (
+                    <div
+                      className="text-lg font-black text-foreground cursor-pointer hover:text-primary transition-colors flex items-center justify-between"
+                      onClick={() => {
+                        setActualInput(totalTime.toFixed(1));
+                        setIsEditingActual(true);
+                      }}
+                    >
+                      <div className={task.timerRunning ? "text-green-500" : "text-foreground"}>
+                        {formatTime(totalTime, task.timerRunning)}
+                      </div>
+                      <span className="text-[10px] text-primary">Add</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
