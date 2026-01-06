@@ -370,13 +370,13 @@ async def chat_with_agent(
     # Format dynamic system prompt
     formatted_prompt = SYSTEM_PROMPT.format(
         current_date=request.currentDate,
-        user_name=db_user.name or "Unknown",
-        general_goal=db_user.general_goal or "Not set",
-        mbti_type=db_user.mbti_type or "Not set",
-        income_level=db_user.income_level or "Not set",
-        job_title=db_user.job_title or "Not set",
-        skills=db_user.skills or "Not set",
-        education_level=db_user.education_level or "Not set"
+        user_name=current_user.name or "Unknown",
+        general_goal=current_user.general_goal or "Not set",
+        mbti_type=current_user.mbti_type or "Not set",
+        income_level=current_user.income_level or "Not set",
+        job_title=current_user.job_title or "Not set",
+        skills=current_user.skills or "Not set",
+        education_level=current_user.education_level or "Not set"
     )
 
     # Delegate execution to the robust AI Service
