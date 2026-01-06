@@ -18,9 +18,8 @@ class AIOperationService:
     # Models to try in order of preference
     # Using free models as requested/configured in original code
     MODELS_TO_TRY = [
-        'google/gemma-3-27b-it:free',
-        'google/gemma-2-9b-it:free',
-        'meta-llama/llama-3.1-8b-instruct:free',
+        'google/gemini-2.0-flash-exp:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
         'mistralai/mistral-7b-instruct:free'
     ]
 
@@ -67,7 +66,7 @@ class AIOperationService:
                     
                     # Execute
                     result = await agent.run(message, deps=deps, model=model)
-                    return result.data
+                    return result.output
 
                 except Exception as e:
                     error_str = str(e).lower()
