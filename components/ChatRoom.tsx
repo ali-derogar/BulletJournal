@@ -44,15 +44,28 @@ const formatTime = (timestamp: number) => {
 
 const getUserInitial = (name: string) => name ? name.charAt(0).toUpperCase() : 'U';
 
+const LEVELS = ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond"];
+
+const LEVEL_CONFIG: Record<string, { color: string; icon: string; label: string }> = {
+  Iron: { color: "#94a3b8", icon: "⚙️", label: "آهن" },
+  Bronze: { color: "#cd7f32", icon: "🥉", label: "برنز" },
+  Silver: { color: "#c0c0c0", icon: "🥈", label: "نقره" },
+  Gold: { color: "#ffd700", icon: "🥇", label: "طلا" },
+  Platinum: { color: "#e5e4e2", icon: "💍", label: "پلاتین" },
+  Diamond: { color: "#b9f2ff", icon: "💎", label: "الماس" }
+};
+
 export default function ChatRoom() {
   const { user: authUser } = useAuth();
-  
+
   // State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<Map<string, User>>(new Map());
   const [inputText, setInputText] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentRoom, setCurrentRoom] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -75,12 +88,15 @@ export default function ChatRoom() {
     }
   }, [authUser]);
 
-  // Initialize messages and WebSocket
+  // Initialize messages and WebSocket when room changes
   useEffect(() => {
-    if (!authUser || messagesLoadedRef.current) return;
+    if (!authUser || !currentRoom) return;
+
+    setMessages([]); // Clear messages when switching rooms
+    messagesLoadedRef.current = false;
 
     // Load messages from API
-    getChatMessages(100)
+    getChatMessages(currentRoom, 100)
       .then(response => {
         const apiMessages: Message[] = response.messages.map(msg => ({
           id: msg.id,
@@ -95,12 +111,9 @@ export default function ChatRoom() {
         messagesLoadedRef.current = true;
 
         // Create WebSocket connection
-        const ws = createChatroomWebSocket((message: ApiChatMessage) => {
+        const ws = createChatroomWebSocket(currentRoom, (message: ApiChatMessage) => {
           setMessages(prev => {
-            // Check if message already exists
-            if (prev.some(m => m.id === message.id)) {
-              return prev;
-            }
+            if (prev.some(m => m.id === message.id)) return prev;
             const newMessage: Message = {
               id: message.id,
               userId: message.userId,
@@ -125,7 +138,7 @@ export default function ChatRoom() {
         websocketRef.current = null;
       }
     };
-  }, [authUser]);
+  }, [authUser, currentRoom]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -134,7 +147,7 @@ export default function ChatRoom() {
 
   // Handlers
   const handleSendMessage = async () => {
-    if (!inputText.trim() || !currentUser) return;
+    if (!inputText.trim() || !currentUser || !currentRoom) return;
 
     const messageText = inputText.trim();
     setInputText('');
@@ -144,10 +157,8 @@ export default function ChatRoom() {
     }
 
     try {
-      // Send message to API
-      const sentMessage = await sendChatMessage(messageText);
-      
-      // Add message to local state (WebSocket will also receive it, but this makes UI more responsive)
+      const sentMessage = await sendChatMessage(messageText, currentRoom);
+
       const newMessage: Message = {
         id: sentMessage.id,
         userId: sentMessage.userId,
@@ -157,19 +168,37 @@ export default function ChatRoom() {
         text: sentMessage.text,
         timestamp: sentMessage.timestamp
       };
-      
+
       setMessages(prev => {
-        // Check if message already exists (from WebSocket)
-        if (prev.some(m => m.id === newMessage.id)) {
-          return prev;
-        }
+        if (prev.some(m => m.id === newMessage.id)) return prev;
         return [...prev, newMessage];
       });
     } catch (error) {
       console.error('Error sending message:', error);
-      // Restore input text on error
       setInputText(messageText);
     }
+  };
+
+  const handleLevelClick = (targetLevel: string) => {
+    const userLevel = authUser?.level || "Iron";
+    const userIdx = LEVELS.indexOf(userLevel);
+    const targetIdx = LEVELS.indexOf(targetLevel);
+
+    if (userIdx < targetIdx) {
+      setErrorMsg(`باید سطح خودتو رشد بدی تا بتونی وارد چت‌روم ${LEVEL_CONFIG[targetLevel].label} بشی! 🌱`);
+      setTimeout(() => setErrorMsg(null), 3000);
+      return;
+    }
+
+    if (userIdx > targetIdx) {
+      // Suggest higher level but allow entry? 
+      // User said: "بگه تو سطح بالایی داری و بهتر تو این سطح باشی"
+      // I'll show a warning but let them enter if they really want, or just set it.
+      // For now, let's just allow it with a notification.
+      console.log("Entering a lower level room.");
+    }
+
+    setCurrentRoom(targetLevel);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -185,9 +214,97 @@ export default function ChatRoom() {
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
   };
 
+  // Render Selection View
+  if (!currentRoom) {
+    const userLevel = authUser?.level || "Iron";
+    const userIdx = LEVELS.indexOf(userLevel);
+
+    return (
+      <div className="flex flex-col h-[calc(100vh-80px)] bg-[#0a0e27] text-slate-100 p-6 overflow-y-auto">
+        <div className="max-w-4xl mx-auto w-full">
+          <header className="mb-10 text-center">
+            <h1 className="text-4xl font-extrabold mb-4 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              انتخاب چت‌روم بر اساس سطح
+            </h1>
+            <p className="text-slate-400">سطح فعلی شما: <span className="text-indigo-400 font-bold">{LEVEL_CONFIG[userLevel]?.label || userLevel}</span></p>
+          </header>
+
+          <AnimatePresence>
+            {errorMsg && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-xl mb-6 text-center backdrop-blur-md"
+              >
+                {errorMsg}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {LEVELS.map((level, idx) => {
+              const config = LEVEL_CONFIG[level];
+              const isLocked = userIdx < idx;
+              const isHigher = userIdx > idx;
+
+              return (
+                <motion.button
+                  key={level}
+                  whileHover={!isLocked ? { scale: 1.05, translateY: -5 } : {}}
+                  whileTap={!isLocked ? { scale: 0.95 } : {}}
+                  onClick={() => handleLevelClick(level)}
+                  className={`relative p-8 rounded-3xl border-2 transition-all flex flex-col items-center gap-4 text-center overflow-hidden group ${isLocked
+                      ? 'bg-slate-900/40 border-slate-800 grayscale cursor-not-allowed opacity-60'
+                      : 'bg-[#1e2449]/40 border-slate-700/50 hover:border-indigo-500/50 shadow-xl'
+                    }`}
+                >
+                  {/* Decorative Glow */}
+                  <div className="absolute -top-10 -right-10 w-32 h-32 blur-3xl rounded-full opacity-20 pointer-events-none transition-all group-hover:opacity-40" style={{ backgroundColor: config.color }}></div>
+
+                  <div className="text-5xl group-hover:rotate-12 transition-transform duration-300">
+                    {config.icon}
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold mb-1" style={{ color: config.color }}>{config.label}</h3>
+                    <p className="text-xs text-slate-400 uppercase tracking-widest">{level}</p>
+                  </div>
+
+                  {isLocked && (
+                    <div className="mt-2 py-1 px-3 bg-red-500/20 rounded-full text-[10px] text-red-400 font-bold border border-red-500/30">
+                      🔒 قفل شده
+                    </div>
+                  )}
+
+                  {!isLocked && isHigher && (
+                    <div className="mt-2 py-1 px-4 bg-indigo-500/20 rounded-full text-[10px] text-indigo-300 font-bold border border-indigo-500/30">
+                      ✨ سطح بالا هستی، اما بیا!
+                    </div>
+                  )}
+
+                  {!isLocked && !isHigher && (
+                    <div className="mt-2 py-1 px-4 bg-emerald-500/20 rounded-full text-[10px] text-emerald-400 font-bold border border-emerald-500/30 animate-pulse">
+                      🏠 خانه تو
+                    </div>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Render Helpers
   const onlineUsers = Array.from(users.values()).filter(u => u.id !== currentUser?.id);
   if (currentUser) onlineUsers.unshift(currentUser);
+
+  const userLevel = authUser?.level || "Iron";
+  const userIdx = LEVELS.indexOf(userLevel);
+  const currentIdx = LEVELS.indexOf(currentRoom);
+  const roomConfig = LEVEL_CONFIG[currentRoom];
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] bg-[#0a0e27] text-slate-100 font-sans overflow-hidden relative">
@@ -200,25 +317,35 @@ export default function ChatRoom() {
       {/* Header */}
       <header className="relative z-10 bg-[#1e2449]/60 backdrop-blur-xl border-b border-slate-700/50 p-4 flex justify-between items-center shadow-lg">
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setCurrentRoom(null)}
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400"
+          >
+            ← بازگشت
+          </button>
           <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse"></div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            چت روم
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <span>{roomConfig.icon}</span>
+            <span style={{ color: roomConfig.color }}>چت‌روم {roomConfig.label}</span>
           </h1>
-          <span className="hidden sm:block px-3 py-1 bg-[#1e2449] rounded-full text-xs text-slate-400 border border-slate-700">
-            {onlineUsers.length} کاربر آنلاین
-          </span>
         </div>
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 bg-[#1e2449] rounded-lg border border-slate-700 text-slate-300 hover:text-indigo-400 hover:border-indigo-500 transition-all"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-        </button>
+
+        <div className="flex items-center gap-2">
+          {userIdx > currentIdx && (
+            <div className="hidden sm:block text-[10px] bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30">
+              تو سطح بالایی داری و بهتره تو سطح خودت باشی ✨
+            </div>
+          )}
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 bg-[#1e2449] rounded-lg border border-slate-700 text-slate-300 hover:text-indigo-400 hover:border-indigo-500 transition-all"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+            </svg>
+          </button>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -228,9 +355,9 @@ export default function ChatRoom() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-500">
-                <div className="text-6xl mb-4 animate-bounce">💬</div>
-                <h2 className="text-xl font-semibold mb-2">به چت روم خوش آمدید!</h2>
-                <p>پیام خود را بنویسید و با دیگران گفتگو کنید</p>
+                <div className="text-6xl mb-4 animate-bounce">{roomConfig.icon}</div>
+                <h2 className="text-xl font-semibold mb-2">به چت‌روم {roomConfig.label} خوش آمدید!</h2>
+                <p>اولین نفری باش که پیام میده...</p>
               </div>
             ) : (
               messages.map((msg) => {
@@ -242,25 +369,9 @@ export default function ChatRoom() {
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex gap-3 max-w-[85%] ${isOwn ? 'self-end flex-row-reverse' : 'self-start'}`}
                   >
-                    {msg.avatar_url ? (
-                      <img
-                        src={msg.avatar_url}
-                        alt={msg.nickname}
-                        className="w-10 h-10 rounded-full object-cover shadow-md shrink-0 border-2"
-                        style={{ borderColor: msg.color }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallback = target.nextElementSibling as HTMLElement;
-                          if (fallback) {
-                            fallback.style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md shrink-0 ${msg.avatar_url ? 'hidden' : ''}`}
-                      style={{ backgroundColor: msg.color }}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md shrink-0`}
+                      style={{ backgroundColor: msg.color || '#6366f1' }}
                     >
                       {getUserInitial(msg.nickname)}
                     </div>
@@ -270,11 +381,10 @@ export default function ChatRoom() {
                         <span className="text-xs text-slate-500">{formatTime(msg.timestamp)}</span>
                       </div>
                       <div
-                        className={`p-3 rounded-xl break-words text-sm sm:text-base shadow-sm ${
-                          isOwn
+                        className={`p-3 rounded-xl break-words text-sm sm:text-base shadow-sm ${isOwn
                             ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-none'
                             : 'bg-[#1e2449] border border-slate-700 text-slate-200 rounded-tl-none'
-                        }`}
+                          }`}
                       >
                         {msg.text}
                       </div>
@@ -286,121 +396,13 @@ export default function ChatRoom() {
             <div ref={messagesEndRef} />
           </div>
         </div>
-
-        {/* Sidebar (Desktop) */}
-        <aside className={`hidden md:flex w-72 flex-col bg-[#1e2449]/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl overflow-hidden shadow-xl transition-all duration-300 ${isSidebarOpen ? 'w-72 opacity-100' : 'w-0 opacity-0 p-0 border-0'}`}>
-          <div className="p-4 border-b border-slate-700/50">
-            <h3 className="font-semibold text-lg">کاربران آنلاین</h3>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-            {onlineUsers.map((user) => (
-              <div key={user.id} className="flex items-center gap-3 p-2 bg-[#141937] rounded-lg border border-slate-700/50 hover:bg-[#1e2449] transition-colors">
-                {user.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.nickname}
-                    className="w-9 h-9 rounded-full object-cover shadow-sm border-2"
-                    style={{ borderColor: user.color }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      if (target.nextElementSibling) {
-                        (target.nextElementSibling as HTMLElement).style.display = 'flex';
-                      }
-                    }}
-                  />
-                ) : null}
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${user.avatar_url ? 'hidden' : ''}`}
-                  style={{ backgroundColor: user.color }}
-                >
-                  {getUserInitial(user.nickname)}
-                </div>
-                <span className="flex-1 font-medium truncate">{user.nickname}</span>
-                {user.id === currentUser?.id && (
-                  <span className="text-xs text-emerald-500 font-bold">شما</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* Sidebar (Mobile) */}
-        <AnimatePresence>
-          {isSidebarOpen && (
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="md:hidden fixed inset-y-0 right-0 w-3/4 max-w-xs bg-[#0a0e27]/95 backdrop-blur-xl border-l border-slate-700 z-50 shadow-2xl flex flex-col"
-            >
-              <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-                <h3 className="font-semibold text-lg">کاربران آنلاین</h3>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-slate-800 rounded">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                {onlineUsers.map((user) => (
-                  <div key={user.id} className="flex items-center gap-3 p-2 bg-[#141937] rounded-lg border border-slate-700/50">
-                    {user.avatar_url ? (
-                      <img
-                        src={user.avatar_url}
-                        alt={user.nickname}
-                        className="w-9 h-9 rounded-full object-cover shadow-sm border-2"
-                        style={{ borderColor: user.color }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallback = target.nextElementSibling as HTMLElement;
-                          if (fallback) {
-                            fallback.style.display = 'flex';
-                          }
-                        }}
-                      />
-                    ) : null}
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ${user.avatar_url ? 'hidden' : ''}`}
-                      style={{ backgroundColor: user.color }}
-                    >
-                      {getUserInitial(user.nickname)}
-                    </div>
-                    <span className="flex-1 font-medium truncate">{user.nickname}</span>
-                    {user.id === currentUser?.id && (
-                      <span className="text-xs text-emerald-500 font-bold">شما</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Input Area */}
       <div className="p-4 bg-[#1e2449]/60 backdrop-blur-xl border-t border-slate-700/50 z-20">
         <div className="max-w-4xl mx-auto flex gap-3 items-end">
-          {currentUser?.avatar_url ? (
-            <img
-              src={currentUser.avatar_url}
-              alt={currentUser.nickname}
-              className="w-10 h-10 rounded-full object-cover shadow-md border-2 shrink-0"
-              style={{ borderColor: currentUser.color }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                if (target.nextElementSibling) {
-                  (target.nextElementSibling as HTMLElement).style.display = 'flex';
-                }
-              }}
-            />
-          ) : null}
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md shrink-0 ${currentUser?.avatar_url ? 'hidden' : ''}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md shrink-0`}
             style={{ backgroundColor: currentUser?.color || '#6366f1' }}
           >
             {getUserInitial(currentUser?.nickname || '')}

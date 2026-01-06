@@ -24,31 +24,32 @@ export interface ChatMessagesResponse {
 /**
  * Send a chat message
  */
-export async function sendChatMessage(text: string): Promise<ChatMessage> {
+export async function sendChatMessage(text: string, room: string = 'Iron'): Promise<ChatMessage> {
   const token = getToken();
   if (!token) {
     throw new Error('Not authenticated');
   }
 
-  return post<ChatMessage>('/api/chatroom/messages', { text }, token);
+  return post<ChatMessage>('/api/chatroom/messages', { text, room }, token);
 }
 
 /**
  * Get recent chat messages
  */
-export async function getChatMessages(limit: number = 100): Promise<ChatMessagesResponse> {
+export async function getChatMessages(room: string = 'Iron', limit: number = 100): Promise<ChatMessagesResponse> {
   const token = getToken();
   if (!token) {
     throw new Error('Not authenticated');
   }
 
-  return get<ChatMessagesResponse>(`/api/chatroom/messages?limit=${limit}`, token);
+  return get<ChatMessagesResponse>(`/api/chatroom/messages?room=${room}&limit=${limit}`, token);
 }
 
 /**
  * Create WebSocket connection for chatroom
  */
 export function createChatroomWebSocket(
+  room: string = 'Iron',
   onMessage: (message: ChatMessage) => void,
   onError?: (error: Event) => void
 ): WebSocket | null {
@@ -60,7 +61,7 @@ export function createChatroomWebSocket(
     }
 
     const wsBaseUrl = getWebSocketBaseUrl();
-    const wsUrl = `${wsBaseUrl}/api/chatroom/ws?token=${token}`;
+    const wsUrl = `${wsBaseUrl}/api/chatroom/ws?room=${room}&token=${token}`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {

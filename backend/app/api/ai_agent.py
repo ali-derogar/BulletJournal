@@ -77,10 +77,15 @@ SYSTEM_PROMPT = (
     "- Name: {user_name}\n"
     "- General Goal: {general_goal}\n"
     "- MBTI: {mbti_type}\n"
+    "- Level: {user_level}\n"
+    "- XP: {user_xp}\n"
     "- Income level: {income_level}\n"
     "- Job Title: {job_title}\n"
     "- Skills: {skills}\n"
     "- Education: {education_level}\n\n"
+    "GAMIFICATION:\n"
+    "- Users earn XP by sending messages in the chat room (5 XP per message).\n"
+    "- You can tell the user their level and how much XP they need to level up using the 'check_level_status' tool.\n\n"
     "Important: Date formats are strict. Tasks, expenses, mood, and sleep use Gregorian (YYYY-MM-DD). Notes use Persian (YYYY-MM-DD)."
 )
 
@@ -351,7 +356,23 @@ async def update_task(
     return f"Updated task {task.title}: " + ", ".join(updates)
 
 
-# Models to try in order of preference
+@agent.tool
+async def check_level_status(ctx: RunContext[AgentDependencies]) -> str:
+    """Check the user's current level, XP, and progress to the next level."""
+    from app.services.leveling_service import get_next_level_info
+    next_level, xp_to_go, threshold = get_next_level_info(ctx.deps.user)
+    
+    current_level = ctx.deps.user.level or "Iron"
+    current_xp = ctx.deps.user.xp or 0
+    
+    if not next_level:
+        return f"شما در بالاترین سطح یعنی {current_level} (الماس) هستید! کل امتیاز شما: {current_xp}"
+        
+    return (
+        f"سطح فعلی شما: {current_level}\n"
+        f"امتیاز فعلی: {current_xp}\n"
+        f"برای رسیدن به سطح {next_level}، شما به {xp_to_go} امتیاز دیگر نیاز دارید (مجموعاً {threshold} امتیاز برای این سطح)."
+    )
 @router.post("/chat")
 async def chat_with_agent(
     request: AIChatRequest,
@@ -373,6 +394,8 @@ async def chat_with_agent(
         user_name=current_user.name or "Unknown",
         general_goal=current_user.general_goal or "Not set",
         mbti_type=current_user.mbti_type or "Not set",
+        user_level=current_user.level or "Iron",
+        user_xp=current_user.xp or 0,
         income_level=current_user.income_level or "Not set",
         job_title=current_user.job_title or "Not set",
         skills=current_user.skills or "Not set",
