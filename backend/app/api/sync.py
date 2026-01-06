@@ -16,6 +16,7 @@ from app.models.calendar_note import CalendarNote
 from app.schemas.sync import SyncData, SyncResponse
 from app.auth.router import get_current_user
 from app.models.user import User
+from app.services.leveling_service import gain_xp
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -76,12 +77,23 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
             if server_updated_at.tzinfo is None:
                 server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
             if client_updated_at > server_updated_at:
+                # Check for completion (todo/in-progress -> done)
+                was_done = (existing_task.status == "done")
+                is_done = (db_task_data.get("status") == "done")
+                
                 # Client has newer version, update
                 for key, value in db_task_data.items():
                     if hasattr(existing_task, key) and key != "id" and key != "userId":
                         setattr(existing_task, key, value)
                 existing_task.updatedAt = datetime.now(timezone.utc)
                 db.commit()
+                
+                # Award XP if completed
+                if is_done and not was_done:
+                    user = db.query(User).filter(User.id == user_id).first()
+                    if user:
+                        gain_xp(db, user, amount=10)
+                
                 return False  # No conflict, just updated
             else:
                 # Server has newer or equal version, keep server version
@@ -111,6 +123,12 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
         db.add(new_task)
         db.commit()
         db.refresh(new_task)
+        
+        # Award XP for creation
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            gain_xp(db, user, amount=2)
+            
         return False
 
 def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
@@ -192,6 +210,12 @@ def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
         db.add(new_expense)
         db.commit()
         db.refresh(new_expense)
+        
+        # Award XP for expense tracking
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            gain_xp(db, user, amount=3)
+            
         return False
 
 def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
@@ -273,6 +297,12 @@ def upsert_journal(db: Session, journal_data: dict, user_id: str) -> bool:
         db.add(new_journal)
         db.commit()
         db.refresh(new_journal)
+        
+        # Award XP for journaling
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            gain_xp(db, user, amount=15)
+            
         return False
 
 def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
@@ -356,6 +386,12 @@ def upsert_reflection(db: Session, reflection_data: dict, user_id: str) -> bool:
         db.add(new_reflection)
         db.commit()
         db.refresh(new_reflection)
+        
+        # Award XP for reflection
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            gain_xp(db, user, amount=20)
+            
         return False
 
 def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
@@ -428,6 +464,12 @@ def upsert_goal(db: Session, goal_data: dict, user_id: str) -> bool:
         db.add(new_goal)
         db.commit()
         db.refresh(new_goal)
+        
+        # Award XP for goal creation
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            gain_xp(db, user, amount=25)
+            
         return False
 
 def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
@@ -500,6 +542,12 @@ def upsert_calendar_note(db: Session, note_data: dict, user_id: str) -> bool:
         db.add(new_note)
         db.commit()
         db.refresh(new_note)
+        
+        # Award XP for calendar note
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            gain_xp(db, user, amount=5)
+            
         return False
 
 @router.post("/sync", response_model=SyncResponse)
