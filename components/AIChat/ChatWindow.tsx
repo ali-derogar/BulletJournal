@@ -134,7 +134,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
       // Single Stage: Call the unified backend AI Agent
       setStatusMessage('Consulting agent...');
       const { callAgent } = await import('@/services/ai-intent');
-      const actionResult = await callAgent(userMessage.content);
+      const actionResult = await callAgent(userMessage.content, messages);
 
       console.log('[ChatWindow] Agent result:', actionResult);
 

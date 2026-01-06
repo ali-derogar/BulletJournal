@@ -6,7 +6,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 /**
  * Call the backend AI Agent to handle a natural language message.
  */
-export async function callAgent(message: string): Promise<ActionResponse> {
+export async function callAgent(message: string, history?: any[]): Promise<ActionResponse> {
   const today = new Date();
   const currentDateStr = today.toISOString().split('T')[0];
   const token = getToken();
@@ -29,6 +29,7 @@ export async function callAgent(message: string): Promise<ActionResponse> {
       body: JSON.stringify({
         message,
         currentDate: currentDateStr,
+        history: history || [],
       }),
     });
 

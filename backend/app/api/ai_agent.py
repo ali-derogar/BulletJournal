@@ -28,9 +28,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
 class AIChatRequest(BaseModel):
     message: str
     currentDate: str
+    history: Optional[List[ChatMessage]] = None
 
 
 
@@ -58,17 +63,32 @@ SYSTEM_PROMPT = (
     "Your goal is to help the user manage their tasks, goals, calendar notes, expenses, mood, sleep, and reflections using natural language. "
     "You have access to tools to create, list, and update these items. "
     "When a user asks to do something, use the appropriate tool. "
-    "Always be concise and encouraging. "
-    "Important: Date formats are strict. Tasks, expenses, mood, and sleep use Gregorian (YYYY-MM-DD). Notes use Persian (YYYY-MM-DD). "
-    "Today's date is provided in context."
+    "Always be concise and encouraging.\n\n"
+    "CRITICAL: LANGUAGE CONSISTENCY\n"
+    "1. Always respond in the exact same language the user is using (e.g., if the user speaks Persian, respond in Persian; if English, respond in English).\n"
+    "2. Ensure all data you create (task titles, notes, goal names, etc.) is in the same language as the user's request.\n"
+    "3. Do not switch languages mid-conversation unless the user does.\n\n"
+    "CONTEXT & DATES:\n"
+    "- Today's date is {current_date}.\n"
+    "- NEVER ask the user 'what date is today' or claim you don't know the date.\n"
+    "- If the user doesn't specify a date, or says 'today', 'now', or 'for today', always use the current date from the context.\n"
+    "- Maintain context of the conversation. If a user provides a title or detail in one message and then a command in another, link them together.\n\n"
+    "USER PROFILE:\n"
+    "- Name: {user_name}\n"
+    "- General Goal: {general_goal}\n"
+    "- MBTI: {mbti_type}\n"
+    "- Income level: {income_level}\n"
+    "- Job Title: {job_title}\n"
+    "- Skills: {skills}\n"
+    "- Education: {education_level}\n\n"
+    "Important: Date formats are strict. Tasks, expenses, mood, and sleep use Gregorian (YYYY-MM-DD). Notes use Persian (YYYY-MM-DD)."
 )
 
 # Define the Agent
 agent: Agent[AgentDependencies, str] = Agent(
     default_model,
-
     deps_type=AgentDependencies,
-    system_prompt=SYSTEM_PROMPT
+    system_prompt="You are a helpful assistant for the BulletJournal app."
 )
 
 @agent.tool
@@ -347,9 +367,29 @@ async def chat_with_agent(
             "data": {}
         }
 
+    # Format dynamic system prompt
+    formatted_prompt = SYSTEM_PROMPT.format(
+        current_date=request.currentDate,
+        user_name=db_user.name or "Unknown",
+        general_goal=db_user.general_goal or "Not set",
+        mbti_type=db_user.mbti_type or "Not set",
+        income_level=db_user.income_level or "Not set",
+        job_title=db_user.job_title or "Not set",
+        skills=db_user.skills or "Not set",
+        education_level=db_user.education_level or "Not set"
+    )
+
     # Delegate execution to the robust AI Service
-    # This handles key rotation, model fallback, validation retries, and raw fallback
-    output = await ai_service.execute_agent(agent, request.message, deps)
+    # Note: We pass the prompt to execute_agent to override the default if needed,
+    # but here we've already modified the agent's base instructions often via run parameters if pydantic-ai supports it.
+    # pydantic-ai actually accepts 'instructions' in run() which overrides/adds to system prompt.
+    output = await ai_service.execute_agent(
+        agent, 
+        request.message, 
+        deps, 
+        history=request.history,
+        instructions=formatted_prompt
+    )
     
     return {
         "success": True, 

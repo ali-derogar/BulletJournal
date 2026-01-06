@@ -5,6 +5,7 @@ from openai import AsyncOpenAI
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse, UserPromptPart, TextPart
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,9 @@ class AIOperationService:
         self, 
         agent: Agent, 
         message: str, 
-        deps: Any
+        deps: Any,
+        history: Optional[List[Any]] = None,
+        instructions: Optional[str] = None
     ) -> str:
         """
         Executes the given agent with the message and dependencies.
@@ -40,6 +43,19 @@ class AIOperationService:
         """
         if not self.api_keys:
              return "Configuration Error: No AI API Keys available."
+
+        # Convert simple history to ModelMessage list
+        pydantic_history: List[ModelMessage] = []
+        if history:
+            for msg in history:
+                # msg is expected to have 'role' and 'content' (either dict or object)
+                role = msg.get('role') if isinstance(msg, dict) else getattr(msg, 'role', None)
+                content = msg.get('content') if isinstance(msg, dict) else getattr(msg, 'content', None)
+                
+                if role == 'user':
+                    pydantic_history.append(ModelRequest(parts=[UserPromptPart(content=content)]))
+                elif role == 'assistant':
+                    pydantic_history.append(ModelResponse(parts=[TextPart(content=content)]))
 
         last_error = None
 
@@ -65,7 +81,13 @@ class AIOperationService:
                     model = OpenAIChatModel(model_name, provider=provider)
                     
                     # Execute
-                    result = await agent.run(message, deps=deps, model=model)
+                    result = await agent.run(
+                        message, 
+                        deps=deps, 
+                        model=model, 
+                        message_history=pydantic_history,
+                        instructions=instructions
+                    )
                     return result.output
 
                 except Exception as e:
