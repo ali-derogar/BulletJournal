@@ -8,6 +8,7 @@ from typing import List, Optional, Dict
 from datetime import datetime, timezone
 import uuid
 import logging
+from pydantic import BaseModel, ConfigDict
 from collections import deque, defaultdict
 
 from app.db.session import get_db
