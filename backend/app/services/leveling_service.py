@@ -58,6 +58,23 @@ def gain_xp(db: Session, user: User, amount: int) -> bool:
     db.commit()
     return leveled_up
 
+def calculate_level_from_xp(xp: int) -> str:
+    """
+    Calculates the appropriate level based on total XP.
+    """
+    if xp < 0:
+        return "Iron"
+        
+    current_level = "Iron"
+    for level in LEVELS:
+        threshold = XP_THRESHOLDS.get(level, 999999999)
+        if xp >= threshold:
+            current_level = LEVELS[LEVELS.index(level) + 1] if LEVELS.index(level) + 1 < len(LEVELS) else level
+        else:
+            break
+            
+    return current_level
+
 def get_next_level_info(user: User):
     """
     Returns (next_level_name, xp_to_go, total_required)

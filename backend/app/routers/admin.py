@@ -177,6 +177,11 @@ async def update_user_gamification(
 
     if gamification.xp is not None:
         user.xp = gamification.xp
+        # Auto-calculate level if not explicitly provided
+        if gamification.level is None:
+            from app.services.leveling_service import calculate_level_from_xp
+            user.level = calculate_level_from_xp(user.xp)
+            
     if gamification.level is not None:
         user.level = gamification.level
 

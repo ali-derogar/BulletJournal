@@ -14,6 +14,7 @@ from app.models.goal import Goal
 from app.models.calendar_note import CalendarNote
 from app.auth.router import get_current_user
 from app.models.user import User
+from app.services.leveling_service import gain_xp
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -139,7 +140,11 @@ async def create_task_action(
         db.commit()
         db.refresh(new_task)
 
+
         logger.info(f"User {current_user.id} created task {task_id} via AI action: {task_request.title}")
+
+        # Award XP
+        gain_xp(db, current_user, 10)
 
         return ActionResponse(
             success=True,
@@ -212,6 +217,9 @@ async def create_goal_action(
 
         logger.info(f"User {current_user.id} created goal {goal_id} via AI action: {goal_request.title}")
 
+        # Award XP
+        gain_xp(db, current_user, 50)
+
         return ActionResponse(
             success=True,
             message=f"Added goal '{goal_request.title}' for {period_desc[goal_request.type]}",
@@ -259,6 +267,9 @@ async def create_calendar_note_action(
         logger.info(f"[AI Backend] Calendar note committed for user {current_user.id}: {note_id}")
 
         logger.info(f"User {current_user.id} created calendar note {note_id} via AI action for {note_request.date}")
+
+        # Award XP
+        gain_xp(db, current_user, 5)
 
         return ActionResponse(
             success=True,
@@ -414,6 +425,9 @@ async def complete_task_action(
         db.refresh(task)
 
         logger.info(f"User {current_user.id} completed task {task_id} via AI action")
+
+        # Award XP
+        gain_xp(db, current_user, 20)
 
         return ActionResponse(
             success=True,
