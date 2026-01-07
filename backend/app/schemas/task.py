@@ -21,6 +21,7 @@ class TaskUpdate(BaseModel):
     timer_start: Optional[datetime] = None
     estimated_time: Optional[float] = None
     is_useful: Optional[bool] = None
+    is_copied_to_next_day: Optional[bool] = None
 
 class Task(TaskBase):
     created_at: Optional[datetime] = None
@@ -39,6 +40,8 @@ class Task(TaskBase):
     estimated_time: Optional[float] = None  # snake_case
     isUseful: Optional[bool] = Field(None, alias="is_useful")  # camelCase with alias
     is_useful: Optional[bool] = None  # snake_case
+    isCopiedToNextDay: Optional[bool] = Field(False, alias="is_copied_to_next_day")  # camelCase with alias
+    is_copied_to_next_day: Optional[bool] = False  # snake_case
 
     @field_validator('timeLogs', mode='before')
     @classmethod

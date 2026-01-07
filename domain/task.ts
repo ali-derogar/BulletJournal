@@ -26,4 +26,5 @@ export interface Task {
   // Estimation and usefulness tracking
   estimatedTime: number | null; // Estimated time in minutes, null if not set
   isUseful: boolean | null; // true = useful, false = not useful, null = not categorized
+  isCopiedToNextDay: boolean; // Star status for copying to next day
 }

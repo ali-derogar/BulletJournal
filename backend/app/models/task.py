@@ -26,3 +26,6 @@ class Task(Base):
     # Estimation and usefulness
     estimated_time = Column(Float, nullable=True)  # Time in minutes
     is_useful = Column(Boolean, nullable=True)
+    
+    # Next day copy flag
+    is_copied_to_next_day = Column(Boolean, default=False)  # Star status for copying to next day

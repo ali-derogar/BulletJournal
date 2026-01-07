@@ -74,6 +74,7 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
                 timerStart: null,
                 estimatedTime: null,
                 isUseful: null,
+                isCopiedToNextDay: false,
             };
             await saveTask(newTask);
             setTasks([...tasks, newTask]);
@@ -90,6 +91,37 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
             setTasks(tasks.map((t) => (t.id === taskToSave.id ? taskToSave : t)));
         } catch (error) {
             console.error("Failed to update task:", error);
+        }
+    };
+
+    const handleCopyToNextDayChange = async (task: Task, isCopied: boolean) => {
+        try {
+            await handleUpdateTask({ ...task, isCopiedToNextDay: isCopied });
+            
+            // If starred, create a copy for next day
+            if (isCopied) {
+                const nextDay = new Date(date);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const nextDayStr = nextDay.toISOString().split('T')[0];
+                
+                const copiedTask: Task = {
+                    ...task,
+                    id: `task-${nextDayStr}-${Date.now()}`,
+                    date: nextDayStr,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    status: "todo",
+                    spentTime: 0,
+                    timeLogs: [],
+                    timerRunning: false,
+                    timerStart: null,
+                    isCopiedToNextDay: false, // Reset for the new task
+                };
+                
+                await saveTask(copiedTask);
+            }
+        } catch (error) {
+            console.error("Failed to update copy status:", error);
         }
     };
 
@@ -230,6 +262,7 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
                                         }]
                                     });
                                 }}
+                                onCopyToNextDayChange={handleCopyToNextDayChange}
                             />
                         ))}
                     </AnimatePresence>
