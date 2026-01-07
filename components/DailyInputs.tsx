@@ -73,6 +73,7 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
       newQuality: number
     ) => {
       try {
+        const existingSleep = await getSleep(date, userId);
         const hoursSlept = calculateSleepDuration(newSleepTime, newWakeTime);
         const sleepData: SleepInfo = {
           id: `sleep-${date}`,
@@ -82,7 +83,9 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
           wakeTime: newWakeTime || null,
           hoursSlept,
           quality: newQuality,
-          createdAt: new Date().toISOString(),
+          createdAt: existingSleep?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          deletedAt: null,
         };
         await saveSleep(sleepData);
       } catch (error) {
@@ -106,6 +109,8 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
           waterIntake: existingMood?.waterIntake || 0,
           studyMinutes: existingMood?.studyMinutes || 0,
           createdAt: existingMood?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          deletedAt: null,
         };
         await saveMood(moodData);
       } catch (error) {

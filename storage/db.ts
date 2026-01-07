@@ -1,5 +1,5 @@
 export const DB_NAME = "BulletJournalDB";
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 export const STORES = {
   DAILY_JOURNALS: "dailyJournals",
@@ -12,13 +12,14 @@ export const STORES = {
   CALENDAR_NOTES: "calendarNotes",
   AI_SESSIONS: "ai_sessions",
   AI_MESSAGES: "ai_messages",
+  AI_REPORTS: "ai_reports",
 } as const;
 
 let dbInstance: IDBDatabase | null = null;
 
 export async function initDB(): Promise<IDBDatabase> {
   // Reset instance if we need to force a reconnect
-  if (dbInstance && (!dbInstance.objectStoreNames.contains(STORES.GOALS) || !dbInstance.objectStoreNames.contains(STORES.CALENDAR_NOTES) || !dbInstance.objectStoreNames.contains(STORES.AI_SESSIONS))) {
+  if (dbInstance && (!dbInstance.objectStoreNames.contains(STORES.GOALS) || !dbInstance.objectStoreNames.contains(STORES.CALENDAR_NOTES) || !dbInstance.objectStoreNames.contains(STORES.AI_SESSIONS) || !dbInstance.objectStoreNames.contains(STORES.AI_REPORTS))) {
     console.log("Database instance exists but missing stores or outdated, resetting...");
     dbInstance.close();
     dbInstance = null;
@@ -124,6 +125,15 @@ export async function initDB(): Promise<IDBDatabase> {
         });
         aiMessageStore.createIndex("sessionId", "sessionId", { unique: false });
         aiMessageStore.createIndex("timestamp", "timestamp", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(STORES.AI_REPORTS)) {
+        const aiReportStore = db.createObjectStore(STORES.AI_REPORTS, {
+          keyPath: "id",
+        });
+        aiReportStore.createIndex("userId", "userId", { unique: false });
+        aiReportStore.createIndex("createdAt", "createdAt", { unique: false });
+        aiReportStore.createIndex("userId_createdAt", ["userId", "createdAt"], { unique: false });
       }
     };
   });

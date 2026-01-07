@@ -13,6 +13,8 @@ from app.models.journal import DailyJournal
 from app.models.reflection import Reflection
 from app.models.goal import Goal
 from app.models.calendar_note import CalendarNote
+from app.models.sleep import SleepInfo
+from app.models.mood import MoodInfo
 from app.schemas.sync import SyncData, SyncResponse
 from app.auth.router import get_current_user
 from app.models.user import User
@@ -107,6 +109,7 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
             existing_task.updatedAt = datetime.now(timezone.utc)
             db.commit()
             return False
+
     else:
         # Check if task exists but belongs to another user (security check)
         existing_task_other_user = db.query(Task).filter(Task.id == task_id).first()
@@ -124,12 +127,166 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
         db.add(new_task)
         db.commit()
         db.refresh(new_task)
-        
+
         # Award XP for creation
         user = db.query(User).filter(User.id == user_id).first()
         if user:
             gain_xp(db, user, amount=2)
-            
+
+        return False
+
+
+def upsert_sleep(db: Session, sleep_data: dict, user_id: str) -> bool:
+    """Upsert sleep info. Returns True if conflict was resolved."""
+    sleep_id = sleep_data["id"]
+    client_updated_at = sleep_data.get("updatedAt")
+
+    if isinstance(client_updated_at, str):
+        try:
+            from dateutil import parser
+            client_updated_at = parser.parse(client_updated_at)
+            if client_updated_at.tzinfo is None:
+                client_updated_at = client_updated_at.replace(tzinfo=timezone.utc)
+        except:
+            client_updated_at = None
+
+    db_sleep_data = sleep_data.copy()
+    sleep_field_mappings = {
+        'createdAt': 'created_at',
+        'sleepTime': 'sleep_time',
+        'wakeTime': 'wake_time',
+        'hoursSlept': 'hours_slept',
+    }
+    for frontend_field, db_field in sleep_field_mappings.items():
+        if frontend_field in db_sleep_data:
+            db_sleep_data[db_field] = db_sleep_data.pop(frontend_field)
+
+    datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
+    for field in datetime_fields:
+        if field in db_sleep_data and isinstance(db_sleep_data[field], str):
+            try:
+                from dateutil import parser
+                parsed_dt = parser.parse(db_sleep_data[field])
+                if parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                db_sleep_data[field] = parsed_dt
+            except:
+                db_sleep_data[field] = None
+
+    existing_sleep = db.query(SleepInfo).filter(SleepInfo.id == sleep_id, SleepInfo.userId == user_id).first()
+
+    if existing_sleep:
+        if client_updated_at and existing_sleep.updatedAt:
+            server_updated_at = existing_sleep.updatedAt
+            if server_updated_at.tzinfo is None:
+                server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
+            if client_updated_at > server_updated_at:
+                for key, value in db_sleep_data.items():
+                    if hasattr(existing_sleep, key) and key != "id" and key != "userId":
+                        setattr(existing_sleep, key, value)
+                existing_sleep.updatedAt = datetime.now(timezone.utc)
+                db.commit()
+                return False
+            else:
+                return True
+        else:
+            for key, value in db_sleep_data.items():
+                if hasattr(existing_sleep, key) and key != "id" and key != "userId":
+                    setattr(existing_sleep, key, value)
+            existing_sleep.updatedAt = datetime.now(timezone.utc)
+            db.commit()
+            return False
+    else:
+        existing_sleep_other_user = db.query(SleepInfo).filter(SleepInfo.id == sleep_id).first()
+        if existing_sleep_other_user:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Cannot modify sleep {sleep_id} belonging to another user"
+            )
+
+        db_sleep_data["userId"] = user_id
+        new_sleep = SleepInfo(**db_sleep_data)
+        new_sleep.updatedAt = datetime.now(timezone.utc)
+        db.add(new_sleep)
+        db.commit()
+        db.refresh(new_sleep)
+        return False
+
+
+def upsert_mood(db: Session, mood_data: dict, user_id: str) -> bool:
+    """Upsert mood info. Returns True if conflict was resolved."""
+    mood_id = mood_data["id"]
+    client_updated_at = mood_data.get("updatedAt")
+
+    if isinstance(client_updated_at, str):
+        try:
+            from dateutil import parser
+            client_updated_at = parser.parse(client_updated_at)
+            if client_updated_at.tzinfo is None:
+                client_updated_at = client_updated_at.replace(tzinfo=timezone.utc)
+        except:
+            client_updated_at = None
+
+    db_mood_data = mood_data.copy()
+    mood_field_mappings = {
+        'createdAt': 'created_at',
+        'dayScore': 'day_score',
+        'waterIntake': 'water_intake',
+        'studyMinutes': 'study_minutes',
+    }
+    for frontend_field, db_field in mood_field_mappings.items():
+        if frontend_field in db_mood_data:
+            db_mood_data[db_field] = db_mood_data.pop(frontend_field)
+
+    datetime_fields = ['created_at', 'updatedAt', 'deletedAt']
+    for field in datetime_fields:
+        if field in db_mood_data and isinstance(db_mood_data[field], str):
+            try:
+                from dateutil import parser
+                parsed_dt = parser.parse(db_mood_data[field])
+                if parsed_dt.tzinfo is None:
+                    parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+                db_mood_data[field] = parsed_dt
+            except:
+                db_mood_data[field] = None
+
+    existing_mood = db.query(MoodInfo).filter(MoodInfo.id == mood_id, MoodInfo.userId == user_id).first()
+
+    if existing_mood:
+        if client_updated_at and existing_mood.updatedAt:
+            server_updated_at = existing_mood.updatedAt
+            if server_updated_at.tzinfo is None:
+                server_updated_at = server_updated_at.replace(tzinfo=timezone.utc)
+            if client_updated_at > server_updated_at:
+                for key, value in db_mood_data.items():
+                    if hasattr(existing_mood, key) and key != "id" and key != "userId":
+                        setattr(existing_mood, key, value)
+                existing_mood.updatedAt = datetime.now(timezone.utc)
+                db.commit()
+                return False
+            else:
+                return True
+        else:
+            for key, value in db_mood_data.items():
+                if hasattr(existing_mood, key) and key != "id" and key != "userId":
+                    setattr(existing_mood, key, value)
+            existing_mood.updatedAt = datetime.now(timezone.utc)
+            db.commit()
+            return False
+    else:
+        existing_mood_other_user = db.query(MoodInfo).filter(MoodInfo.id == mood_id).first()
+        if existing_mood_other_user:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Cannot modify mood {mood_id} belonging to another user"
+            )
+
+        db_mood_data["userId"] = user_id
+        new_mood = MoodInfo(**db_mood_data)
+        new_mood.updatedAt = datetime.now(timezone.utc)
+        db.add(new_mood)
+        db.commit()
+        db.refresh(new_mood)
         return False
 
 def upsert_expense(db: Session, expense_data: dict, user_id: str) -> bool:
@@ -564,6 +721,8 @@ async def sync_data(
         synced_tasks = 0
         synced_expenses = 0
         synced_journals = 0
+        synced_sleep = 0
+        synced_mood = 0
         synced_goals = 0
         synced_calendar_notes = 0
         synced_reflections = 0
@@ -574,6 +733,8 @@ async def sync_data(
             len(sync_data.tasks) +
             len(sync_data.expenses) +
             len(sync_data.journals) +
+            len(sync_data.sleep) +
+            len(sync_data.mood) +
             len(sync_data.goals) +
             len(sync_data.calendarNotes) +
             len(sync_data.reflections)
@@ -590,6 +751,22 @@ async def sync_data(
         for task in sync_data.tasks:
             task_dict = task.dict() if hasattr(task, 'dict') else task.__dict__
             if task_dict.get("userId") and task_dict["userId"] != current_user.id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Cannot sync items belonging to another user"
+                )
+
+        for sleep in sync_data.sleep:
+            sleep_dict = sleep.dict() if hasattr(sleep, 'dict') else sleep.__dict__
+            if sleep_dict.get("userId") and sleep_dict["userId"] != current_user.id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Cannot sync items belonging to another user"
+                )
+
+        for mood in sync_data.mood:
+            mood_dict = mood.dict() if hasattr(mood, 'dict') else mood.__dict__
+            if mood_dict.get("userId") and mood_dict["userId"] != current_user.id:
                 raise HTTPException(
                     status_code=403,
                     detail="Cannot sync items belonging to another user"
@@ -615,6 +792,20 @@ async def sync_data(
             if upsert_journal(db, journal_dict, current_user.id):
                 conflicts_resolved += 1
             synced_journals += 1
+
+        # Sync sleep
+        for sleep in sync_data.sleep:
+            sleep_dict = sleep.dict() if hasattr(sleep, 'dict') else sleep.__dict__
+            if upsert_sleep(db, sleep_dict, current_user.id):
+                conflicts_resolved += 1
+            synced_sleep += 1
+
+        # Sync mood
+        for mood in sync_data.mood:
+            mood_dict = mood.dict() if hasattr(mood, 'dict') else mood.__dict__
+            if upsert_mood(db, mood_dict, current_user.id):
+                conflicts_resolved += 1
+            synced_mood += 1
 
         # Sync goals
         for goal in sync_data.goals:
@@ -649,6 +840,8 @@ async def sync_data(
             synced_tasks=synced_tasks,
             synced_expenses=synced_expenses,
             synced_journals=synced_journals,
+            synced_sleep=synced_sleep,
+            synced_mood=synced_mood,
             synced_goals=synced_goals,
             synced_calendar_notes=synced_calendar_notes,
             synced_reflections=synced_reflections,
@@ -731,6 +924,24 @@ async def download_data(
             else:
                 raise
 
+        try:
+            sleep = db.query(SleepInfo).filter(SleepInfo.userId == current_user.id).all()
+        except Exception as e:
+            if "no such column" in str(e).lower() or "no such table" in str(e).lower():
+                logger.warning(f"Sleep table missing or has missing columns for user {current_user.id}, returning empty")
+                sleep = []
+            else:
+                raise
+
+        try:
+            mood = db.query(MoodInfo).filter(MoodInfo.userId == current_user.id).all()
+        except Exception as e:
+            if "no such column" in str(e).lower() or "no such table" in str(e).lower():
+                logger.warning(f"Mood table missing or has missing columns for user {current_user.id}, returning empty")
+                mood = []
+            else:
+                raise
+
         logger.info(
             f"User {current_user.id} downloaded data: "
             f"tasks={len(tasks)}, expenses={len(expenses)}, "
@@ -743,6 +954,8 @@ async def download_data(
             tasks=tasks,
             expenses=expenses,
             journals=journals,
+            sleep=sleep,
+            mood=mood,
             goals=goals,
             calendarNotes=calendar_notes,
             reflections=reflections

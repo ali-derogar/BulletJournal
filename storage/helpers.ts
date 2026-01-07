@@ -9,6 +9,7 @@ import type { Expense } from '@/domain/expense';
 import type { DailyJournal } from '@/domain/journal';
 import type { Goal } from '@/domain/goal';
 import type { CalendarNote } from '@/domain/calendar';
+import type { SleepInfo, MoodInfo } from '@/domain';
 
 /**
  * Get all tasks for a user across all dates
@@ -29,6 +30,90 @@ export async function getAllTasks(userId: string): Promise<Task[]> {
 
     request.onerror = () => {
       reject(new Error(`Failed to get tasks: ${request.error?.message}`));
+    };
+  });
+}
+
+/**
+ * Get all sleep entries for a user
+ */
+export async function getAllSleep(userId: string): Promise<SleepInfo[]> {
+  await initDB();
+  const db = getDB();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORES.SLEEP], 'readonly');
+    const store = transaction.objectStore(STORES.SLEEP);
+    const index = store.index('userId');
+    const request = index.getAll(userId);
+
+    request.onsuccess = () => {
+      resolve(request.result || []);
+    };
+
+    request.onerror = () => {
+      reject(new Error(`Failed to get sleep: ${request.error?.message}`));
+    };
+  });
+}
+
+/**
+ * Get all mood entries for a user
+ */
+export async function getAllMood(userId: string): Promise<MoodInfo[]> {
+  await initDB();
+  const db = getDB();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORES.MOOD], 'readonly');
+    const store = transaction.objectStore(STORES.MOOD);
+    const index = store.index('userId');
+    const request = index.getAll(userId);
+
+    request.onsuccess = () => {
+      resolve(request.result || []);
+    };
+
+    request.onerror = () => {
+      reject(new Error(`Failed to get mood: ${request.error?.message}`));
+    };
+  });
+}
+
+/**
+ * Upsert sleep (used for applying server updates)
+ */
+export async function upsertSleep(sleep: SleepInfo): Promise<void> {
+  await initDB();
+  const db = getDB();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORES.SLEEP], 'readwrite');
+    const store = transaction.objectStore(STORES.SLEEP);
+    const request = store.put(sleep);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => {
+      reject(new Error(`Failed to upsert sleep: ${request.error?.message}`));
+    };
+  });
+}
+
+/**
+ * Upsert mood (used for applying server updates)
+ */
+export async function upsertMood(mood: MoodInfo): Promise<void> {
+  await initDB();
+  const db = getDB();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORES.MOOD], 'readwrite');
+    const store = transaction.objectStore(STORES.MOOD);
+    const request = store.put(mood);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => {
+      reject(new Error(`Failed to upsert mood: ${request.error?.message}`));
     };
   });
 }

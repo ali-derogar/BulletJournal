@@ -8,4 +8,6 @@ export interface MoodInfo {
   waterIntake: number;
   studyMinutes: number;
   createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
 }

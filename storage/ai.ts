@@ -15,6 +15,105 @@ export interface AIMessage {
     timestamp: string;
 }
 
+export interface AIReportRecord {
+    id: string;
+    userId: string;
+    createdAt: string;
+    periodKey: string;
+    title: string;
+    raw: string;
+    parsed?: unknown;
+}
+
+/**
+ * Save AI Review report and keep only the latest N reports per user.
+ */
+export async function saveAIReport(report: AIReportRecord, keepLatest: number = 5): Promise<void> {
+    await initDB();
+    const db = getDB();
+
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORES.AI_REPORTS], "readwrite");
+        const store = transaction.objectStore(STORES.AI_REPORTS);
+
+        store.put(report);
+
+        // Trim history to keepLatest
+        const index = store.index("userId");
+        const req = index.getAll(report.userId);
+        req.onsuccess = () => {
+            const all = (req.result || []) as AIReportRecord[];
+            all.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            const toDelete = all.slice(keepLatest);
+            toDelete.forEach((r) => store.delete(r.id));
+        };
+        req.onerror = () => {
+            // Even if trim fails, still allow save to succeed
+            console.warn("Failed to trim AI reports:", req.error);
+        };
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(new Error(`Failed to save AI report: ${transaction.error?.message}`));
+    });
+}
+
+/**
+ * Get last N AI Review reports for a user (sorted newest first).
+ */
+export async function getRecentAIReports(userId: string, limit: number = 5): Promise<AIReportRecord[]> {
+    try {
+        await initDB();
+        const db = getDB();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORES.AI_REPORTS], "readonly");
+            const store = transaction.objectStore(STORES.AI_REPORTS);
+            const index = store.index("userId");
+            const request = index.getAll(userId);
+
+            request.onsuccess = () => {
+                const reports = (request.result || []) as AIReportRecord[];
+                reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                resolve(reports.slice(0, limit));
+            };
+
+            request.onerror = () => {
+                reject(new Error(`Failed to get AI reports: ${request.error?.message}`));
+            };
+        });
+    } catch (error) {
+        console.error("Error in getRecentAIReports:", error);
+        return [];
+    }
+}
+
+/**
+ * Get a single AI Review report by ID.
+ */
+export async function getAIReportById(id: string): Promise<AIReportRecord | null> {
+    try {
+        await initDB();
+        const db = getDB();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORES.AI_REPORTS], "readonly");
+            const store = transaction.objectStore(STORES.AI_REPORTS);
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                resolve((request.result as AIReportRecord) || null);
+            };
+
+            request.onerror = () => {
+                reject(new Error(`Failed to get AI report: ${request.error?.message}`));
+            };
+        });
+    } catch (error) {
+        console.error("Error in getAIReportById:", error);
+        return null;
+    }
+}
+
 /**
  * Get all AI chat sessions for a user, sorted by updatedAt descending
  */

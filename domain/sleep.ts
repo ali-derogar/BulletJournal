@@ -7,4 +7,6 @@ export interface SleepInfo {
   hoursSlept: number;
   quality: number;
   createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
 }

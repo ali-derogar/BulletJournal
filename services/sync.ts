@@ -7,19 +7,22 @@ import { post } from './api';
 import { getToken } from './auth';
 import { getLastSyncAt, updateLastSyncAt } from '@/storage/syncMeta';
 import {
-  getAllTasks, getAllExpenses, getAllJournals, getAllGoals, getAllCalendarNotes,
-  migrateDefaultDataToUser, upsertTask, upsertExpense, upsertJournal, upsertGoal, upsertCalendarNote
+  getAllTasks, getAllExpenses, getAllJournals, getAllGoals, getAllCalendarNotes, getAllSleep, getAllMood,
+  migrateDefaultDataToUser, upsertTask, upsertExpense, upsertJournal, upsertGoal, upsertCalendarNote, upsertSleep, upsertMood
 } from '@/storage/helpers';
 import type { Task } from '@/domain/task';
 import type { Expense } from '@/domain/expense';
 import type { DailyJournal } from '@/domain/journal';
 import type { Goal } from '@/domain/goal';
 import type { CalendarNote } from '@/domain/calendar';
+import type { SleepInfo, MoodInfo } from '@/domain';
 
 export interface SyncRequest {
   tasks: Task[];
   expenses: Expense[];
   journals: DailyJournal[];
+  sleep: SleepInfo[];
+  mood: MoodInfo[];
   goals: Goal[];
   calendarNotes: CalendarNote[];
   reflections: never[]; // Backend expects this but frontend doesn't have reflections yet
@@ -29,6 +32,8 @@ export interface SyncResponse {
   synced_tasks: number;
   synced_expenses: number;
   synced_journals: number;
+  synced_sleep?: number;
+  synced_mood?: number;
   synced_goals: number;
   synced_calendar_notes: number;
   synced_reflections: number;
@@ -39,6 +44,8 @@ export interface DownloadResponse {
   tasks: Task[];
   expenses: Expense[];
   journals: DailyJournal[];
+  sleep: SleepInfo[];
+  mood: MoodInfo[];
   goals: Goal[];
   calendarNotes: CalendarNote[];
   reflections: never[];
@@ -53,6 +60,8 @@ export interface SyncResult {
     uploadedTasks: number;
     uploadedExpenses: number;
     uploadedJournals: number;
+    uploadedSleep: number;
+    uploadedMood: number;
     uploadedGoals: number;
     uploadedCalendarNotes: number;
     conflictsResolved: number;
@@ -151,6 +160,14 @@ function validateSyncData(data: SyncRequest): { valid: boolean; errors: string[]
 
   data.journals.forEach((journal, idx) => {
     if (!journal.id) errors.push(`Journal at index ${idx} missing ID`);
+  });
+
+  data.sleep.forEach((s, idx) => {
+    if (!s.id) errors.push(`Sleep at index ${idx} missing ID`);
+  });
+
+  data.mood.forEach((m, idx) => {
+    if (!m.id) errors.push(`Mood at index ${idx} missing ID`);
   });
 
   data.goals.forEach((goal, idx) => {
@@ -317,6 +334,12 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
     const allJournals = await getAllJournals(userId);
     console.log('📖 Found journals:', allJournals.length);
 
+    const allSleep = await getAllSleep(userId);
+    console.log('😴 Found sleep:', allSleep.length);
+
+    const allMood = await getAllMood(userId);
+    console.log('🙂 Found mood:', allMood.length);
+
     const allGoals = await getAllGoals(userId);
     console.log('🎯 Found goals:', allGoals.length);
 
@@ -327,10 +350,12 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
     const uniqueTasks = deduplicateById(allTasks);
     const uniqueExpenses = deduplicateById(allExpenses);
     const uniqueJournals = deduplicateById(allJournals);
+    const uniqueSleep = deduplicateById(allSleep);
+    const uniqueMood = deduplicateById(allMood);
     const uniqueGoals = deduplicateById(allGoals);
     const uniqueCalendarNotes = deduplicateById(allCalendarNotes);
 
-    console.log('✅ After deduplication - Tasks:', uniqueTasks.length, 'Expenses:', uniqueExpenses.length, 'Journals:', uniqueJournals.length, 'Goals:', uniqueGoals.length, 'Calendar Notes:', uniqueCalendarNotes.length);
+    console.log('✅ After deduplication - Tasks:', uniqueTasks.length, 'Expenses:', uniqueExpenses.length, 'Journals:', uniqueJournals.length, 'Sleep:', uniqueSleep.length, 'Mood:', uniqueMood.length, 'Goals:', uniqueGoals.length, 'Calendar Notes:', uniqueCalendarNotes.length);
 
     // Validate userId - filter out items with wrong userId instead of forcing
     const validTasks = uniqueTasks.filter(task => {
@@ -357,6 +382,22 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       return true;
     });
 
+    const validSleep = uniqueSleep.filter(s => {
+      if (s.userId !== userId) {
+        console.error(`❌ CRITICAL: Sleep ${s.id} has wrong userId: ${s.userId} (expected: ${userId})`);
+        return false;
+      }
+      return true;
+    });
+
+    const validMood = uniqueMood.filter(m => {
+      if (m.userId !== userId) {
+        console.error(`❌ CRITICAL: Mood ${m.id} has wrong userId: ${m.userId} (expected: ${userId})`);
+        return false;
+      }
+      return true;
+    });
+
     const validGoals = uniqueGoals.filter(goal => {
       if (goal.userId !== userId) {
         console.error(`❌ CRITICAL: Goal ${goal.id} has wrong userId: ${goal.userId} (expected: ${userId})`);
@@ -373,7 +414,7 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       return true;
     });
 
-    console.log('✅ After userId validation - Tasks:', validTasks.length, 'Expenses:', validExpenses.length, 'Journals:', validJournals.length, 'Goals:', validGoals.length, 'Calendar Notes:', validCalendarNotes.length);
+    console.log('✅ After userId validation - Tasks:', validTasks.length, 'Expenses:', validExpenses.length, 'Journals:', validJournals.length, 'Sleep:', validSleep.length, 'Mood:', validMood.length, 'Goals:', validGoals.length, 'Calendar Notes:', validCalendarNotes.length);
 
     // If no lastSyncAt, sync everything (first sync)
     if (!lastSyncAt) {
@@ -384,6 +425,8 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
         tasks: validTasks,
         expenses: validExpenses,
         journals: validJournals,
+        sleep: validSleep,
+        mood: validMood,
         goals: transformedGoals,
         calendarNotes: validCalendarNotes,
         reflections: [],
@@ -398,6 +441,24 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       if (!timestamp) {
         console.warn(`Task ${task.id} has no timestamp, including in sync`);
         return true; // Include items without timestamps to be safe
+      }
+      return new Date(timestamp) > lastSync;
+    });
+
+    const changedSleep = validSleep.filter((s) => {
+      const timestamp = s.updatedAt || s.createdAt;
+      if (!timestamp) {
+        console.warn(`Sleep ${s.id} has no timestamp, including in sync`);
+        return true;
+      }
+      return new Date(timestamp) > lastSync;
+    });
+
+    const changedMood = validMood.filter((m) => {
+      const timestamp = m.updatedAt || m.createdAt;
+      if (!timestamp) {
+        console.warn(`Mood ${m.id} has no timestamp, including in sync`);
+        return true;
       }
       return new Date(timestamp) > lastSync;
     });
@@ -438,7 +499,7 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       return new Date(timestamp) > lastSync;
     });
 
-    console.log('✅ After incremental filtering - Tasks:', changedTasks.length, 'Expenses:', changedExpenses.length, 'Journals:', changedJournals.length, 'Goals:', changedGoals.length, 'Calendar Notes:', changedCalendarNotes.length);
+    console.log('✅ After incremental filtering - Tasks:', changedTasks.length, 'Expenses:', changedExpenses.length, 'Journals:', changedJournals.length, 'Sleep:', changedSleep.length, 'Mood:', changedMood.length, 'Goals:', changedGoals.length, 'Calendar Notes:', changedCalendarNotes.length);
 
     // Transform goals for backend compatibility
     const transformedChangedGoals = changedGoals.map(transformGoalForBackend);
@@ -447,6 +508,8 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       tasks: changedTasks,
       expenses: changedExpenses,
       journals: changedJournals,
+      sleep: changedSleep,
+      mood: changedMood,
       goals: transformedChangedGoals,
       calendarNotes: changedCalendarNotes,
       reflections: [],
@@ -458,6 +521,8 @@ async function getLocalChanges(userId: string, lastSyncAt: string | null): Promi
       tasks: [],
       expenses: [],
       journals: [],
+      sleep: [],
+      mood: [],
       goals: [],
       calendarNotes: [],
       reflections: [],
@@ -497,6 +562,8 @@ export async function performDownload(
       tasks: serverData.tasks.length,
       expenses: serverData.expenses.length,
       journals: serverData.journals.length,
+      sleep: serverData.sleep?.length || 0,
+      mood: serverData.mood?.length || 0,
       goals: serverData.goals?.length || 0,
       calendarNotes: serverData.calendarNotes?.length || 0,
     });
@@ -525,6 +592,8 @@ export async function performDownload(
     const validTasks = serverData.tasks.filter(task => task.userId === userId);
     const validExpenses = serverData.expenses.filter(expense => expense.userId === userId);
     const validJournals = serverData.journals.filter(journal => journal.userId === userId);
+    const validSleep = (serverData.sleep || []).filter(s => s.userId === userId);
+    const validMood = (serverData.mood || []).filter(m => m.userId === userId);
     const validGoals = (serverData.goals || []).filter(goal => goal.userId === userId);
     const validCalendarNotes = (serverData.calendarNotes || []).filter(note => note.userId === userId);
 
@@ -533,6 +602,8 @@ export async function performDownload(
       tasks: serverData.tasks.length - validTasks.length,
       expenses: serverData.expenses.length - validExpenses.length,
       journals: serverData.journals.length - validJournals.length,
+      sleep: (serverData.sleep?.length || 0) - validSleep.length,
+      mood: (serverData.mood?.length || 0) - validMood.length,
       goals: (serverData.goals?.length || 0) - validGoals.length,
       calendarNotes: (serverData.calendarNotes?.length || 0) - validCalendarNotes.length,
     };
@@ -575,6 +646,28 @@ export async function performDownload(
       }
     }
 
+    // Save all sleep to IndexedDB
+    let savedSleep = 0;
+    for (const sleep of validSleep) {
+      try {
+        await upsertSleep(sleep);
+        savedSleep++;
+      } catch (error) {
+        console.error('Failed to save sleep:', sleep.id, error);
+      }
+    }
+
+    // Save all mood to IndexedDB
+    let savedMood = 0;
+    for (const mood of validMood) {
+      try {
+        await upsertMood(mood);
+        savedMood++;
+      } catch (error) {
+        console.error('Failed to save mood:', mood.id, error);
+      }
+    }
+
     // Save all goals to IndexedDB (transform from backend format first)
     let savedGoals = 0;
     for (const backendGoal of validGoals) {
@@ -598,10 +691,12 @@ export async function performDownload(
       }
     }
 
-    console.log('💾 Saved to IndexedDB:', {
+    console.log('✅ Download completed successfully', {
       tasks: savedTasks,
       expenses: savedExpenses,
       journals: savedJournals,
+      sleep: savedSleep,
+      mood: savedMood,
       goals: savedGoals,
       calendarNotes: savedCalendarNotes,
     });
@@ -615,17 +710,19 @@ export async function performDownload(
     // Trigger a custom event to notify components to refresh their data
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('data-downloaded', {
-        detail: { userId, tasks: savedTasks, expenses: savedExpenses, journals: savedJournals, goals: savedGoals, calendarNotes: savedCalendarNotes }
+        detail: { userId, tasks: savedTasks, expenses: savedExpenses, journals: savedJournals, sleep: savedSleep, mood: savedMood, goals: savedGoals, calendarNotes: savedCalendarNotes }
       }));
     }
 
     return {
       success: true,
-      message: 'Downloaded successfully',
+      message: 'Download completed successfully',
       stats: {
         uploadedTasks: savedTasks,
         uploadedExpenses: savedExpenses,
         uploadedJournals: savedJournals,
+        uploadedSleep: savedSleep,
+        uploadedMood: savedMood,
         uploadedGoals: savedGoals,
         uploadedCalendarNotes: savedCalendarNotes,
         conflictsResolved: 0,
@@ -696,6 +793,8 @@ export async function performSync(
       tasks: localChanges.tasks.length,
       expenses: localChanges.expenses.length,
       journals: localChanges.journals.length,
+      sleep: localChanges.sleep.length,
+      mood: localChanges.mood.length,
       goals: localChanges.goals.length,
       calendarNotes: localChanges.calendarNotes.length,
     });
@@ -704,6 +803,8 @@ export async function performSync(
       localChanges.tasks.length +
       localChanges.expenses.length +
       localChanges.journals.length +
+      localChanges.sleep.length +
+      localChanges.mood.length +
       localChanges.goals.length +
       localChanges.calendarNotes.length;
 
@@ -719,6 +820,8 @@ export async function performSync(
           uploadedTasks: 0,
           uploadedExpenses: 0,
           uploadedJournals: 0,
+          uploadedSleep: 0,
+          uploadedMood: 0,
           uploadedGoals: 0,
           uploadedCalendarNotes: 0,
           conflictsResolved: 0,
@@ -759,6 +862,8 @@ export async function performSync(
         uploadedTasks: response.synced_tasks,
         uploadedExpenses: response.synced_expenses,
         uploadedJournals: response.synced_journals,
+        uploadedSleep: response.synced_sleep || 0,
+        uploadedMood: response.synced_mood || 0,
         uploadedGoals: response.synced_goals,
         uploadedCalendarNotes: response.synced_calendar_notes,
         conflictsResolved: response.conflicts_resolved,

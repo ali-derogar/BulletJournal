@@ -6,6 +6,7 @@ import type { AnalyticsData, Period, PeriodType } from '@/domain/analytics';
 import { getAnalytics, requestAIReview } from '@/services/analytics';
 import { getCurrentPeriod, getPreviousPeriod, getNextPeriod, getPeriodDates } from '@/utils/analytics';
 import { useUser } from '@/app/context/UserContext';
+import { getRecentAIReports, saveAIReport, type AIReportRecord } from '@/storage/ai';
 
 interface AnalyticsDashboardProps {
   initialPeriodType?: PeriodType;
@@ -15,7 +16,12 @@ type AIParsedReport = {
   summary?: string;
   strengths?: unknown[];
   critiques?: unknown[];
+  root_causes?: unknown[];
   recommendations?: unknown[];
+  goal_alignment?: unknown;
+  plan_7_days?: unknown;
+  plan_30_days?: unknown;
+  questions?: unknown[];
   [key: string]: unknown;
 };
 
@@ -29,6 +35,8 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiReport, setAiReport] = useState<{ raw: string; parsed?: unknown } | null>(null);
+  const [aiHistory, setAiHistory] = useState<AIReportRecord[]>([]);
+  const [selectedAiReportId, setSelectedAiReportId] = useState<string | null>(null);
 
 
   const loadAnalytics = useCallback(async () => {
@@ -62,6 +70,15 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       loadAnalytics();
     }
   }, [period, currentUser?.id, loadAnalytics]);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!currentUser?.id) return;
+      const items = await getRecentAIReports(currentUser.id, 5);
+      setAiHistory(items);
+    };
+    loadHistory();
+  }, [currentUser?.id, period]);
 
   const handlePeriodChange = (newPeriod: Period) => {
     console.log('📊 AnalyticsDashboard: Period changed', { from: period, to: newPeriod });
@@ -143,6 +160,27 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       setAiLoading(true);
       const result = await requestAIReview(period);
       setAiReport(result);
+
+      if (currentUser?.id) {
+        const nowIso = new Date().toISOString();
+        const periodKey = `${period.type}:${period.year}:${period.period}`;
+        const title = `${period.type} ${period.year}/${period.period}`;
+
+        const record: AIReportRecord = {
+          id: `ai-report-${currentUser.id}-${Date.now()}`,
+          userId: currentUser.id,
+          createdAt: nowIso,
+          periodKey,
+          title,
+          raw: result.raw,
+          parsed: result.parsed,
+        };
+
+        await saveAIReport(record, 5);
+        const items = await getRecentAIReports(currentUser.id, 5);
+        setAiHistory(items);
+        setSelectedAiReportId(record.id);
+      }
     } catch (e) {
       setAiError(e instanceof Error ? e.message : 'AI review failed');
     } finally {
@@ -279,71 +317,130 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
             AI Report
           </h3>
 
+          {aiHistory.length > 0 && (
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
+              <label className="text-sm font-bold text-muted-foreground">History</label>
+              <select
+                className="px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+                value={selectedAiReportId || ''}
+                onChange={(e) => {
+                  const id = e.target.value || null;
+                  setSelectedAiReportId(id);
+                  const item = aiHistory.find((x) => x.id === id);
+                  if (item) {
+                    setAiReport({ raw: item.raw, parsed: item.parsed });
+                  }
+                }}
+              >
+                <option value="">Select a previous report…</option>
+                {aiHistory.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.title} — {new Date(r.createdAt).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {aiError && (
             <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
               <p className="text-red-800 dark:text-red-200 text-sm">{aiError}</p>
             </div>
           )}
 
-          {aiReport?.parsed ? (
-            <div className="space-y-4">
-              {(() => {
-                const parsed = aiReport.parsed as AIParsedReport;
-                return parsed.summary ? (
-                <div>
-                  <h4 className="text-sm font-bold text-muted-foreground mb-2">Summary</h4>
-                  <p className="text-foreground font-medium whitespace-pre-wrap">{parsed.summary}</p>
-                </div>
-                ) : null;
-              })()}
+          {(() => {
+            const toText = (v: unknown): string => {
+              if (typeof v === 'string') return v;
+              if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+              if (v == null) return '';
+              try {
+                return JSON.stringify(v);
+              } catch {
+                return String(v);
+              }
+            };
 
-              {(() => {
-                const parsed = aiReport.parsed as AIParsedReport;
-                return Array.isArray(parsed.strengths) && parsed.strengths.length > 0 ? (
-                <div>
-                  <h4 className="text-sm font-bold text-muted-foreground mb-2">Strengths</h4>
-                  <ul className="space-y-2">
-                    {parsed.strengths.slice(0, 8).map((x: unknown, i: number) => (
-                      <li key={i} className="text-foreground font-medium">- {String(x)}</li>
-                    ))}
-                  </ul>
-                </div>
-                ) : null;
-              })()}
+            const toStringList = (v: unknown): string[] => {
+              if (!Array.isArray(v)) return [];
+              return v
+                .map((x) => toText(x))
+                .map((s) => s.trim())
+                .filter(Boolean);
+            };
 
-              {(() => {
-                const parsed = aiReport.parsed as AIParsedReport;
-                return Array.isArray(parsed.critiques) && parsed.critiques.length > 0 ? (
-                <div>
-                  <h4 className="text-sm font-bold text-muted-foreground mb-2">Critiques</h4>
-                  <ul className="space-y-2">
-                    {parsed.critiques.slice(0, 8).map((x: unknown, i: number) => (
-                      <li key={i} className="text-foreground font-medium">- {String(x)}</li>
-                    ))}
-                  </ul>
-                </div>
-                ) : null;
-              })()}
+            const parsed: AIParsedReport | null = (() => {
+              if (aiReport?.parsed && typeof aiReport.parsed === 'object') {
+                return aiReport.parsed as AIParsedReport;
+              }
 
-              {(() => {
-                const parsed = aiReport.parsed as AIParsedReport;
-                return Array.isArray(parsed.recommendations) && parsed.recommendations.length > 0 ? (
-                <div>
-                  <h4 className="text-sm font-bold text-muted-foreground mb-2">Recommendations</h4>
-                  <ul className="space-y-2">
-                    {parsed.recommendations.slice(0, 8).map((x: unknown, i: number) => (
-                      <li key={i} className="text-foreground font-medium">- {typeof x === 'string' ? x : JSON.stringify(x)}</li>
-                    ))}
-                  </ul>
-                </div>
-                ) : null;
-              })()}
-            </div>
-          ) : aiReport?.raw ? (
-            <pre className="text-xs whitespace-pre-wrap break-words bg-muted/30 rounded-lg p-3 border border-border">
-              {aiReport.raw}
-            </pre>
-          ) : null}
+              if (aiReport?.raw) {
+                try {
+                  const maybe = JSON.parse(aiReport.raw) as unknown;
+                  if (maybe && typeof maybe === 'object') return maybe as AIParsedReport;
+                } catch {
+                  return null;
+                }
+              }
+
+              return null;
+            })();
+
+            const plan7 = parsed && parsed.plan_7_days && typeof parsed.plan_7_days === 'object'
+              ? (parsed.plan_7_days as { recommendations?: unknown }).recommendations
+              : undefined;
+
+            const plan30 = parsed && parsed.plan_30_days && typeof parsed.plan_30_days === 'object'
+              ? (parsed.plan_30_days as { recommendations?: unknown }).recommendations
+              : undefined;
+
+            const sections: Array<{ title: string; items?: string[]; text?: string }> = [
+              { title: 'Summary', text: parsed?.summary ? String(parsed.summary) : '' },
+              { title: 'Strengths', items: toStringList(parsed?.strengths) },
+              { title: 'Critiques', items: toStringList(parsed?.critiques) },
+              { title: 'Root Causes', items: toStringList(parsed?.root_causes) },
+              { title: 'Recommendations', items: toStringList(parsed?.recommendations) },
+              { title: 'Goal Alignment', text: parsed?.goal_alignment ? toText(parsed.goal_alignment) : '' },
+              { title: 'Plan (7 Days)', items: toStringList(plan7) },
+              { title: 'Plan (30 Days)', items: toStringList(plan30) },
+              { title: 'Questions', items: toStringList(parsed?.questions) },
+            ];
+
+            const hasAnySection = sections.some((s) => (s.text && s.text.trim().length > 0) || (s.items && s.items.length > 0));
+
+            if (!hasAnySection) {
+              return aiReport?.raw ? (
+                <pre className="text-xs whitespace-pre-wrap break-words bg-muted/30 rounded-lg p-3 border border-border">
+                  {aiReport.raw}
+                </pre>
+              ) : null;
+            }
+
+            return (
+              <div className="space-y-4">
+                {sections.map((s) => {
+                  const items = s.items && s.items.length > 0 ? s.items.slice(0, 10) : [];
+                  const text = s.text ? s.text.trim() : '';
+
+                  if (!text && items.length === 0) return null;
+
+                  return (
+                    <div key={s.title}>
+                      <h4 className="text-sm font-bold text-muted-foreground mb-2">{s.title}</h4>
+                      {text ? (
+                        <p className="text-foreground font-medium whitespace-pre-wrap">{text}</p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {items.map((x, i) => (
+                            <li key={`${s.title}-${i}`} className="text-foreground font-medium">- {x}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </motion.div>
       )}
 
