@@ -47,6 +47,7 @@ def upsert_task(db: Session, task_data: dict, user_id: str) -> bool:
         'estimatedTime': 'estimated_time',
         'isUseful': 'is_useful',
         'accumulatedTime': 'accumulated_time',
+        'isCopiedToNextDay': 'is_copied_to_next_day',
     }
     for frontend_field, db_field in task_field_mappings.items():
         if frontend_field in db_task_data:
