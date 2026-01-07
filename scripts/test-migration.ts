@@ -48,6 +48,7 @@ function createLegacyTask(date: string, index: number): any {
     timerStart: null,
     estimatedTime: 30,
     isUseful: true,
+    isCopiedToNextDay: false,
   };
 }
 
@@ -262,8 +263,9 @@ async function runTests() {
       }],
       timerRunning: false,
       timerStart: null,
-      estimatedTime: 60,
+      estimatedTime: 30,
       isUseful: true,
+      isCopiedToNextDay: false,
     };
 
     const bobTask: Task = {
@@ -284,6 +286,7 @@ async function runTests() {
       timerStart: new Date().toISOString(),
       estimatedTime: 30,
       isUseful: false,
+      isCopiedToNextDay: false,
     };
 
     await saveTask(aliceTask);

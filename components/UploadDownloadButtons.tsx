@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { performSync, performDownload, canSync, formatSyncStats } from '@/services/sync';
+import { performSync, canSync } from '@/services/sync';
 import { logout } from '@/services/auth';
 import type { SyncResult, SyncPhase } from '@/services/sync';
 import SyncStatus from './SyncStatus';
@@ -32,23 +32,7 @@ export default function UploadDownloadButtons() {
     syncCheckReason: syncCheck.reason,
   });
 
-  // Auto-sync effect: trigger handleUpload every 10 seconds
-  React.useEffect(() => {
-    if (!isAuthenticated || !user || !isOnline) return;
-
-    console.log('⏱️ Auto-sync timer started (10s)');
-    const interval = setInterval(() => {
-      console.log('🔄 Auto-sync pulse triggered');
-      handleUpload(true); // Call silently
-    }, 10000);
-
-    return () => {
-      console.log('🛑 Auto-sync timer cleared');
-      clearInterval(interval);
-    };
-  }, [isAuthenticated, user, isOnline]);
-
-  const handleUpload = async (isSilent = false) => {
+  const handleUpload = useCallback(async (isSilent = false) => {
     if (!isSilent) {
       console.log('🔵 Upload action initiated manually', {
         syncCheckAllowed: syncCheck.allowed,
@@ -64,108 +48,53 @@ export default function UploadDownloadButtons() {
     }
 
     setUploadPhase('loading');
-    if (!isSilent) {
-      setSyncResult(null);
-      setShowNotification(false);
-      setLastSyncError(null);
-    }
-
-    try {
-      const result = await performSync(user.id, (progress) => {
-        setUploadPhase(progress.phase);
-      });
-
-      if (!isSilent) {
-        setSyncResult(result);
-        setShowNotification(true);
-      }
-
-      if (result.success) {
-        if (!isSilent) {
-          setLastSyncError(null);
-          setTimeout(() => {
-            setShowNotification(false);
-          }, 5000);
-        }
-      } else {
-        if (result.tokenExpired) {
-          console.warn('Token expired during upload, logging out...');
-          logout();
-          return;
-        }
-        if (!isSilent) {
-          setLastSyncError(result.error || result.message);
-        } else {
-          console.error('Auto-sync upload failed:', result.error || result.message);
-        }
-      }
-    } catch (error) {
-      if (!isSilent) {
-        console.error('Upload error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setLastSyncError(errorMessage);
-        setSyncResult({
-          success: false,
-          message: 'Upload failed',
-          error: errorMessage,
-          retryable: true,
-        });
-        setShowNotification(true);
-      } else {
-        console.error('Auto-sync upload error:', error);
-      }
-    } finally {
-      setUploadPhase('idle');
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!syncCheck.allowed || !user) {
-      return;
-    }
-
-    setDownloadPhase('loading');
     setSyncResult(null);
     setShowNotification(false);
     setLastSyncError(null);
 
     try {
-      const result = await performDownload(user.id, (progress) => {
-        console.log('Download Progress:', progress);
-        setDownloadPhase(progress.phase);
-      });
-
+      const result = await performSync(user.id);
       setSyncResult(result);
-      setShowNotification(true);
 
-      if (result.success) {
-        setLastSyncError(null);
-        setTimeout(() => {
-          setShowNotification(false);
-        }, 5000);
-      } else {
-        if (result.tokenExpired) {
-          console.warn('Token expired during download, logging out...');
-          logout();
-          return;
+      if (!result.success) {
+        setLastSyncError(result.error || 'Upload failed');
+        if (!isSilent) {
+          setShowNotification(true);
         }
-        setLastSyncError(result.error || result.message);
       }
     } catch (error) {
-      console.error('Download error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setLastSyncError(errorMessage);
+      console.error('Upload error:', error);
       setSyncResult({
         success: false,
-        message: 'Download failed',
+        message: 'Upload failed',
         error: errorMessage,
         retryable: true,
       });
-      setShowNotification(true);
+      setLastSyncError(errorMessage);
+      if (!isSilent) {
+        setShowNotification(true);
+      }
     } finally {
-      setDownloadPhase('idle');
+      setUploadPhase('idle');
     }
-  };
+  }, [syncCheck, user]);
+
+  // Auto-sync effect: trigger handleUpload every 10 seconds
+  React.useEffect(() => {
+    if (!isAuthenticated || !user || !isOnline) return;
+
+    console.log('⏱️ Auto-sync timer started (10s)');
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-sync pulse triggered');
+      handleUpload(true); // Call silently
+    }, 10000);
+
+    return () => {
+      console.log('🛑 Auto-sync timer cleared');
+      clearInterval(interval);
+    };
+  }, [isAuthenticated, user, isOnline, handleUpload]);
 
   // Don't show anything if not authenticated
   if (!isAuthenticated) {
@@ -207,17 +136,23 @@ export default function UploadDownloadButtons() {
                 </h4>
 
                 {syncResult.error && (
-                  <p className="text-xs text-red-700 mt-1 break-words">
-                    {typeof syncResult.error === 'string' ? syncResult.error : JSON.stringify(syncResult.error)}
-                  </p>
+                  <p className="mt-1 text-xs text-red-600">{syncResult.error}</p>
+                )}
+
+                {syncResult.retryable && (
+                  <button
+                    onClick={() => handleUpload(false)}
+                    className="mt-2 text-xs font-medium text-red-700 hover:text-red-800 underline"
+                  >
+                    Try Again
+                  </button>
                 )}
               </div>
 
               {/* Close Button */}
               <button
                 onClick={() => setShowNotification(false)}
-                className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors"
-                aria-label="Close"
+                className="flex-shrink-0 p-1 text-red-400 hover:text-red-600"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -227,6 +162,48 @@ export default function UploadDownloadButtons() {
           </div>
         </div>
       )}
+
+      {/* Upload Button - Always visible */}
+      <button
+        onClick={() => handleUpload(false)}
+        disabled={isUploading}
+        className={`
+          relative px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
+          ${isUploading 
+            ? 'bg-blue-100 text-blue-700 cursor-not-allowed' 
+            : 'bg-blue-500 text-white hover:bg-blue-600 shadow-sm hover:shadow-md'
+          }
+        `}
+        title={isUploading ? 'Syncing...' : 'Sync to cloud'}
+      >
+        {isUploading ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Syncing...
+          </>
+        ) : (
+          <>
+            <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Sync
+          </>
+        )}
+      </button>
+
+      {/* Logout Button */}
+      <button
+        onClick={logout}
+        className="px-3 py-2 rounded-lg text-xs font-medium text-red-600 hover:text-red-800 hover:bg-red-50 transition-colors duration-200"
+        title="Logout"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </button>
     </div>
   );
 }

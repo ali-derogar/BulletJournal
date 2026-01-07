@@ -33,8 +33,6 @@ const generateUserColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
-const generateUserId = () => `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
 const formatTime = (timestamp: number) => {
   return new Date(timestamp).toLocaleTimeString('fa-IR', {
     hour: '2-digit',
@@ -61,7 +59,7 @@ export default function ChatRoom() {
   // State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [users, setUsers] = useState<Map<string, User>>(new Map());
+  const [users] = useState<Map<string, User>>(new Map());
   const [inputText, setInputText] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);

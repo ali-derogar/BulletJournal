@@ -18,7 +18,7 @@ const LEVEL_CONFIG: Record<string, { color: string; icon: string; threshold: num
 
 export default function AuthButton() {
   const router = useRouter();
-  const { user, isAuthenticated, logout, isOnline } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 

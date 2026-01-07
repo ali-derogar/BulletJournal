@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Task, TaskStatus, Expense, MoodInfo, SleepInfo } from "@/domain";
+import type { Task, Expense, MoodInfo, SleepInfo } from "@/domain";
 import { getTasks, saveTask, deleteTask, getExpenses, getMood, getSleep } from "@/storage";
 import TaskCard from "./TaskCard";
 import { calculateEmotionalScore, getSleepQualityColor, getUsefulTaskRatioColor } from "@/utils/emotionalScoring";
@@ -15,7 +15,6 @@ interface UnifiedTasksProps {
 
 export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: UnifiedTasksProps) {
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [expenses, setExpenses] = useState<Expense[]>([]);
     const [moodData, setMoodData] = useState<MoodInfo | null>(null);
     const [sleepData, setSleepData] = useState<SleepInfo | null>(null);
     const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -37,14 +36,13 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
         async function loadData() {
             try {
                 setLoading(true);
-                const [tasksData, expensesData, moodDataResult, sleepDataResult] = await Promise.all([
+                const [tasksData, , moodDataResult, sleepDataResult] = await Promise.all([
                     getTasks(date, userId),
                     getExpenses(date, userId),
                     getMood(date, userId),
                     getSleep(date, userId),
                 ]);
                 setTasks(tasksData);
-                setExpenses(expensesData);
                 setMoodData(moodDataResult);
                 setSleepData(sleepDataResult);
             } catch (error) {
