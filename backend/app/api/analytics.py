@@ -439,7 +439,10 @@ async def ai_review(
             "اگر general_goal یا goals موجود است، محور تحلیل باید همان باشد. اگر هدف‌ها خالی هستند، ابتدا ۲ سوال کوتاه برای روشن شدن هدف بپرس. "
             "لحن: منتقدانه اما سازنده. سطح سخت‌گیری: " + str(strictness) + ". "
             "تمرکز تحلیل: " + focus + ". "
-            "خروجی را به صورت JSON معتبر برگردان با کلیدهای: summary, strengths, critiques, root_causes, recommendations, goal_alignment, plan_7_days, plan_30_days, questions." 
+            "خروجی باید فقط و فقط یک JSON معتبر باشد (بدون متن اضافه، بدون markdown، بدون ```). "
+            "کلیدها باید دقیقاً این‌ها باشند: summary, strengths, critiques, root_causes, recommendations, goal_alignment, plan_7_days, plan_30_days, questions. "
+            "مقادیر strengths/critiques/root_causes/recommendations/questions/plan_7_days/plan_30_days باید آرایه‌ای از رشته‌های کوتاه و خوانا باشد. "
+            "goal_alignment می‌تواند یک رشته باشد."
         )
 
         deps = AgentDependencies(db=db, user=current_user, current_date=end_str)
@@ -456,7 +459,18 @@ async def ai_review(
         try:
             parsed = json.loads(raw)
         except Exception:
-            parsed = None
+            try:
+                cleaned = raw.strip()
+                if cleaned.startswith('```'):
+                    cleaned = cleaned.strip('`')
+                first = cleaned.find('{')
+                last = cleaned.rfind('}')
+                if first >= 0 and last > first:
+                    parsed = json.loads(cleaned[first:last + 1])
+                else:
+                    parsed = None
+            except Exception:
+                parsed = None
 
         return AIReviewResponse(raw=raw, parsed=parsed)
 

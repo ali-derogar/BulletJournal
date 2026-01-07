@@ -12,6 +12,149 @@ interface AnalyticsDashboardProps {
   initialPeriodType?: PeriodType;
 }
 
+function SparklineCard({
+  title,
+  data,
+  className,
+}: {
+  title: string;
+  data: Record<string, number>;
+  className: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-background/40 p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <h4 className="text-sm font-bold text-muted-foreground truncate">{title}</h4>
+        <span className="text-xs font-semibold text-muted-foreground">
+          {Object.keys(data || {}).length} pt
+        </span>
+      </div>
+      <Sparkline data={data} className={className} />
+    </div>
+  );
+}
+
+function Sparkline({
+  data,
+  className,
+  height = 56,
+}: {
+  data: Record<string, number>;
+  className: string;
+  height?: number;
+}) {
+  const entries = Object.entries(data || {}).sort(([a], [b]) => a.localeCompare(b));
+  const values = entries.map(([, v]) => (Number.isFinite(v) ? v : 0));
+  const n = values.length;
+
+  if (n < 2) {
+    return (
+      <div className="h-14 rounded-xl bg-muted/30 border border-border flex items-center justify-center">
+        <span className="text-xs text-muted-foreground font-medium">Not enough data</span>
+      </div>
+    );
+  }
+
+  const w = 240;
+  const h = height;
+  const pad = 8;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  const points = values.map((v, i) => {
+    const x = pad + (i * (w - pad * 2)) / (n - 1);
+    const y = pad + ((max - v) * (h - pad * 2)) / range;
+    return { x, y };
+  });
+
+  const d = points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+    .join(' ');
+
+  const area = `${d} L ${points[points.length - 1].x.toFixed(2)} ${(h - pad).toFixed(2)} L ${points[0].x.toFixed(2)} ${(h - pad).toFixed(2)} Z`;
+  const gradId = `spark-${titleToId(className)}-${Math.round(values[0] * 1000)}-${n}`;
+
+  return (
+    <div className="w-full">
+      <svg viewBox={`0 0 ${w} ${h}`} className={`w-full ${className}`} aria-label={"sparkline"}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill={`url(#${gradId})`} />
+        <path d={d} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="4" fill="currentColor" />
+      </svg>
+      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground font-medium">
+        <span>min {formatCompact(min)}</span>
+        <span>max {formatCompact(max)}</span>
+      </div>
+    </div>
+  );
+}
+
+function CompareBars({
+  title,
+  unit,
+  current,
+  previous,
+  className,
+}: {
+  title: string;
+  unit: string;
+  current: number;
+  previous: number;
+  className: string;
+}) {
+  const c = Number.isFinite(current) ? current : 0;
+  const p = Number.isFinite(previous) ? previous : 0;
+  const max = Math.max(c, p, 1);
+  const cPct = Math.round((c / max) * 100);
+  const pPct = Math.round((p / max) * 100);
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-background/40 p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h4 className="text-sm font-bold text-muted-foreground truncate">{title}</h4>
+        <span className="text-xs font-semibold text-muted-foreground">{formatCompact(c)}{unit}</span>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="w-14 text-xs text-muted-foreground font-semibold">Now</span>
+          <div className="flex-1 h-3 rounded-full bg-muted/30 border border-border overflow-hidden">
+            <div className={`h-full ${className}`} style={{ width: `${cPct}%`, backgroundColor: 'currentColor' }} />
+          </div>
+          <span className="w-14 text-right text-xs text-muted-foreground font-semibold">{formatCompact(c)}{unit}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="w-14 text-xs text-muted-foreground font-semibold">Prev</span>
+          <div className="flex-1 h-3 rounded-full bg-muted/30 border border-border overflow-hidden">
+            <div className={`h-full ${className}`} style={{ width: `${pPct}%`, opacity: 0.55, backgroundColor: 'currentColor' }} />
+          </div>
+          <span className="w-14 text-right text-xs text-muted-foreground font-semibold">{formatCompact(p)}{unit}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function titleToId(s: string): string {
+  return s.replace(/[^a-z0-9_-]+/gi, '-').toLowerCase();
+}
+
+function formatCompact(v: number): string {
+  if (!Number.isFinite(v)) return '0';
+  const n = Math.round(v * 10) / 10;
+  if (Math.abs(n) >= 1000000) return `${Math.round(n / 100000) / 10}M`;
+  if (Math.abs(n) >= 1000) return `${Math.round(n / 100) / 10}K`;
+  return `${n}`;
+}
+
 type AIParsedReport = {
   summary?: string;
   strengths?: unknown[];
@@ -79,6 +222,15 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
     };
     loadHistory();
   }, [currentUser?.id, period]);
+
+  useEffect(() => {
+    if (aiReport) return;
+    if (selectedAiReportId) return;
+    if (aiHistory.length === 0) return;
+    const latest = aiHistory[0];
+    setSelectedAiReportId(latest.id);
+    setAiReport({ raw: latest.raw, parsed: latest.parsed });
+  }, [aiHistory, aiReport, selectedAiReportId]);
 
   const handlePeriodChange = (newPeriod: Period) => {
     console.log('📊 AnalyticsDashboard: Period changed', { from: period, to: newPeriod });
@@ -195,28 +347,28 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
   });
 
   return (
-    <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
       {/* Header with Gradient */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, type: "spring" }}
-        className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-2xl p-4 md:p-6 mb-4 md:mb-6 shadow-2xl"
+        className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-700 dark:via-purple-700 dark:to-pink-700 rounded-3xl p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 shadow-2xl border border-white/10"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="text-white">
-            <h1 className="text-2xl md:text-3xl font-black mb-2 flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
+          <div className="text-white flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 flex items-center gap-3">
               <span className="text-2xl md:text-3xl">📊</span>
-              Analytics Dashboard
+              <span className="truncate">Analytics Dashboard</span>
             </h1>
             <PeriodSelector period={period} onPeriodChange={handlePeriodChange} />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               onClick={runAIReview}
               disabled={aiLoading}
-              className="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white font-bold shadow-lg backdrop-blur-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white font-bold shadow-lg backdrop-blur-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               title="AI Review"
             >
               {aiLoading ? 'Analyzing…' : 'AI Review'}
@@ -230,13 +382,13 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.5 }}
-        className="flex items-center justify-between mb-6 bg-card dark:bg-card rounded-xl p-4 shadow-lg border border-border dark:border-border"
+        className="grid grid-cols-[auto,1fr,auto] items-center gap-3 mb-6 bg-card dark:bg-card rounded-2xl p-3 sm:p-4 shadow-lg border border-border dark:border-border"
       >
         <motion.button
           onClick={() => navigatePeriod('prev')}
           whileHover={{ scale: 1.05, x: -2 }}
           whileTap={{ scale: 0.95 }}
-          className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-md hover:shadow-lg transition-all duration-300"
+          className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
         >
           ← Prev
         </motion.button>
@@ -248,14 +400,14 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           whileHover={{ scale: 1.05, x: 2 }}
           whileTap={{ scale: 0.95 }}
           disabled={isCurrentPeriod(period)}
-          className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-secondary disabled:hover:to-secondary/80"
+          className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-secondary disabled:hover:to-secondary/80 text-sm sm:text-base"
         >
           Next →
         </motion.button>
       </motion.div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <MetricCard
           title="Total Time"
           value={formatTime(analytics.time.totalTimeSpent)}
@@ -275,7 +427,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
 
       {/* Wellbeing Cards */}
       {analytics.wellbeing && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <MetricCard
             title="Avg Sleep"
             value={`${analytics.wellbeing.avgSleepHours.toFixed(1)}h`}
@@ -304,13 +456,92 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
         </div>
       )}
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.16, duration: 0.45 }}
+          className="bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-4 sm:p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border"
+        >
+          <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text mb-4 flex items-center gap-2">
+            <span>📈</span>
+            Trends
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <CompareBars
+              title="Time"
+              unit="m"
+              current={analytics.trends.totalTimeSpent.current}
+              previous={analytics.trends.totalTimeSpent.previous}
+              className="text-indigo-600 dark:text-indigo-400"
+            />
+            <CompareBars
+              title="Completion"
+              unit="%"
+              current={analytics.trends.taskCompletionRate.current}
+              previous={analytics.trends.taskCompletionRate.previous}
+              className="text-emerald-600 dark:text-emerald-400"
+            />
+            <CompareBars
+              title="Goals"
+              unit="%"
+              current={analytics.trends.goalSuccessRate.current}
+              previous={analytics.trends.goalSuccessRate.previous}
+              className="text-amber-600 dark:text-amber-400"
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18, duration: 0.45 }}
+          className="bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-4 sm:p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border"
+        >
+          <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 dark:from-blue-400 dark:via-cyan-400 dark:to-teal-400 bg-clip-text mb-4 flex items-center gap-2">
+            <span>🌙</span>
+            Wellbeing
+          </h3>
+
+          {analytics.wellbeing?.series ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <SparklineCard
+                title="Sleep Hours"
+                className="text-indigo-600 dark:text-indigo-400"
+                data={analytics.wellbeing.series.sleepHoursByDay}
+              />
+              <SparklineCard
+                title="Mood Rating"
+                className="text-emerald-600 dark:text-emerald-400"
+                data={analytics.wellbeing.series.moodRatingByDay}
+              />
+              <SparklineCard
+                title="Water"
+                className="text-blue-600 dark:text-blue-400"
+                data={analytics.wellbeing.series.waterIntakeByDay}
+              />
+              <SparklineCard
+                title="Study Minutes"
+                className="text-amber-600 dark:text-amber-400"
+                data={analytics.wellbeing.series.studyMinutesByDay}
+              />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border/60 bg-background/40 p-4">
+              <p className="text-sm text-muted-foreground font-medium">No wellbeing series available for this period.</p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+
       {/* AI Report */}
-      {(aiError || aiReport) && (
+      {(aiError || aiReport || aiHistory.length > 0) && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
-          className="mb-8 bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border"
+          className="mb-8 bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-4 sm:p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border"
         >
           <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 dark:from-purple-400 dark:via-pink-400 dark:to-red-400 bg-clip-text mb-4 flex items-center gap-2">
             <span>🧠</span>
@@ -321,7 +552,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
             <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
               <label className="text-sm font-bold text-muted-foreground">History</label>
               <select
-                className="px-3 py-2 rounded-lg border border-border bg-background text-foreground"
+                className="w-full sm:w-[360px] px-3 py-2.5 rounded-xl border border-border bg-background text-foreground"
                 value={selectedAiReportId || ''}
                 onChange={(e) => {
                   const id = e.target.value || null;
@@ -368,30 +599,105 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
                 .filter(Boolean);
             };
 
+            const tryParseJson = (raw: string): AIParsedReport | null => {
+              try {
+                const maybe = JSON.parse(raw) as unknown;
+                if (maybe && typeof maybe === 'object') return maybe as AIParsedReport;
+                return null;
+              } catch {
+                const first = raw.indexOf('{');
+                const last = raw.lastIndexOf('}');
+                if (first >= 0 && last > first) {
+                  const slice = raw.slice(first, last + 1);
+                  try {
+                    const maybe = JSON.parse(slice) as unknown;
+                    if (maybe && typeof maybe === 'object') return maybe as AIParsedReport;
+                  } catch {
+                    return null;
+                  }
+                }
+                return null;
+              }
+            };
+
+            const parseSectionedText = (raw: string): Partial<AIParsedReport> | null => {
+              const lines = raw.split(/\r?\n/).map((l) => l.trim());
+              const headings: Record<string, keyof AIParsedReport> = {
+                'summary': 'summary',
+                'strengths': 'strengths',
+                'critiques': 'critiques',
+                'root causes': 'root_causes',
+                'root_causes': 'root_causes',
+                'recommendations': 'recommendations',
+                'goal alignment': 'goal_alignment',
+                'goal_alignment': 'goal_alignment',
+                'plan (7 days)': 'plan_7_days',
+                'plan_7_days': 'plan_7_days',
+                'plan (30 days)': 'plan_30_days',
+                'plan_30_days': 'plan_30_days',
+                'questions': 'questions',
+              };
+
+              let current: keyof AIParsedReport | null = null;
+              const out: Partial<Record<keyof AIParsedReport, string[] | string>> = {};
+
+              for (const line of lines) {
+                if (!line) continue;
+                const key = headings[line.toLowerCase()];
+                if (key) {
+                  current = key;
+                  if (out[current] == null) {
+                    out[current] = (current === 'summary' || current === 'goal_alignment') ? '' : [];
+                  }
+                  continue;
+                }
+
+                if (!current) continue;
+
+                const isListTarget = current !== 'summary' && current !== 'goal_alignment';
+                if (isListTarget) {
+                  const arr = Array.isArray(out[current]) ? (out[current] as string[]) : [];
+                  const cleaned = line.replace(/^[-*•]\s*/, '').trim();
+                  if (cleaned) arr.push(cleaned);
+                  out[current] = arr;
+                } else {
+                  const prev = typeof out[current] === 'string' ? (out[current] as string) : '';
+                  out[current] = prev ? `${prev}\n${line}` : line;
+                }
+              }
+
+              const hasAny = Object.values(out).some((v) => (typeof v === 'string' ? v.trim().length > 0 : Array.isArray(v) && v.length > 0));
+              if (!hasAny) return null;
+
+              return out as Partial<AIParsedReport>;
+            };
+
             const parsed: AIParsedReport | null = (() => {
               if (aiReport?.parsed && typeof aiReport.parsed === 'object') {
                 return aiReport.parsed as AIParsedReport;
               }
 
               if (aiReport?.raw) {
-                try {
-                  const maybe = JSON.parse(aiReport.raw) as unknown;
-                  if (maybe && typeof maybe === 'object') return maybe as AIParsedReport;
-                } catch {
-                  return null;
-                }
+                const fromJson = tryParseJson(aiReport.raw);
+                if (fromJson) return fromJson;
+
+                const fromSections = parseSectionedText(aiReport.raw);
+                if (fromSections) return fromSections as AIParsedReport;
               }
 
               return null;
             })();
 
-            const plan7 = parsed && parsed.plan_7_days && typeof parsed.plan_7_days === 'object'
-              ? (parsed.plan_7_days as { recommendations?: unknown }).recommendations
-              : undefined;
+            const normalizePlanItems = (v: unknown): string[] => {
+              if (Array.isArray(v)) return toStringList(v);
+              if (v && typeof v === 'object' && 'recommendations' in (v as Record<string, unknown>)) {
+                return toStringList((v as Record<string, unknown>).recommendations);
+              }
+              return [];
+            };
 
-            const plan30 = parsed && parsed.plan_30_days && typeof parsed.plan_30_days === 'object'
-              ? (parsed.plan_30_days as { recommendations?: unknown }).recommendations
-              : undefined;
+            const plan7 = normalizePlanItems(parsed?.plan_7_days);
+            const plan30 = normalizePlanItems(parsed?.plan_30_days);
 
             const sections: Array<{ title: string; items?: string[]; text?: string }> = [
               { title: 'Summary', text: parsed?.summary ? String(parsed.summary) : '' },
@@ -400,19 +706,21 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
               { title: 'Root Causes', items: toStringList(parsed?.root_causes) },
               { title: 'Recommendations', items: toStringList(parsed?.recommendations) },
               { title: 'Goal Alignment', text: parsed?.goal_alignment ? toText(parsed.goal_alignment) : '' },
-              { title: 'Plan (7 Days)', items: toStringList(plan7) },
-              { title: 'Plan (30 Days)', items: toStringList(plan30) },
+              { title: 'Plan (7 Days)', items: plan7 },
+              { title: 'Plan (30 Days)', items: plan30 },
               { title: 'Questions', items: toStringList(parsed?.questions) },
             ];
 
             const hasAnySection = sections.some((s) => (s.text && s.text.trim().length > 0) || (s.items && s.items.length > 0));
 
             if (!hasAnySection) {
-              return aiReport?.raw ? (
-                <pre className="text-xs whitespace-pre-wrap break-words bg-muted/30 rounded-lg p-3 border border-border">
-                  {aiReport.raw}
-                </pre>
-              ) : null;
+              return (
+                <div className="bg-muted/30 rounded-lg p-3 border border-border">
+                  <p className="text-sm text-muted-foreground font-medium">
+                    فرمت گزارش AI قابل نمایش نیست. لطفاً دوباره روی AI Review بزنید.
+                  </p>
+                </div>
+              );
             }
 
             return (
@@ -424,7 +732,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
                   if (!text && items.length === 0) return null;
 
                   return (
-                    <div key={s.title}>
+                    <div key={s.title} className="rounded-2xl border border-border/60 bg-background/40 p-3 sm:p-4">
                       <h4 className="text-sm font-bold text-muted-foreground mb-2">{s.title}</h4>
                       {text ? (
                         <p className="text-foreground font-medium whitespace-pre-wrap">{text}</p>
