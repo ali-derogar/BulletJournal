@@ -7,8 +7,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-# Use npm ci for faster, reliable builds
-RUN npm ci --only=production
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -28,11 +27,7 @@ ENV NEXT_PUBLIC_DEFAULT_AI_PROVIDER=${NEXT_PUBLIC_DEFAULT_AI_PROVIDER}
 ENV NEXT_PUBLIC_DEFAULT_AI_MODEL=${NEXT_PUBLIC_DEFAULT_AI_MODEL}
 
 # Build the application
-ENV NODE_ENV=production
 RUN npm run build
-
-# Optional: Remove development dependencies to reduce image size
-RUN npm prune --production
 
 # Production image, copy all the files and run next
 FROM base AS runner
