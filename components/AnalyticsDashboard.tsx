@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { AnalyticsData, Period, PeriodType } from '@/domain/analytics';
-import { getAnalytics } from '@/services/analytics';
+import { getAnalytics, requestAIReview } from '@/services/analytics';
 import { getCurrentPeriod, getPreviousPeriod, getNextPeriod, getPeriodDates } from '@/utils/analytics';
 import { useUser } from '@/app/context/UserContext';
 
@@ -11,12 +11,24 @@ interface AnalyticsDashboardProps {
   initialPeriodType?: PeriodType;
 }
 
+type AIParsedReport = {
+  summary?: string;
+  strengths?: unknown[];
+  critiques?: unknown[];
+  recommendations?: unknown[];
+  [key: string]: unknown;
+};
+
 export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: AnalyticsDashboardProps) {
   const { currentUser } = useUser();
   const [period, setPeriod] = useState<Period>(getCurrentPeriod(initialPeriodType));
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiReport, setAiReport] = useState<{ raw: string; parsed?: unknown } | null>(null);
 
 
   const loadAnalytics = useCallback(async () => {
@@ -125,6 +137,19 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
     return null;
   }
 
+  const runAIReview = async () => {
+    try {
+      setAiError(null);
+      setAiLoading(true);
+      const result = await requestAIReview(period);
+      setAiReport(result);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : 'AI review failed');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   console.log('📊 AnalyticsDashboard: Rendering analytics data', {
     period: analytics.period,
     tasksCreated: analytics.tasks.totalTasksCreated,
@@ -147,6 +172,17 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
               Analytics Dashboard
             </h1>
             <PeriodSelector period={period} onPeriodChange={handlePeriodChange} />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={runAIReview}
+              disabled={aiLoading}
+              className="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white font-bold shadow-lg backdrop-blur-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              title="AI Review"
+            >
+              {aiLoading ? 'Analyzing…' : 'AI Review'}
+            </button>
           </div>
         </div>
       </motion.div>
@@ -198,6 +234,118 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           subtitle={`of ${analytics.dataQuality.totalDays} total days`}
         />
       </div>
+
+      {/* Wellbeing Cards */}
+      {analytics.wellbeing && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <MetricCard
+            title="Avg Sleep"
+            value={`${analytics.wellbeing.avgSleepHours.toFixed(1)}h`}
+            subtitle={`${analytics.wellbeing.sleepDays} day(s) logged`}
+          />
+          <MetricCard
+            title="Sleep Quality"
+            value={analytics.wellbeing.avgSleepQuality.toFixed(1)}
+            subtitle="1-10 scale"
+          />
+          <MetricCard
+            title="Mood"
+            value={analytics.wellbeing.avgMoodRating.toFixed(1)}
+            subtitle={`Day score ${analytics.wellbeing.avgDayScore.toFixed(1)}`}
+          />
+          <MetricCard
+            title="Water"
+            value={analytics.wellbeing.totalWaterIntake.toString()}
+            subtitle="glasses (sum)"
+          />
+          <MetricCard
+            title="Study"
+            value={`${analytics.wellbeing.totalStudyMinutes}m`}
+            subtitle="minutes (sum)"
+          />
+        </div>
+      )}
+
+      {/* AI Report */}
+      {(aiError || aiReport) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
+          className="mb-8 bg-gradient-to-br from-card via-card to-card/95 dark:from-card dark:via-card dark:to-card/95 p-6 rounded-2xl shadow-xl border-2 border-border dark:border-border"
+        >
+          <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 dark:from-purple-400 dark:via-pink-400 dark:to-red-400 bg-clip-text mb-4 flex items-center gap-2">
+            <span>🧠</span>
+            AI Report
+          </h3>
+
+          {aiError && (
+            <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <p className="text-red-800 dark:text-red-200 text-sm">{aiError}</p>
+            </div>
+          )}
+
+          {aiReport?.parsed ? (
+            <div className="space-y-4">
+              {(() => {
+                const parsed = aiReport.parsed as AIParsedReport;
+                return parsed.summary ? (
+                <div>
+                  <h4 className="text-sm font-bold text-muted-foreground mb-2">Summary</h4>
+                  <p className="text-foreground font-medium whitespace-pre-wrap">{parsed.summary}</p>
+                </div>
+                ) : null;
+              })()}
+
+              {(() => {
+                const parsed = aiReport.parsed as AIParsedReport;
+                return Array.isArray(parsed.strengths) && parsed.strengths.length > 0 ? (
+                <div>
+                  <h4 className="text-sm font-bold text-muted-foreground mb-2">Strengths</h4>
+                  <ul className="space-y-2">
+                    {parsed.strengths.slice(0, 8).map((x: unknown, i: number) => (
+                      <li key={i} className="text-foreground font-medium">- {String(x)}</li>
+                    ))}
+                  </ul>
+                </div>
+                ) : null;
+              })()}
+
+              {(() => {
+                const parsed = aiReport.parsed as AIParsedReport;
+                return Array.isArray(parsed.critiques) && parsed.critiques.length > 0 ? (
+                <div>
+                  <h4 className="text-sm font-bold text-muted-foreground mb-2">Critiques</h4>
+                  <ul className="space-y-2">
+                    {parsed.critiques.slice(0, 8).map((x: unknown, i: number) => (
+                      <li key={i} className="text-foreground font-medium">- {String(x)}</li>
+                    ))}
+                  </ul>
+                </div>
+                ) : null;
+              })()}
+
+              {(() => {
+                const parsed = aiReport.parsed as AIParsedReport;
+                return Array.isArray(parsed.recommendations) && parsed.recommendations.length > 0 ? (
+                <div>
+                  <h4 className="text-sm font-bold text-muted-foreground mb-2">Recommendations</h4>
+                  <ul className="space-y-2">
+                    {parsed.recommendations.slice(0, 8).map((x: unknown, i: number) => (
+                      <li key={i} className="text-foreground font-medium">- {typeof x === 'string' ? x : JSON.stringify(x)}</li>
+                    ))}
+                  </ul>
+                </div>
+                ) : null;
+              })()}
+            </div>
+          ) : aiReport?.raw ? (
+            <pre className="text-xs whitespace-pre-wrap break-words bg-muted/30 rounded-lg p-3 border border-border">
+              {aiReport.raw}
+            </pre>
+          ) : null}
+        </motion.div>
+      )}
 
       {/* Detailed Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

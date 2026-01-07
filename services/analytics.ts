@@ -1,6 +1,6 @@
-import type { AnalyticsData, Period, PeriodType } from '@/domain/analytics';
+import type { AnalyticsData, Period, PeriodType, WellbeingAnalytics } from '@/domain/analytics';
 import { getGoals } from '@/storage/goal';
-import { get } from '@/services/api';
+import { get, post } from '@/services/api';
 import { getToken } from '@/services/auth';
 import {
   getPeriodDates,
@@ -24,6 +24,49 @@ interface TaskAnalyticsResponse {
     estimated_time: number;
     is_useful: boolean | null;
   }>;
+}
+
+interface WellbeingAnalyticsResponse {
+  avg_sleep_hours: number;
+  avg_sleep_quality: number;
+  sleep_days: number;
+  avg_mood_rating: number;
+  avg_day_score: number;
+  mood_days: number;
+  total_water_intake: number;
+  total_study_minutes: number;
+  series: {
+    sleep_hours_by_day: Record<string, number>;
+    sleep_quality_by_day: Record<string, number>;
+    mood_rating_by_day: Record<string, number>;
+    day_score_by_day: Record<string, number>;
+    water_intake_by_day: Record<string, number>;
+    study_minutes_by_day: Record<string, number>;
+  };
+}
+
+export interface AIReviewResponse {
+  raw: string;
+  parsed?: any;
+}
+
+export async function requestAIReview(period: Period): Promise<AIReviewResponse> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  return post<AIReviewResponse>(
+    `/api/analytics/ai-review`,
+    {
+      period_type: period.type,
+      year: period.year,
+      period: period.period,
+      focus: 'overall',
+      strictness: 3,
+    },
+    token
+  );
 }
 
 export async function getAnalytics(
@@ -53,12 +96,18 @@ export async function getAnalytics(
     const totalDays = days.length;
     console.log('🔍 Analytics Debug: Period info', { totalDays, start: start.toISOString(), end: end.toISOString() });
 
-    // Fetch task analytics from backend
+    // Fetch analytics from backend
     console.log('🔍 Analytics Debug: Fetching from backend...');
-    const taskResponse = await get<TaskAnalyticsResponse>(
-      `/api/analytics/tasks/${period.type}/${period.year}/${period.period}`,
-      token
-    );
+    const [taskResponse, wellbeingResponse] = await Promise.all([
+      get<TaskAnalyticsResponse>(
+        `/api/analytics/tasks/${period.type}/${period.year}/${period.period}`,
+        token
+      ),
+      get<WellbeingAnalyticsResponse>(
+        `/api/analytics/wellbeing/${period.type}/${period.year}/${period.period}`,
+        token
+      ).catch(() => null),
+    ]);
     console.log('🔍 Analytics Debug: Backend response received', taskResponse);
 
     // Fetch goals for the period
@@ -117,6 +166,9 @@ export async function getAnalytics(
       tasks: taskAnalytics,
       goals: goalAnalytics,
       trends,
+      wellbeing: wellbeingResponse
+        ? mapWellbeingResponse(wellbeingResponse)
+        : undefined,
       insights: [],
       dataQuality
     };
@@ -154,6 +206,27 @@ export async function getAnalytics(
     // Return demo analytics on other errors for better UX
     return getDemoAnalytics(period);
   }
+}
+
+function mapWellbeingResponse(resp: WellbeingAnalyticsResponse): WellbeingAnalytics {
+  return {
+    avgSleepHours: resp.avg_sleep_hours || 0,
+    avgSleepQuality: resp.avg_sleep_quality || 0,
+    sleepDays: resp.sleep_days || 0,
+    avgMoodRating: resp.avg_mood_rating || 0,
+    avgDayScore: resp.avg_day_score || 0,
+    moodDays: resp.mood_days || 0,
+    totalWaterIntake: resp.total_water_intake || 0,
+    totalStudyMinutes: resp.total_study_minutes || 0,
+    series: {
+      sleepHoursByDay: resp.series?.sleep_hours_by_day || {},
+      sleepQualityByDay: resp.series?.sleep_quality_by_day || {},
+      moodRatingByDay: resp.series?.mood_rating_by_day || {},
+      dayScoreByDay: resp.series?.day_score_by_day || {},
+      waterIntakeByDay: resp.series?.water_intake_by_day || {},
+      studyMinutesByDay: resp.series?.study_minutes_by_day || {},
+    },
+  };
 }
 
 function calculateGoalAnalytics(goals: any[], period: Period) {

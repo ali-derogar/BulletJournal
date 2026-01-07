@@ -51,12 +51,34 @@ export interface TrendsAnalytics {
   goalSuccessRate: TrendComparison;
 }
 
+export interface WellbeingSeries {
+  sleepHoursByDay: Record<string, number>;
+  sleepQualityByDay: Record<string, number>;
+  moodRatingByDay: Record<string, number>;
+  dayScoreByDay: Record<string, number>;
+  waterIntakeByDay: Record<string, number>;
+  studyMinutesByDay: Record<string, number>;
+}
+
+export interface WellbeingAnalytics {
+  avgSleepHours: number;
+  avgSleepQuality: number;
+  sleepDays: number;
+  avgMoodRating: number;
+  avgDayScore: number;
+  moodDays: number;
+  totalWaterIntake: number;
+  totalStudyMinutes: number;
+  series: WellbeingSeries;
+}
+
 export interface AnalyticsData {
   period: Period;
   time: TimeAnalytics;
   tasks: TaskAnalytics;
   goals: GoalAnalytics;
   trends: TrendsAnalytics;
+  wellbeing?: WellbeingAnalytics;
   insights: string[];
   dataQuality: {
     isComplete: boolean;
