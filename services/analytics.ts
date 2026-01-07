@@ -1,4 +1,4 @@
-import type { AnalyticsData, Period, PeriodType, WellbeingAnalytics } from '@/domain/analytics';
+import type { AnalyticsData, Period, PeriodType, WellbeingAnalytics, TrendsAnalytics } from '@/domain/analytics';
 import { getGoals } from '@/storage/goal';
 import { get, post } from '@/services/api';
 import { getToken } from '@/services/auth';
@@ -71,12 +71,13 @@ export async function requestAIReview(period: Period): Promise<AIReviewResponse>
 
 export async function getAnalytics(
   period: Period,
-  userId: string
+  userId: string,
+  options?: { depth?: number }
 ): Promise<AnalyticsData> {
   // Check if user is online first
   if (!navigator.onLine) {
     console.log('🔍 Analytics Debug: Offline, returning demo analytics');
-    const demoData = getDemoAnalytics(period);
+    const demoData = getDemoAnalytics(period, options);
     demoData.isDemo = false; // Don't mark as demo when offline
     demoData.insights = ['You are currently offline. Analytics data is not available.'];
     return demoData;
@@ -87,7 +88,7 @@ export async function getAnalytics(
   if (!token) {
     console.log('🔍 Analytics Debug: No token, returning demo analytics');
     // Return demo analytics for unauthenticated users
-    return getDemoAnalytics(period);
+    return getDemoAnalytics(period, options);
   }
 
   try {
@@ -145,12 +146,48 @@ export async function getAnalytics(
     // Calculate goal analytics
     const goalAnalytics = calculateGoalAnalytics(goals, period);
 
-    // Calculate trends (simplified - no previous period data for now to avoid infinite loops)
-    const trends = {
-      totalTimeSpent: { current: timeAnalytics.totalTimeSpent, previous: 0, change: 0, trend: 'no-change' as const },
-      taskCompletionRate: { current: taskAnalytics.taskCompletionRate, previous: 0, change: 0, trend: 'no-change' as const },
-      goalSuccessRate: { current: goalAnalytics.goalSuccessRate, previous: 0, change: 0, trend: 'no-change' as const }
-    };
+    // Calculate trends with previous period data
+    let trends: TrendsAnalytics;
+    const depth = options?.depth ?? 1; // Default depth is 1
+
+    if (depth > 0) {
+      try {
+        // Fetch previous period data with depth 0 to prevent recursion
+        const previousPeriod = getPreviousPeriod(period);
+        const previousData = await getAnalytics(previousPeriod, userId, { depth: 0 });
+
+        // Calculate trends using the imported calculateTrend function
+        trends = {
+          totalTimeSpent: calculateTrend(
+            timeAnalytics.totalTimeSpent,
+            previousData.time.totalTimeSpent
+          ),
+          taskCompletionRate: calculateTrend(
+            taskAnalytics.taskCompletionRate,
+            previousData.tasks.taskCompletionRate
+          ),
+          goalSuccessRate: calculateTrend(
+            goalAnalytics.goalSuccessRate,
+            previousData.goals.goalSuccessRate
+          )
+        };
+      } catch (error) {
+        console.warn('Failed to fetch previous period data for trends:', error);
+        // Fallback to zero values if previous period fetch fails
+        trends = {
+          totalTimeSpent: { current: timeAnalytics.totalTimeSpent, previous: 0, change: 0, trend: 'no-change' as const },
+          taskCompletionRate: { current: taskAnalytics.taskCompletionRate, previous: 0, change: 0, trend: 'no-change' as const },
+          goalSuccessRate: { current: goalAnalytics.goalSuccessRate, previous: 0, change: 0, trend: 'no-change' as const }
+        };
+      }
+    } else {
+      // When depth is 0, don't fetch previous period (prevents infinite recursion)
+      trends = {
+        totalTimeSpent: { current: timeAnalytics.totalTimeSpent, previous: 0, change: 0, trend: 'no-change' as const },
+        taskCompletionRate: { current: taskAnalytics.taskCompletionRate, previous: 0, change: 0, trend: 'no-change' as const },
+        goalSuccessRate: { current: goalAnalytics.goalSuccessRate, previous: 0, change: 0, trend: 'no-change' as const }
+      };
+    }
 
     // Calculate data quality
     const dataQuality = {
@@ -192,19 +229,19 @@ export async function getAnalytics(
     // Check if it's a network error (offline)
     if (error && typeof error === 'object' && 'status' in error && error.status === 0) {
       console.log('🔍 Analytics Debug: Network error (offline), returning demo analytics');
-      return getDemoAnalytics(period);
+      return getDemoAnalytics(period, options);
     }
 
     // Check if it's an authentication error
     if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
       console.log('🔍 Analytics Debug: Authentication error, returning demo analytics');
       // Return demo analytics for better UX
-      return getDemoAnalytics(period);
+      return getDemoAnalytics(period, options);
     }
 
     console.log('🔍 Analytics Debug: Other error, returning demo analytics');
     // Return demo analytics on other errors for better UX
-    return getDemoAnalytics(period);
+    return getDemoAnalytics(period, options);
   }
 }
 
@@ -321,7 +358,7 @@ function calculateTimeByUsefulness(tasks: any[]): { useful: number; notUseful: n
   return { useful, notUseful };
 }
 
-function getDemoAnalytics(period: Period): AnalyticsData {
+function getDemoAnalytics(period: Period, options?: { depth?: number }): AnalyticsData {
   // Return sample analytics data for demonstration
   const totalDays = getPeriodDates(period).days.length;
   const activeDays = Math.min(totalDays, 7); // Simulate having data for up to 7 days
