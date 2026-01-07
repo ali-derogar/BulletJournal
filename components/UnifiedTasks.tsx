@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Task, Expense, MoodInfo, SleepInfo } from "@/domain";
+import type { Task, MoodInfo, SleepInfo } from "@/domain";
 import { getTasks, saveTask, deleteTask, getExpenses, getMood, getSleep } from "@/storage";
 import TaskCard from "./TaskCard";
 import { calculateEmotionalScore, getSleepQualityColor, getUsefulTaskRatioColor } from "@/utils/emotionalScoring";

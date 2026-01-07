@@ -14,7 +14,6 @@ export default function UploadDownloadButtons() {
   console.log('🟡 UploadDownloadButtons CALLED, isAuthenticated:', isAuthenticated, 'user:', user);
 
   const [uploadPhase, setUploadPhase] = useState<SyncPhase>('idle');
-  const [downloadPhase, setDownloadPhase] = useState<SyncPhase>('idle');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [lastSyncError, setLastSyncError] = useState<string | null>(null);
   const [showNotification, setShowNotification] = useState(false);
@@ -102,8 +101,7 @@ export default function UploadDownloadButtons() {
   }
 
   const isUploading = uploadPhase !== 'idle';
-  const isDownloading = downloadPhase !== 'idle';
-  const currentPhase = isUploading ? uploadPhase : isDownloading ? downloadPhase : 'idle';
+  const currentPhase = isUploading ? uploadPhase : 'idle';
 
   return (
     <div className="flex items-center gap-2">

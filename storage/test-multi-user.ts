@@ -41,6 +41,7 @@ async function testMultiUserStorage(): Promise<void> {
       timerStart: null,
       estimatedTime: null,
       isUseful: null,
+      isCopiedToNextDay: false,
     };
 
     const task2: Task = {
@@ -56,6 +57,7 @@ async function testMultiUserStorage(): Promise<void> {
       timerStart: null,
       estimatedTime: null,
       isUseful: null,
+      isCopiedToNextDay: false,
     };
 
     const taskDefault: Task = {
@@ -71,6 +73,7 @@ async function testMultiUserStorage(): Promise<void> {
       timerStart: null,
       estimatedTime: null,
       isUseful: null,
+      isCopiedToNextDay: false,
     };
 
     await saveTask(task1);
