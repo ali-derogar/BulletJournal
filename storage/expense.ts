@@ -23,6 +23,7 @@ export async function getExpenses(date: string, userId: string = "default"): Pro
           .map((expense: Expense) => ({
             ...expense,
             userId: expense.userId ?? "default", // Migrate old expenses without userId
+            type: expense.type || "expense", // Default to expense for backward compatibility
           }))
           .filter((expense) => expense.userId === userId); // Filter by userId
         resolve(migratedExpenses);
@@ -51,6 +52,7 @@ export async function saveExpense(expense: Expense): Promise<void> {
     // Auto-populate updatedAt if not present
     const expenseToSave: Expense = {
       ...expense,
+      type: expense.type || "expense", // Ensure type is set
       updatedAt: expense.updatedAt || new Date().toISOString(),
     };
 
@@ -104,5 +106,36 @@ export async function deleteExpense(expenseId: string): Promise<void> {
     throw new Error(
       `Error in deleteExpense: ${error instanceof Error ? error.message : String(error)}`
     );
+  }
+}
+
+export async function getAllExpenses(userId: string = "default"): Promise<Expense[]> {
+  try {
+    await initDB();
+    const db = getDB();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORES.EXPENSES], "readonly");
+      const store = transaction.objectStore(STORES.EXPENSES);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const expenses = request.result || [];
+        const filteredExpenses = expenses
+          .map((expense: Expense) => ({
+            ...expense,
+            userId: expense.userId ?? "default",
+            type: expense.type || "expense",
+          }))
+          .filter((expense) => expense.userId === userId);
+        resolve(filteredExpenses);
+      };
+
+      request.onerror = () => {
+        reject(new Error(`Failed to get all expenses: ${request.error?.message}`));
+      };
+    });
+  } catch (error) {
+    throw new Error(`Error in getAllExpenses: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

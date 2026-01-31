@@ -3,7 +3,7 @@ export { getDay, saveDay, deleteDay } from "./journal";
 export { getSleep, saveSleep, deleteSleep } from "./sleep";
 export { getMood, saveMood, deleteMood } from "./mood";
 export { getTasks, saveTask, deleteTask } from "./task";
-export { getExpenses, saveExpense, deleteExpense } from "./expense";
+export { getExpenses, saveExpense, deleteExpense, getAllExpenses } from "./expense";
 export {
   getAllUsers,
   getUserById,

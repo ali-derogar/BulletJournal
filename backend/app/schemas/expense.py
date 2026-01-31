@@ -8,6 +8,7 @@ class ExpenseBase(BaseModel):
     date: str
     title: str
     amount: float
+    type: str = "expense"
 
 class ExpenseCreate(ExpenseBase):
     pass
@@ -15,6 +16,7 @@ class ExpenseCreate(ExpenseBase):
 class ExpenseUpdate(BaseModel):
     title: Optional[str] = None
     amount: Optional[float] = None
+    type: Optional[str] = None
 
 class Expense(ExpenseBase):
     createdAt: Optional[datetime] = Field(None, alias="created_at")

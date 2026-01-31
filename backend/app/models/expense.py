@@ -10,6 +10,7 @@ class Expense(Base):
     date = Column(String, nullable=False, index=True)
     title = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
+    type = Column(String, nullable=False, default='expense', server_default='expense') # 'expense' or 'income'
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updatedAt = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     deletedAt = Column(DateTime(timezone=True), nullable=True)
