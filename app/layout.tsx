@@ -67,11 +67,11 @@ export default function RootLayout({
           <AuthProvider>
             <UserProvider>
               <DateProvider>{children}</DateProvider>
+              <NotificationPermissionPrompt />
             </UserProvider>
           </AuthProvider>
         </ThemeProvider>
         <PWARegistration />
-        <NotificationPermissionPrompt />
       </body>
     </html>
   );
