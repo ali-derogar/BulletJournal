@@ -2,8 +2,20 @@
 
 import { useEffect, useState } from "react";
 
+interface DebugInfo {
+    hasServiceWorker: boolean;
+    hasNotification: boolean;
+    swRegistered: boolean;
+    swError: string;
+    permission: string;
+    isSecure: boolean;
+    protocol: string;
+    swScope?: string;
+    swActive?: boolean;
+}
+
 export default function ServiceWorkerDebug() {
-    const [debug, setDebug] = useState({
+    const [debug, setDebug] = useState<DebugInfo>({
         hasServiceWorker: false,
         hasNotification: false,
         swRegistered: false,
@@ -15,12 +27,14 @@ export default function ServiceWorkerDebug() {
 
     useEffect(() => {
         const checkAPIs = async () => {
-            const info: any = {
+            const info: DebugInfo = {
                 hasServiceWorker: "serviceWorker" in navigator,
                 hasNotification: "Notification" in window,
                 isSecure: window.isSecureContext,
                 protocol: window.location.protocol,
                 permission: "Notification" in window ? Notification.permission : "not-supported",
+                swRegistered: false,
+                swError: "",
             };
 
             if ("serviceWorker" in navigator) {
@@ -30,9 +44,9 @@ export default function ServiceWorkerDebug() {
                     info.swScope = registration.scope;
                     info.swActive = !!registration.active;
                     console.log("✅ Service Worker registered:", registration);
-                } catch (error: any) {
+                } catch (error) {
                     info.swRegistered = false;
-                    info.swError = error.message;
+                    info.swError = error instanceof Error ? error.message : String(error);
                     console.error("❌ Service Worker registration failed:", error);
                 }
             }
