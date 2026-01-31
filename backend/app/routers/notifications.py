@@ -10,6 +10,8 @@ import logging
 from app.db.session import get_db
 from app.models.user import User
 from app.models.notification import Notification, PushSubscription
+from app.models.system_config import SystemConfig
+from app.schemas.system_config import SystemConfigResponse
 from app.auth.dependencies import get_current_active_user, get_current_admin
 from app.core.roles import Role
 from app.core.config import settings
@@ -424,3 +426,19 @@ async def get_admin_notification_stats(
         "total_muted": total_muted,
         "total_push_subscriptions": total_subscriptions
     }
+
+
+@router.get("/config", response_model=SystemConfigResponse)
+async def get_notification_config(
+    db: Session = Depends(get_db)
+):
+    """Get system-wide notification configuration"""
+    config = db.query(SystemConfig).filter(SystemConfig.key == "notification_prompt_message").first()
+    if not config:
+        # Return default if not set in DB
+        return {
+            "key": "notification_prompt_message",
+            "value": "To receive AI-generated messages and important updates, please allow notification access.",
+            "updated_at": datetime.now(timezone.utc)
+        }
+    return config

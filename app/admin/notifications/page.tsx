@@ -12,6 +12,8 @@ import {
   type Notification,
   getNotificationTypeColor,
   formatNotificationTime,
+  getNotificationConfig,
+  updateNotificationConfig,
 } from '@/services/notifications';
 
 export default function AdminNotificationsPage() {
@@ -24,6 +26,9 @@ export default function AdminNotificationsPage() {
   });
   const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [promptMessage, setPromptMessage] = useState('');
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -37,17 +42,19 @@ export default function AdminNotificationsPage() {
   // Load stats and recent notifications
   const loadData = async () => {
     try {
-      setLoadingStats(true);
-      const [statsData, notifs] = await Promise.all([
+      const [statsData, notifs, config] = await Promise.all([
         getAdminNotificationStats(),
         getAllNotifications(10, 0),
+        getNotificationConfig(),
       ]);
       setStats(statsData);
       setRecentNotifications(notifs.notifications);
+      setPromptMessage(config.value);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
       setLoadingStats(false);
+      setLoadingConfig(false);
     }
   };
 
@@ -105,6 +112,24 @@ export default function AdminNotificationsPage() {
     }
   };
 
+  const handleSaveConfig = async () => {
+    if (!promptMessage.trim()) {
+      alert('Prompt message cannot be empty');
+      return;
+    }
+
+    try {
+      setSavingConfig(true);
+      await updateNotificationConfig(promptMessage.trim());
+      alert('Notification prompt message updated successfully!');
+    } catch (error) {
+      console.error('Failed to update config:', error);
+      alert('Failed to update config');
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
   return (
     <AdminGuard>
       <AdminLayout>
@@ -142,6 +167,45 @@ export default function AdminNotificationsPage() {
               <div className="text-sm font-medium text-green-600">Push Subscriptions</div>
               <div className="mt-2 text-3xl font-bold text-green-900">
                 {loadingStats ? '...' : stats.total_push_subscriptions.toLocaleString()}
+              </div>
+            </div>
+          </div>
+
+          {/* Permission Prompt Configuration */}
+          <div className="bg-white rounded-lg shadow p-6 border-2 border-primary/10">
+            <h2 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <span className="text-2xl">⚙️</span> Permission Prompt Configuration
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Customize the message users see when asked for notification permission.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Prompt Message
+                </label>
+                <textarea
+                  value={promptMessage}
+                  onChange={(e) => setPromptMessage(e.target.value)}
+                  placeholder="Enter the message for the notification permission prompt..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={loadingConfig || savingConfig}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  This message appears in the custom UI before the browser&apos;s native prompt.
+                </p>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleSaveConfig}
+                  disabled={loadingConfig || savingConfig}
+                  className="px-6 py-2 bg-primary text-white font-bold rounded-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {savingConfig ? 'Saving...' : 'Save Configuration'}
+                </button>
               </div>
             </div>
           </div>

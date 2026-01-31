@@ -297,6 +297,27 @@ export async function getAdminNotificationStats(): Promise<{
   return get('/api/notifications/admin/stats', token);
 }
 
+/**
+ * Get system-wide notification configuration
+ */
+export async function getNotificationConfig(): Promise<{ key: string; value: string; updated_at: string }> {
+  return get<{ key: string; value: string; updated_at: string }>('/api/notifications/config');
+}
+
+/**
+ * Update system-wide notification configuration (Admin only)
+ */
+export async function updateNotificationConfig(message: string): Promise<{ key: string; value: string; updated_at: string }> {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+
+  return patch<{ key: string; value: string; updated_at: string }>(
+    '/admin/notifications/config',
+    { value: message },
+    token
+  );
+}
+
 // ===== HELPER FUNCTIONS =====
 
 /**

@@ -5,7 +5,9 @@ from pydantic import BaseModel
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.system_config import SystemConfig
 from app.schemas.user import User as UserSchema
+from app.schemas.system_config import SystemConfigUpdate, SystemConfigResponse
 from app.auth.dependencies import get_current_admin, get_current_superuser
 from app.core.roles import Role
 
@@ -188,3 +190,23 @@ async def update_user_gamification(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.patch("/notifications/config", response_model=SystemConfigResponse)
+async def update_notification_config(
+    config_update: SystemConfigUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin)
+):
+    """Update system-wide notification configuration (Admin/Superuser only)"""
+    config = db.query(SystemConfig).filter(SystemConfig.key == "notification_prompt_message").first()
+    
+    if not config:
+        config = SystemConfig(key="notification_prompt_message", value=config_update.value)
+        db.add(config)
+    else:
+        config.value = config_update.value
+        
+    db.commit()
+    db.refresh(config)
+    return config
