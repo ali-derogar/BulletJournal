@@ -12,6 +12,8 @@ export default function NotificationPermissionPrompt() {
     const [showPrompt, setShowPrompt] = useState(false);
     const [isDismissed, setIsDismissed] = useState(false);
 
+    const [permissionStatus, setPermissionStatus] = useState<PermissionState | "unknown">("unknown");
+
     useEffect(() => {
         if (!currentUser) return;
 
@@ -20,6 +22,28 @@ export default function NotificationPermissionPrompt() {
             setPermission("unsupported");
             return;
         }
+
+        const checkDetailedPermission = async () => {
+            try {
+                if (navigator.permissions && navigator.permissions.query) {
+                    const status = await navigator.permissions.query({ name: "notifications" as PermissionName });
+                    setPermissionStatus(status.state);
+
+                    status.onchange = () => {
+                        console.log("Permission status changed to:", status.state);
+                        setPermissionStatus(status.state);
+                        setPermission(Notification.permission);
+                        if (status.state === "granted") {
+                            setShowPrompt(false);
+                        }
+                    };
+                }
+            } catch (e) {
+                console.warn("Permissions API check failed:", e);
+            }
+        };
+
+        checkDetailedPermission();
 
         // Update permission state
         const updatePermission = () => {
@@ -48,8 +72,8 @@ export default function NotificationPermissionPrompt() {
             loadConfig();
         }
 
-        // Poll for permission changes (some browsers don't support permission change events)
-        const permissionCheckInterval = setInterval(updatePermission, 1000);
+        // Poll as fallback
+        const permissionCheckInterval = setInterval(updatePermission, 2000);
 
         return () => {
             clearInterval(permissionCheckInterval);
@@ -64,6 +88,12 @@ export default function NotificationPermissionPrompt() {
             await subscribeToPush();
             setShowPrompt(false);
             setIsDismissed(true); // Prevent showing again in this session
+        } else {
+            // Force re-check of status
+            if (navigator.permissions && navigator.permissions.query) {
+                const status = await navigator.permissions.query({ name: "notifications" as PermissionName });
+                setPermissionStatus(status.state);
+            }
         }
     };
 
@@ -95,9 +125,20 @@ export default function NotificationPermissionPrompt() {
                                 {configMessage || "To receive AI-generated messages and important updates, please allow notification access."}
                             </p>
 
-                            {permission === "denied" ? (
-                                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs text-yellow-600 dark:text-yellow-400 font-medium">
-                                    ⚠️ Notifications are blocked by your browser. Please enable them in your browser settings to receive updates.
+                            {(permission === "denied" || permissionStatus === "denied") ? (
+                                <div className="space-y-3">
+                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400 font-medium">
+                                        ⚠️ Notifications are blocked by your browser settings.
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Click the lock icon 🔒 in your address bar and toggle "Notifications" to ON.
+                                    </div>
+                                    <button
+                                        onClick={handleRequestPermission}
+                                        className="w-full px-3 py-2 bg-secondary text-secondary-foreground text-xs font-medium rounded-lg hover:bg-secondary/80"
+                                    >
+                                        Try Again
+                                    </button>
                                 </div>
                             ) : (
                                 <div className="flex gap-3">

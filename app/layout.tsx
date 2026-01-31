@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import PWARegistration from "./PWARegistration";
 import NotificationPermissionPrompt from "@/components/NotificationPermissionPrompt";
+import ServiceWorkerDebug from "@/components/ServiceWorkerDebug";
 
 export const metadata: Metadata = {
   title: "Bullet Journal v1.1.0",
@@ -72,6 +73,7 @@ export default function RootLayout({
           </AuthProvider>
         </ThemeProvider>
         <PWARegistration />
+        <ServiceWorkerDebug />
       </body>
     </html>
   );
