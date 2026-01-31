@@ -125,20 +125,31 @@ export default function NotificationPermissionPrompt() {
                                 {configMessage || "To receive AI-generated messages and important updates, please allow notification access."}
                             </p>
 
-                            {(permission === "denied" || permissionStatus === "denied") ? (
+                            {(permission === "denied" || permissionStatus === "denied" || (typeof window !== "undefined" && !window.isSecureContext)) ? (
                                 <div className="space-y-3">
-                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400 font-medium">
-                                        ⚠️ Notifications are blocked by your browser settings.
-                                    </div>
+                                    {typeof window !== "undefined" && !window.isSecureContext ? (
+                                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400 font-medium">
+                                            ⚠️ Security Restriction: Notifications require HTTPS.
+                                        </div>
+                                    ) : (
+                                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400 font-medium">
+                                            ⚠️ Notifications are blocked by your browser settings.
+                                        </div>
+                                    )}
                                     <div className="text-xs text-muted-foreground">
-                                        Click the lock icon 🔒 in your address bar and toggle "Notifications" to ON.
+                                        {typeof window !== "undefined" && !window.isSecureContext
+                                            ? "Please access this site via localhost or HTTPS."
+                                            : "Click the lock icon 🔒 in your address bar and toggle \"Notifications\" to ON."
+                                        }
                                     </div>
-                                    <button
-                                        onClick={handleRequestPermission}
-                                        className="w-full px-3 py-2 bg-secondary text-secondary-foreground text-xs font-medium rounded-lg hover:bg-secondary/80"
-                                    >
-                                        Try Again
-                                    </button>
+                                    {(!window.isSecureContext) ? null : (
+                                        <button
+                                            onClick={handleRequestPermission}
+                                            className="w-full px-3 py-2 bg-secondary text-secondary-foreground text-xs font-medium rounded-lg hover:bg-secondary/80"
+                                        >
+                                            Try Again
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="flex gap-3">

@@ -9,6 +9,11 @@ export default function PWARegistration() {
       return;
     }
 
+    if (!window.isSecureContext && window.location.hostname !== "localhost") {
+      console.warn("⚠️ Service Worker requires a Secure Context (HTTPS). Registration skipped.");
+      return;
+    }
+
     const registerServiceWorker = async () => {
       try {
         // Unregister existing workers first to ensure clean state
