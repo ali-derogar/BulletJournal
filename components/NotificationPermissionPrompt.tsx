@@ -21,7 +21,18 @@ export default function NotificationPermissionPrompt() {
             return;
         }
 
-        setPermission(Notification.permission);
+        // Update permission state
+        const updatePermission = () => {
+            const currentPermission = Notification.permission;
+            setPermission(currentPermission);
+
+            // Hide prompt if permission is granted
+            if (currentPermission === "granted") {
+                setShowPrompt(false);
+            }
+        };
+
+        updatePermission();
 
         // Only show if not granted and not dismissed in this session
         if (Notification.permission !== "granted" && !isDismissed) {
@@ -36,6 +47,13 @@ export default function NotificationPermissionPrompt() {
             };
             loadConfig();
         }
+
+        // Poll for permission changes (some browsers don't support permission change events)
+        const permissionCheckInterval = setInterval(updatePermission, 1000);
+
+        return () => {
+            clearInterval(permissionCheckInterval);
+        };
     }, [currentUser, isDismissed]);
 
     const handleRequestPermission = async () => {
@@ -45,6 +63,7 @@ export default function NotificationPermissionPrompt() {
         if (result === "granted") {
             await subscribeToPush();
             setShowPrompt(false);
+            setIsDismissed(true); // Prevent showing again in this session
         }
     };
 
