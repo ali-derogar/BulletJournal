@@ -343,6 +343,7 @@ async function runTests() {
       date: testDate,
       title: "Alice's Expense",
       amount: 50.0,
+      type: 'expense',
       createdAt: new Date().toISOString(),
     };
 

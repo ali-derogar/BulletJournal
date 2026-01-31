@@ -145,6 +145,7 @@ async function testMultiUserStorage(): Promise<void> {
       date: testDate,
       title: "User 1 - Expense 1",
       amount: 10.5,
+      type: 'expense',
       createdAt: new Date().toISOString(),
     };
 
@@ -154,6 +155,7 @@ async function testMultiUserStorage(): Promise<void> {
       date: testDate,
       title: "User 2 - Expense 1",
       amount: 20.75,
+      type: 'expense',
       createdAt: new Date().toISOString(),
     };
 

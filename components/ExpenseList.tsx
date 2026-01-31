@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Expense } from "@/domain";
 import { getExpenses, saveExpense, deleteExpense, getAllExpenses } from "@/storage";
 
@@ -21,7 +21,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
   const [editingType, setEditingType] = useState<'income' | 'expense'>('expense');
   const [loading, setLoading] = useState(true);
 
-  const calculateTotalBalance = async () => {
+  const calculateTotalBalance = useCallback(async () => {
     try {
       const allExpenses = await getAllExpenses(userId);
       const balance = allExpenses.reduce((sum, item) => {
@@ -31,7 +31,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
     } catch (error) {
       console.error("Failed to calculate total balance:", error);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     async function loadExpenses() {
@@ -60,7 +60,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
     return () => {
       window.removeEventListener('data-downloaded', handleDataDownloaded);
     };
-  }, [date, userId]);
+  }, [date, userId, calculateTotalBalance]);
 
   const handleAddExpense = async () => {
     if (!newTitle.trim() || !newAmount.trim()) return;
