@@ -55,13 +55,14 @@ def upgrade() -> None:
         op.create_index(op.f('ix_mood_id'), 'mood', ['id'], unique=False)
 
     # Check indexes on reflections
-    reflections_indexes = [idx['name'] for idx in inspector.get_indexes('reflections')]
-    if op.f('ix_reflections_date') not in reflections_indexes:
-        op.create_index(op.f('ix_reflections_date'), 'reflections', ['date'], unique=False)
-    if op.f('ix_reflections_id') not in reflections_indexes:
-        op.create_index(op.f('ix_reflections_id'), 'reflections', ['id'], unique=False)
-    if op.f('ix_reflections_user_id') not in reflections_indexes:
-        op.create_index(op.f('ix_reflections_user_id'), 'reflections', ['user_id'], unique=False)
+    if 'reflections' in tables:
+        reflections_indexes = [idx['name'] for idx in inspector.get_indexes('reflections')]
+        if op.f('ix_reflections_date') not in reflections_indexes:
+            op.create_index(op.f('ix_reflections_date'), 'reflections', ['date'], unique=False)
+        if op.f('ix_reflections_id') not in reflections_indexes:
+            op.create_index(op.f('ix_reflections_id'), 'reflections', ['id'], unique=False)
+        if op.f('ix_reflections_user_id') not in reflections_indexes:
+            op.create_index(op.f('ix_reflections_user_id'), 'reflections', ['user_id'], unique=False)
 
     # Check index on sleep
     sleep_indexes = [idx['name'] for idx in inspector.get_indexes('sleep')]
