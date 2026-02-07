@@ -118,9 +118,9 @@ fi
 print_step "Step 7/8: Setting up environment variables..."
 cd $DEPLOY_DIR
 
-if [ ! -f ".env.local" ]; then
-    cp .env.local.example .env.local
-    print_info "Created .env.local from example. Please update with your values!"
+if [ ! -f ".env" ]; then
+    cp .env.example .env
+    print_info "Created .env from example. Please update with your values!"
 fi
 
 # Set up deploy script
@@ -159,7 +159,7 @@ echo -e "${GREEN}🎉 Server setup completed successfully!${NC}"
 echo -e "${GREEN}════════════════════════════════════════${NC}"
 echo ""
 print_info "Next steps:"
-echo "  1. Edit $DEPLOY_DIR/.env.local with your configuration"
+echo "  1. Edit $DEPLOY_DIR/.env with your configuration"
 echo "  2. Run: sudo $DEPLOY_DIR/deploy.sh"
 echo "  3. Or use: sudo systemctl start bulletjournal"
 echo ""

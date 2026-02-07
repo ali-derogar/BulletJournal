@@ -110,10 +110,10 @@ cd ..
 #### 3. Setup Environment Variables
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Edit [.env.local](.env.local) to set your API URL and other configuration.
+Edit [.env](.env) to set your API URL and other configuration.
 
 #### 4. Run Backend
 

@@ -13,7 +13,7 @@
 
 ## 1️⃣ تنظیم برای Local Development
 
-### فایل `.env.local` (در ریشه پروژه):
+### فایل `.env` (در ریشه پروژه):
 
 ```bash
 # AI Configuration
@@ -165,7 +165,7 @@ export async function POST(req: Request) {
 
 ## 🎯 خلاصه برای شما الان:
 
-✅ **Local**: `.env.local` رو دارید و کار می‌کنه
+✅ **Local**: `.env` رو دارید و کار می‌کنه
 ✅ **GitHub Variables**: تنظیم کردید (فقط برای GitHub Actions)
 ⏳ **Production**: وقتی deploy کنید، در Vercel/Netlify هم باید تنظیم کنید
 
