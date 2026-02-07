@@ -49,25 +49,39 @@ print_success "Repository updated"
 
 # Auto-detect server IP and create/update .env file
 print_info "Configuring environment variables..."
+
+# 1. Try to get domain from Nginx config or use provided variable
+DOMAIN="myjurn.top" # Hardcoded for this specific fix, or could be dynamic
+
+# 2. Fallback to IP detection if no domain
 SERVER_IP=$(hostname -I | awk '{print $1}')
 if [ -z "$SERVER_IP" ]; then
-    # Fallback: try to get public IP
     SERVER_IP=$(curl -s ifconfig.me || echo "localhost")
 fi
 
 # Create or update .env file
 if [ ! -f .env ]; then
-    print_info "Creating .env file with server IP: $SERVER_IP"
+    print_info "Creating .env file"
     cp .env.example .env
 else
-    print_info "Updating .env file with server IP: $SERVER_IP"
+    print_info "Updating .env file"
+fi
+
+# Set NEXT_PUBLIC_API_URL in .env
+# If domain exists, use it. Otherwise use IP.
+if [ -n "$DOMAIN" ]; then
+    API_URL="https://$DOMAIN/api"
+    print_info "Using domain for API: $API_URL"
+else
+    API_URL="http://$SERVER_IP:8000"
+    print_info "Using IP for API: $API_URL"
 fi
 
 # Set NEXT_PUBLIC_API_URL in .env
 if grep -q "^NEXT_PUBLIC_API_URL=" .env; then
-    sed -i "s|^NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=http://$SERVER_IP:8000|" .env
+    sed -i "s|^NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=$API_URL|" .env
 else
-    echo "NEXT_PUBLIC_API_URL=http://$SERVER_IP:8000" >> .env
+    echo "NEXT_PUBLIC_API_URL=$API_URL" >> .env
 fi
 
 # Set AI Configuration in .env if provided
