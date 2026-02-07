@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Head from 'next/head';
+import { register } from '@/services/auth';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -44,24 +45,11 @@ export default function Register() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setStatus({ type: 'success', message: 'Registration successful! You can now log in.' });
-                setFormData({ name: '', username: '', email: '', password: '' });
-            } else {
-                setStatus({ type: 'error', message: data.detail || 'Registration failed' });
-            }
-        } catch {
-            setStatus({ type: 'error', message: 'Network error. Please try again later.' });
+            await register(formData);
+            setStatus({ type: 'success', message: 'Registration successful! You can now log in.' });
+            setFormData({ name: '', username: '', email: '', password: '' });
+        } catch (error) {
+            setStatus({ type: 'error', message: error.message || 'Registration failed. Please try again.' });
         } finally {
             setIsLoading(false);
         }
