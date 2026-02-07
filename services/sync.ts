@@ -556,7 +556,7 @@ export async function performDownload(
     console.log('📥 Starting download for user:', userId);
 
     // Fetch data from server
-    const serverData = await post<DownloadResponse>('/api/sync/download', {}, token);
+    const serverData = await post<DownloadResponse>('/sync/download', {}, token);
 
     console.log('📦 Downloaded data:', {
       tasks: serverData.tasks.length,
@@ -849,7 +849,7 @@ export async function performSync(
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     console.log('Sending sync request to /api/sync');
-    const response = await post<SyncResponse>('/api/sync', localChanges, token);
+    const response = await post<SyncResponse>('/sync', localChanges, token);
     console.log('Sync response received:', response);
 
     // Update last sync timestamp only after successful sync

@@ -10,7 +10,7 @@ export async function GET(
     const { year, month, day } = await params;
 
     // Proxy to backend
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
     const backendUrl = apiBaseUrl.endsWith('/api')
       ? `${apiBaseUrl}/holidays/${year}/${month}/${day}`
       : `${apiBaseUrl}/api/holidays/${year}/${month}/${day}`;

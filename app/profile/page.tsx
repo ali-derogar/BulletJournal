@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import ProfileForm from "@/components/Profile/ProfileForm";
 import Icon from "@/components/Icon";
 import { UserProfile } from "@/domain/user";
-import { getStoredToken, clearStoredToken } from "@/services/auth";
+import { getStoredToken, clearStoredToken, getCurrentUser } from "@/services/auth";
 import { getLevelColor } from "@/utils/gamification";
 
 export default function ProfilePage() {
@@ -26,29 +26,15 @@ export default function ProfilePage() {
         }
         setToken(storedToken);
 
-        // Fetch user data
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/me`, {
-            headers: {
-                "Authorization": `Bearer ${storedToken}`
-            }
-        })
-            .then(async res => {
-                if (res.status === 401) {
-                    throw new Error("Unauthorized");
-                }
-                if (!res.ok) {
-                    const text = await res.text();
-                    throw new Error(text || "Server Error");
-                }
-                return res.json();
-            })
+        // Fetch user data using auth service
+        getCurrentUser()
             .then(data => {
-                setUser(data);
+                setUser(data as any); // Cast because of minor type mismatch in schemas
                 setError(null);
             })
             .catch((err) => {
                 console.error("Profile fetch error:", err);
-                if (err.message === "Unauthorized") {
+                if (err.message.includes("authenticated") || err.message.includes("Unauthorized")) {
                     clearStoredToken();
                     router.push("/");
                 } else {

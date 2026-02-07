@@ -6,6 +6,7 @@ import { UserProfile } from "@/domain/user";
 import { motion } from "framer-motion";
 import Icon from "../Icon";
 import { getLevelColor } from "@/utils/gamification";
+import { updateUserProfile } from "@/services/auth";
 
 interface ProfileFormProps {
     user: UserProfile;
@@ -40,20 +41,7 @@ export default function ProfileForm({ user, token }: ProfileFormProps) {
         setMessage(null);
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/me`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify(formData),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to update profile");
-            }
-
-            await response.json(); // Consume body but ignore result
+            await updateUserProfile(formData as any);
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
             router.refresh(); // Refresh server components
         } catch (error) {

@@ -93,6 +93,7 @@ app.include_router(content_router, prefix="/api") # /api/admin/content
 app.include_router(notifications_router, prefix="/api") # Notifications
 app.include_router(chatroom_router, prefix="/api") # Chatroom
 
+@app.get("/api/health")
 @app.get("/health")
 @limiter.limit("10/minute")  # Rate limit health checks
 async def health_check(request: Request):

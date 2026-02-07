@@ -30,7 +30,7 @@ export async function sendChatMessage(text: string, room: string = 'Iron'): Prom
     throw new Error('Not authenticated');
   }
 
-  return post<ChatMessage>('/api/chatroom/messages', { text, room }, token);
+  return post<ChatMessage>('/chatroom/messages', { text, room }, token);
 }
 
 /**
@@ -42,7 +42,7 @@ export async function getChatMessages(room: string = 'Iron', limit: number = 100
     throw new Error('Not authenticated');
   }
 
-  return get<ChatMessagesResponse>(`/api/chatroom/messages?room=${room}&limit=${limit}`, token);
+  return get<ChatMessagesResponse>(`/chatroom/messages?room=${room}&limit=${limit}`, token);
 }
 
 /**
@@ -61,7 +61,7 @@ export function createChatroomWebSocket(
     }
 
     const wsBaseUrl = getWebSocketBaseUrl();
-    const wsUrl = `${wsBaseUrl}/api/chatroom/ws?room=${room}&token=${token}`;
+    const wsUrl = `${wsBaseUrl}/chatroom/ws?room=${room}&token=${token}`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {

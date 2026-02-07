@@ -54,7 +54,7 @@ export async function getNotifications(
     unread_only: unreadOnly.toString(),
   });
 
-  return get<Notification[]>(`/api/notifications?${params}`, token);
+  return get<Notification[]>(`/notifications?${params}`, token);
 }
 
 /**
@@ -64,7 +64,7 @@ export async function getNotificationStats(): Promise<NotificationStats> {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  return get<NotificationStats>('/api/notifications/stats', token);
+  return get<NotificationStats>('/notifications/stats', token);
 }
 
 /**
@@ -74,7 +74,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  await patch(`/api/notifications/${notificationId}/read`, {}, token);
+  await patch(`/notifications/${notificationId}/read`, {}, token);
 }
 
 /**
@@ -84,7 +84,7 @@ export async function markAllAsRead(): Promise<void> {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  await patch('/api/notifications/read-all', {}, token);
+  await patch('/notifications/read-all', {}, token);
 }
 
 /**
@@ -94,7 +94,7 @@ export async function muteNotification(notificationId: string): Promise<void> {
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  await patch(`/api/notifications/${notificationId}/mute`, {}, token);
+  await patch(`/notifications/${notificationId}/mute`, {}, token);
 }
 
 /**
@@ -105,7 +105,7 @@ export async function deleteNotification(notificationId: string): Promise<void> 
   if (!token) throw new Error('Authentication required');
 
   try {
-    await del(`/api/notifications/${notificationId}`, undefined, token);
+    await del(`/notifications/${notificationId}`, undefined, token);
     console.log(`Notification ${notificationId} deleted successfully`);
   } catch (error) {
     console.error('Failed to delete notification:', error);
@@ -132,7 +132,7 @@ export async function requestPushPermission(): Promise<NotificationPermission> {
  */
 export async function getVapidPublicKey(): Promise<string> {
   try {
-    const response = await get<{ publicKey: string }>('/api/notifications/vapid-public-key');
+    const response = await get<{ publicKey: string }>('/notifications/vapid-public-key');
     return response.publicKey;
   } catch (error) {
     console.error('Failed to get VAPID public key:', error);
@@ -175,7 +175,7 @@ export async function subscribeToPush(): Promise<boolean> {
     // Send subscription to backend
     const subscriptionJSON = subscription.toJSON();
     await post(
-      '/api/notifications/subscribe',
+      '/notifications/subscribe',
       {
         endpoint: subscriptionJSON.endpoint,
         p256dh: subscriptionJSON.keys?.p256dh,
@@ -209,7 +209,7 @@ export async function unsubscribeFromPush(): Promise<boolean> {
 
     // Unsubscribe from backend
     await del(
-      `/api/notifications/unsubscribe?endpoint=${encodeURIComponent(subscription.endpoint)}`,
+      `/notifications/unsubscribe?endpoint=${encodeURIComponent(subscription.endpoint)}`,
       undefined,
       token
     );
@@ -258,7 +258,7 @@ export async function sendBulkNotification(
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  return post('/api/notifications/send', notification, token);
+  return post('/notifications/send', notification, token);
 }
 
 /**
@@ -279,7 +279,7 @@ export async function getAllNotifications(
 
   if (userId) params.append('user_id', userId);
 
-  return get(`/api/notifications/admin/all?${params}`, token);
+  return get(`/notifications/admin/all?${params}`, token);
 }
 
 /**
@@ -294,14 +294,14 @@ export async function getAdminNotificationStats(): Promise<{
   const token = getToken();
   if (!token) throw new Error('Authentication required');
 
-  return get('/api/notifications/admin/stats', token);
+  return get('/notifications/admin/stats', token);
 }
 
 /**
  * Get system-wide notification configuration
  */
 export async function getNotificationConfig(): Promise<{ key: string; value: string; updated_at: string }> {
-  return get<{ key: string; value: string; updated_at: string }>('/api/notifications/config');
+  return get<{ key: string; value: string; updated_at: string }>('/notifications/config');
 }
 
 /**
@@ -415,7 +415,7 @@ class NotificationWebSocket {
     try {
       // Get WebSocket URL - includes /api prefix
       const wsBaseUrl = getWebSocketBaseUrl();
-      const wsUrl = `${wsBaseUrl}/api/notifications/ws/${userId}?token=${token}`;
+      const wsUrl = `${wsBaseUrl}/notifications/ws/${userId}?token=${token}`;
       console.log('Connecting to WebSocket:', wsUrl.replace(token, 'TOKEN_HIDDEN'));
       this.ws = new WebSocket(wsUrl);
 

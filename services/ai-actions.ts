@@ -58,7 +58,7 @@ export async function createTaskAction(params: CreateTaskParams): Promise<Action
     }
 
     console.log(`[AI Action] Sending POST to /api/actions/create-task:`, params);
-    const response = await fetch(`${API_BASE_URL}/api/actions/create-task`, {
+    const response = await fetch(`${API_BASE_URL}/actions/create-task`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ export async function createGoalAction(params: CreateGoalParams): Promise<Action
     }
 
     console.log(`[AI Action] Sending POST to /api/actions/create-goal:`, params);
-    const response = await fetch(`${API_BASE_URL}/api/actions/create-goal`, {
+    const response = await fetch(`${API_BASE_URL}/actions/create-goal`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -157,7 +157,7 @@ export async function createCalendarNoteAction(params: CreateCalendarNoteParams)
     }
 
     console.log(`[AI Action] Sending POST to /api/actions/create-calendar-note:`, params);
-    const response = await fetch(`${API_BASE_URL}/api/actions/create-calendar-note`, {
+    const response = await fetch(`${API_BASE_URL}/actions/create-calendar-note`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -203,7 +203,7 @@ export async function updateTaskAction(params: UpdateTaskParams): Promise<Action
       };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/actions/update-task`, {
+    const response = await fetch(`${API_BASE_URL}/actions/update-task`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -245,7 +245,7 @@ export async function listTasksAction(params: ListTasksParams = {}): Promise<Act
       };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/actions/list-tasks`, {
+    const response = await fetch(`${API_BASE_URL}/actions/list-tasks`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -287,7 +287,7 @@ export async function completeTaskAction(taskId: string): Promise<ActionResponse
       };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/actions/complete-task?task_id=${encodeURIComponent(taskId)}`, {
+    const response = await fetch(`${API_BASE_URL}/actions/complete-task?task_id=${encodeURIComponent(taskId)}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

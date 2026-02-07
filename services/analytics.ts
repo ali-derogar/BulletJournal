@@ -57,7 +57,7 @@ export async function requestAIReview(period: Period): Promise<AIReviewResponse>
   }
 
   return post<AIReviewResponse>(
-    `/api/analytics/ai-review`,
+    `/analytics/ai-review`,
     {
       period_type: period.type,
       year: period.year,
@@ -101,11 +101,11 @@ export async function getAnalytics(
     console.log('🔍 Analytics Debug: Fetching from backend...');
     const [taskResponse, wellbeingResponse] = await Promise.all([
       get<TaskAnalyticsResponse>(
-        `/api/analytics/tasks/${period.type}/${period.year}/${period.period}`,
+        `/analytics/tasks/${period.type}/${period.year}/${period.period}`,
         token
       ),
       get<WellbeingAnalyticsResponse>(
-        `/api/analytics/wellbeing/${period.type}/${period.year}/${period.period}`,
+        `/analytics/wellbeing/${period.type}/${period.year}/${period.period}`,
         token
       ).catch(() => null),
     ]);

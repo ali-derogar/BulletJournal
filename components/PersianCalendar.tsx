@@ -6,6 +6,7 @@ import type { JalaaliDate } from "jalaali-js";
 import { getCalendarNotes, saveCalendarNote, deleteCalendarNote } from "@/storage/calendar";
 import type { CalendarNote } from "@/domain";
 import type { CalendarEvent } from "@/domain/calendar-events";
+import { getCalendarEvents } from "@/services/calendar-api";
 
 
 interface PersianCalendarProps {
@@ -71,11 +72,10 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
     try {
       const newHolidays: { [key: string]: HolidayData[] } = {};
 
-      // NEW: Fetch all events for the month in one API call
-      const response = await fetch(`/api/calendar/${year}/${month}/events`);
+      // NEW: Use standardized calendar service
+      const data = await getCalendarEvents(year, month);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (data) {
         console.log('[PersianCalendar] API response:', data.total_events, 'events,', data.total_holidays, 'holidays');
 
         // Filter events to only include those for the current month
@@ -111,8 +111,6 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
           newHolidays[key].push(eventData);
         }
-      } else {
-        console.warn(`Failed to fetch calendar events:`, response.status);
       }
 
       setHolidays(prev => ({ ...prev, ...newHolidays }));
