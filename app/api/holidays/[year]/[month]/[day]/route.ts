@@ -11,7 +11,9 @@ export async function GET(
 
     // Proxy to backend
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    const backendUrl = `${apiBaseUrl}/api/holidays/${year}/${month}/${day}`;
+    const backendUrl = apiBaseUrl.endsWith('/api')
+      ? `${apiBaseUrl}/holidays/${year}/${month}/${day}`
+      : `${apiBaseUrl}/api/holidays/${year}/${month}/${day}`;
     console.log(`[API Route] NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL}`);
     console.log(`[API Route] Proxying to backend: ${backendUrl}`);
 

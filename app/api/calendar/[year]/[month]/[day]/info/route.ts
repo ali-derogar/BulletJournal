@@ -11,7 +11,9 @@ export async function GET(
 
     // Proxy to backend
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
-    const backendUrl = `${apiBaseUrl}/api/calendar/${year}/${month}/${day}/info`;
+    const backendUrl = apiBaseUrl.endsWith('/api')
+      ? `${apiBaseUrl}/calendar/${year}/${month}/${day}/info`
+      : `${apiBaseUrl}/api/calendar/${year}/${month}/${day}/info`;
     console.log(`[Calendar Day Info API Route] Proxying to backend: ${backendUrl}`);
 
     const response = await fetch(backendUrl, {
