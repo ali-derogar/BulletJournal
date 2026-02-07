@@ -17,7 +17,10 @@ export default function InstallButton() {
 
   useEffect(() => {
     // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
+
+    if (isStandalone) {
       setIsInstalled(true);
       return;
     }
@@ -33,10 +36,16 @@ export default function InstallButton() {
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
+    const installHandler = () => {
+      setIsInstalled(true);
+    };
+
     window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", installHandler);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", installHandler);
     };
   }, []);
 
@@ -59,6 +68,10 @@ export default function InstallButton() {
     }
   };
 
+
+  if (isInstalled) {
+    return null;
+  }
 
   return (
     <>
