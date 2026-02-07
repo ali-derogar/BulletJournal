@@ -7,6 +7,10 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+interface NavigatorStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -15,7 +19,7 @@ export default function InstallPrompt() {
   useEffect(() => {
     // Check if app is already installed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+      (window.navigator as NavigatorStandalone).standalone === true;
 
     if (isStandalone) {
       setShowPrompt(false);
