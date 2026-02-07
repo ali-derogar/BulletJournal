@@ -199,7 +199,8 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
 
   return (
     <>
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes slideInUp {
           from {
             opacity: 0;
@@ -233,7 +234,7 @@ export default function PersianCalendar({ userId }: PersianCalendarProps) {
         .animate-in {
           animation: slideInUp 0.4s ease-out forwards;
         }
-      `}</style>
+      `}} />
 
       <div className="max-w-6xl mx-auto p-2 sm:p-4 md:p-6" dir="rtl">
         {/* Beautiful Header with Gradient */}
