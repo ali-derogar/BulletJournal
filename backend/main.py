@@ -87,9 +87,9 @@ async def security_headers(request: Request, call_next):
 
 # Include routers
 app.include_router(api_router, prefix="/api")
-app.include_router(auth_router, prefix="/auth", tags=["authentication"])
-app.include_router(admin_router) # Prefix is defined in the router itself
-app.include_router(content_router) # Admin content management
+app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
+app.include_router(admin_router, prefix="/api") # /api/admin
+app.include_router(content_router, prefix="/api") # /api/admin/content
 app.include_router(notifications_router, prefix="/api") # Notifications
 app.include_router(chatroom_router, prefix="/api") # Chatroom
 
