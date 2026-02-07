@@ -70,7 +70,7 @@ fi
 # Set NEXT_PUBLIC_API_URL in .env
 # If domain exists, use it. Otherwise use IP.
 if [ -n "$DOMAIN" ]; then
-    API_URL="https://$DOMAIN/api"
+    API_URL="https://$DOMAIN"
     print_info "Using domain for API: $API_URL"
 else
     API_URL="http://$SERVER_IP:8000"
@@ -101,7 +101,7 @@ update_env_var "NEXT_PUBLIC_OPENROUTER_API_KEYS" "$NEXT_PUBLIC_OPENROUTER_API_KE
 update_env_var "NEXT_PUBLIC_DEFAULT_AI_PROVIDER" "$NEXT_PUBLIC_DEFAULT_AI_PROVIDER"
 update_env_var "NEXT_PUBLIC_DEFAULT_AI_MODEL" "$NEXT_PUBLIC_DEFAULT_AI_MODEL"
 
-print_success "Environment configured with API URL: http://$SERVER_IP:8000 and AI settings"
+print_success "Environment configured with API URL: $API_URL and AI settings"
 
 # Stop existing containers
 print_info "Stopping existing containers..."
