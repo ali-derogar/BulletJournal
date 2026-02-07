@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Head from 'next/head';
 
 export default function Register() {
@@ -60,7 +60,7 @@ export default function Register() {
             } else {
                 setStatus({ type: 'error', message: data.detail || 'Registration failed' });
             }
-        } catch (error) {
+        } catch {
             setStatus({ type: 'error', message: 'Network error. Please try again later.' });
         } finally {
             setIsLoading(false);

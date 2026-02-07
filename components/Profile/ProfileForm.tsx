@@ -13,7 +13,7 @@ interface ProfileFormProps {
     token: string;
 }
 
-export default function ProfileForm({ user, token }: ProfileFormProps) {
+export default function ProfileForm({ user }: ProfileFormProps) {
     const router = useRouter();
     const [formData, setFormData] = useState<Partial<UserProfile>>({
         avatar_url: user.avatar_url || "",
@@ -41,7 +41,7 @@ export default function ProfileForm({ user, token }: ProfileFormProps) {
         setMessage(null);
 
         try {
-            await updateUserProfile(formData as any);
+            await updateUserProfile(formData);
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
             router.refresh(); // Refresh server components
         } catch (error) {

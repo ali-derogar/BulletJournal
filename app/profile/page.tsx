@@ -29,7 +29,7 @@ export default function ProfilePage() {
         // Fetch user data using auth service
         getCurrentUser()
             .then(data => {
-                setUser(data as any); // Cast because of minor type mismatch in schemas
+                setUser(data as unknown as UserProfile);
                 setError(null);
             })
             .catch((err) => {

@@ -92,9 +92,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-gray-900 text-white transition-all duration-300 flex flex-col`}
+        className={`${sidebarOpen ? 'w-64' : 'w-20'
+          } bg-gray-900 text-white transition-all duration-300 flex flex-col`}
       >
         {/* Header */}
         <div className="p-4 border-b border-gray-700">
@@ -126,16 +125,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const isActive = pathname === item.href || (pathname?.startsWith(item.href + '/') ?? false);
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  isActive
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
+                  }`}
               >
                 {item.icon}
                 {sidebarOpen && <span>{item.name}</span>}
