@@ -30,13 +30,15 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://myjurn.top/api}
         - NEXT_PUBLIC_OPENROUTER_API_KEYS=${NEXT_PUBLIC_OPENROUTER_API_KEYS}
         - NEXT_PUBLIC_DEFAULT_AI_PROVIDER=${NEXT_PUBLIC_DEFAULT_AI_PROVIDER}
         - NEXT_PUBLIC_DEFAULT_AI_MODEL=${NEXT_PUBLIC_DEFAULT_AI_MODEL}
     container_name: bulletjournal-frontend
     ports:
       - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://myjurn.top/api}
     depends_on:
       backend:
         condition: service_healthy
