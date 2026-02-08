@@ -33,3 +33,11 @@ class User(Base):
     # Admin / Security
     role = Column(String, default="USER") # USER, ADMIN, SUPERUSER
     is_banned = Column(Boolean, default=False)
+
+    # Email Verification & Password Reset (NEW)
+    is_email_verified = Column(Boolean, default=False)
+    email_verification_token_hash = Column(String, nullable=True)  # Hashed token for security
+    email_verification_token_expires = Column(DateTime(timezone=True), nullable=True)
+    password_reset_token_hash = Column(String, nullable=True)  # Hashed token for security
+    password_reset_token_expires = Column(DateTime(timezone=True), nullable=True)
+    last_password_reset_request = Column(DateTime(timezone=True), nullable=True)  # For rate limiting

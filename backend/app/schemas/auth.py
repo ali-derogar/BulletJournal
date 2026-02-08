@@ -30,3 +30,32 @@ class UserUpdate(BaseModel):
     bio: Optional[str] = None
     skills: Optional[str] = None
     location: Optional[str] = None
+
+
+# NEW: Email Verification & Password Reset Schemas
+class VerifyEmailRequest(BaseModel):
+    """Request to verify email with token"""
+    token: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Request to initiate password reset"""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Request to reset password with token"""
+    token: str
+    new_password: str
+
+
+class EmailVerificationResponse(BaseModel):
+    """Response for email verification"""
+    message: str
+    email_verified: bool
+
+
+class PasswordResetResponse(BaseModel):
+    """Response for password reset"""
+    message: str
+    success: bool
