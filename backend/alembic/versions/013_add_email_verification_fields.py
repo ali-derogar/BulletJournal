@@ -1,7 +1,7 @@
 """Add email verification and password reset fields to users table
 
 Revision ID: 013_add_email_verification_fields
-Revises: 012_merge_heads
+Revises: e52345678912
 Create Date: 2026-02-08 17:30:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '013_add_email_verification_fields'
-down_revision = '012_merge_heads'
+down_revision = 'e52345678912'
 branch_labels = None
 depends_on = None
 
