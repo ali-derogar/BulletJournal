@@ -127,11 +127,20 @@ export async function login(data: LoginData): Promise<{
   user: UserInfo;
 }> {
   try {
-    // Backend uses OAuth2 password flow
-    const tokenResponse = await postForm<TokenResponse>('/auth/login', {
-      username: data.email,
-      password: data.password,
+    // Login via Next.js API route
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
+
+    const tokenResponse = await response.json();
+
+    if (!response.ok) {
+      throw new Error(tokenResponse.message || tokenResponse.detail || 'Login failed');
+    }
 
     // Store token persistently
     setStoredToken(tokenResponse.access_token);
@@ -147,7 +156,7 @@ export async function login(data: LoginData): Promise<{
       user,
     };
   } catch (error) {
-    const apiError = error as ApiError;
+    const apiError = error as Error;
     throw new Error(apiError.message || 'Login failed');
   }
 }
@@ -170,13 +179,26 @@ export async function getCurrentUser(): Promise<UserInfo> {
   }
 
   try {
-    const user = await get<UserInfo>('/auth/me', token);
+    const response = await fetch('/api/auth/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    });
+
+    const user = await response.json();
+
+    if (!response.ok) {
+      throw new Error(user.message || user.detail || 'Failed to fetch user info');
+    }
+
     return user;
   } catch (error) {
     // If token is invalid, clear it
     authToken = null;
     clearStoredToken();
-    const apiError = error as ApiError;
+    const apiError = error as Error;
     throw new Error(apiError.message || 'Failed to fetch user info');
   }
 }
@@ -253,10 +275,24 @@ export async function updateUserProfile(data: { name?: string }): Promise<UserIn
   }
 
   try {
-    const user = await patch<UserInfo>('/auth/me', data, token);
+    const response = await fetch('/api/auth/me', {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const user = await response.json();
+
+    if (!response.ok) {
+      throw new Error(user.message || user.detail || 'Failed to update profile');
+    }
+
     return user;
   } catch (error) {
-    const apiError = error as ApiError;
+    const apiError = error as Error;
     throw new Error(apiError.message || 'Failed to update profile');
   }
 }
