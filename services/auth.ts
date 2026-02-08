@@ -96,10 +96,24 @@ let authToken: string | null = null;
  */
 export async function register(data: RegisterData): Promise<UserInfo> {
   try {
-    const user = await post<UserInfo>('/auth/register', data);
-    return user;
+    // Use local Next.js API route which proxies to backend
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || result.detail || 'Registration failed');
+    }
+
+    return result;
   } catch (error) {
-    const apiError = error as ApiError;
+    const apiError = error as Error;
     throw new Error(apiError.message || 'Registration failed');
   }
 }
