@@ -1,5 +1,5 @@
-const CACHE_NAME = "bullet-journal-v1770532921538";
-const RUNTIME_CACHE = "bullet-journal-runtime-v1770532921538";
+const CACHE_NAME = "bullet-journal-v1770542551159";
+const RUNTIME_CACHE = "bullet-journal-runtime-v1770542551159";
 
 const PRECACHE_URLS = [
   "/",

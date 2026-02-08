@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-async function handler(req: NextRequest, { params }: { params: { path: string[] } }) {
+async function handler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
     try {
-        const path = params.path.join('/');
+        const { path: pathSegments } = await params;
+        const path = pathSegments.join('/');
         const method = req.method;
         const backendUrl = process.env.INTERNAL_API_URL || 'http://backend:8000';
 
