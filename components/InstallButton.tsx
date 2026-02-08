@@ -1,112 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-interface NavigatorStandalone extends Navigator {
-  standalone?: boolean;
-}
+import { useState } from "react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 export default function InstallButton() {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
+  const { isInstalled, isStandalone, isIOS, canInstall, handleInstall } = usePWAInstall();
   const [showGuide, setShowGuide] = useState(false);
 
-
-  useEffect(() => {
-    // Check if app is already installed
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as NavigatorStandalone).standalone === true;
-
-    if (isStandalone) {
-      setIsInstalled(true);
-      return;
-    }
-
-    // Detect iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    setIsIOS(isIOSDevice);
-
-    const handler = (e: Event) => {
-
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-
-    const installHandler = () => {
-      setIsInstalled(true);
-    };
-
-    window.addEventListener("beforeinstallprompt", handler);
-    window.addEventListener("appinstalled", installHandler);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-      window.removeEventListener("appinstalled", installHandler);
-    };
-  }, []);
-
-  const handleInstall = async () => {
-    if (isInstalled) {
-      return;
-    }
-
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        setIsInstalled(true);
-      }
-      setDeferredPrompt(null);
-    } else if (isIOS) {
+  const handleClick = async () => {
+    if (isIOS) {
       setShowGuide(true);
     } else {
-      alert("Installation is not supported by your browser or it's already installed. Look for the install icon in your browser's address bar.");
+      await handleInstall();
     }
   };
 
-
-  if (isInstalled) {
+  // Don't render if already installed or in standalone mode
+  if (isInstalled || isStandalone || !canInstall) {
     return null;
   }
 
   return (
     <>
       <button
-        onClick={handleInstall}
-        className={`flex items-center gap-1.5 px-3 py-1.5 ${isInstalled
-          ? "bg-slate-100 dark:bg-slate-800 text-slate-500"
-          : "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
-          } rounded-full text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95`}
-        title={isInstalled ? "App is installed" : "app"}
+        onClick={handleClick}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+        title="Install app"
       >
-        {isInstalled ? (
-          <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-          </svg>
-        ) : (
-          <svg
-            className="w-3.5 h-3.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-            />
-          </svg>
-        )}
-        <span>{isInstalled ? "Installed" : "App"}</span>
+        <svg
+          className="w-3.5 h-3.5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+          />
+        </svg>
+        <span>App</span>
       </button>
 
       {showGuide && (

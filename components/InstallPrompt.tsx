@@ -1,61 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
-interface NavigatorStandalone extends Navigator {
-  standalone?: boolean;
-}
+import { useState } from "react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 export default function InstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [showPrompt, setShowPrompt] = useState(false);
+  const { deferredPrompt, isInstalled, isStandalone, canInstall, handleInstall } = usePWAInstall();
+  const [showPrompt, setShowPrompt] = useState(canInstall && !isInstalled && !isStandalone);
 
-  useEffect(() => {
-    // Check if app is already installed
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as NavigatorStandalone).standalone === true;
-
-    if (isStandalone) {
-      setShowPrompt(false);
-      return;
-    }
-
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowPrompt(true);
-    };
-
-    const installHandler = () => {
-      setShowPrompt(false);
-    };
-
-    window.addEventListener("beforeinstallprompt", handler);
-    window.addEventListener("appinstalled", installHandler);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-      window.removeEventListener("appinstalled", installHandler);
-    };
-  }, []);
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      console.log("User accepted the install prompt");
-    }
-
-    setDeferredPrompt(null);
+  const handleInstallClick = async () => {
+    await handleInstall();
     setShowPrompt(false);
   };
 
@@ -63,7 +16,10 @@ export default function InstallPrompt() {
     setShowPrompt(false);
   };
 
-  if (!showPrompt) return null;
+  // Don't render if already installed, in standalone mode, or no install prompt available
+  if (!canInstall || isInstalled || isStandalone || !showPrompt) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-card rounded-lg shadow-xl p-4 border-2 border-primary z-50">
@@ -75,7 +31,7 @@ export default function InstallPrompt() {
           </p>
           <div className="flex gap-2">
             <button
-              onClick={handleInstall}
+              onClick={handleInstallClick}
               className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 text-sm font-medium"
             >
               Install
