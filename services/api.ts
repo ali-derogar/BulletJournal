@@ -1,22 +1,19 @@
 /**
- * API Client for backend communication
- * Handles base configuration and request/response formatting
+ * Centralized API client for all services
  */
 
-// Always use relative /api path to route through Next.js proxy
-// This avoids CORS issues and ensures headers are handled correctly by our proxy route
-export const API_BASE_URL = '/api';
+import { getStoredToken } from './auth';
 
-// Note: NEXT_PUBLIC_API_URL should be set correctly in .env.local
-// Development: http://localhost:8000
-// Production: http://your-server-ip:8000
+export const API_BASE_URL = '/api';
 
 /**
  * Get WebSocket base URL
- * Converts http/https to ws/wss
+ * Automatically handles secure/insecure WebSocket protocols
  */
 export function getWebSocketBaseUrl(): string {
-  return API_BASE_URL.replace(/^http/, 'ws');
+  // Use root-relative /api because Nginx will route it
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}/api`;
 }
 
 export interface ApiError {
@@ -33,17 +30,18 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
+  const headers = new Headers(options.headers);
 
-  const config: RequestInit = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  };
+  // Default content type to JSON
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
 
   try {
-    const response = await fetch(url, config);
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
     if (!response.ok) {
       let errorDetail = 'Request failed';
@@ -113,7 +111,7 @@ export async function get<T>(endpoint: string, token?: string): Promise<T> {
  */
 export async function post<T>(
   endpoint: string,
-  data?: unknown,
+  data?: any,
   token?: string
 ): Promise<T> {
   const headers: Record<string, string> = {};
@@ -129,23 +127,22 @@ export async function post<T>(
 }
 
 /**
- * POST request with form data (for OAuth2 password flow)
+ * POST request with Form Data
  */
 export async function postForm<T>(
   endpoint: string,
-  data: Record<string, string>
+  formData: FormData,
+  token?: string
 ): Promise<T> {
-  const formData = new URLSearchParams();
-  Object.entries(data).forEach(([key, value]) => {
-    formData.append(key, value);
-  });
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   return apiRequest<T>(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData.toString(),
+    headers,
+    body: formData,
   });
 }
 
@@ -154,7 +151,7 @@ export async function postForm<T>(
  */
 export async function patch<T>(
   endpoint: string,
-  data?: unknown,
+  data?: any,
   token?: string
 ): Promise<T> {
   const headers: Record<string, string> = {};
@@ -174,7 +171,7 @@ export async function patch<T>(
  */
 export async function del<T>(
   endpoint: string,
-  data?: unknown,
+  data?: any,
   token?: string
 ): Promise<T> {
   const headers: Record<string, string> = {};
@@ -190,14 +187,11 @@ export async function del<T>(
 }
 
 /**
- * Check if backend is reachable
+ * Health check functionality
  */
 export async function healthCheck(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000), // 5 second timeout
-    });
+    const response = await fetch(`${API_BASE_URL}/health`);
     return response.ok;
   } catch {
     return false;
