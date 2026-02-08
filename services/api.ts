@@ -3,7 +3,9 @@
  * Handles base configuration and request/response formatting
  */
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Always use relative /api path to route through Next.js proxy
+// This avoids CORS issues and ensures headers are handled correctly by our proxy route
+export const API_BASE_URL = '/api';
 
 // Note: NEXT_PUBLIC_API_URL should be set correctly in .env.local
 // Development: http://localhost:8000
