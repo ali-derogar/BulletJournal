@@ -9,7 +9,7 @@ import type {
   DayInfo,
 } from "@/domain/calendar-events";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { API_BASE_URL } from "./api";
 
 /**
  * Fetch full calendar data for a month
