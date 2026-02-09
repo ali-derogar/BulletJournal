@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import ProfileForm from "@/components/Profile/ProfileForm";
+import PsychologicalProfile from "@/components/Profile/PsychologicalProfile";
 import Icon from "@/components/Icon";
 import { UserProfile } from "@/domain/user";
 import { getStoredToken, clearStoredToken, getCurrentUser } from "@/services/auth";
@@ -191,6 +192,16 @@ export default function ProfilePage() {
                         </motion.div>
                     </div>
                 </div>
+
+                {/* Psychological Profile Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="mt-12"
+                >
+                    <PsychologicalProfile userId={user.id} token={token} />
+                </motion.div>
             </div>
         </div>
     );

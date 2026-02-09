@@ -93,12 +93,16 @@ app.include_router(content_router, prefix="/api") # /api/admin/content
 app.include_router(notifications_router, prefix="/api") # Notifications
 app.include_router(chatroom_router, prefix="/api") # Chatroom
 
+# Public share endpoints (no auth required)
+from app.api.profile_tests import router as profile_tests_router
+app.include_router(profile_tests_router, prefix="/api/profile", tags=["profile-tests"])
+
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup"""
     try:
         # Import all models to ensure they are registered in Base.metadata
-        from app.models import User, Task, DailyJournal, Goal, Report, Expense, SleepInfo, MoodInfo, Reflection, SystemConfig, Notification, CalendarNote
+        from app.models import User, Task, DailyJournal, Goal, Report, Expense, SleepInfo, MoodInfo, Reflection, SystemConfig, Notification, CalendarNote, ProfileTest, SharedTestResult
         from app.db.session import engine, Base
         
         # Create all tables if they don't exist

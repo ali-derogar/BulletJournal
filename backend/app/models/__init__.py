@@ -11,6 +11,7 @@ from .notification import Notification, PushSubscription
 from .goal import Goal
 from .calendar_note import CalendarNote
 from .report import Report
+from .profile_test import ProfileTest, SharedTestResult
 
 __all__ = [
     "User", 
@@ -25,5 +26,7 @@ __all__ = [
     "PushSubscription",
     "Goal",
     "CalendarNote",
-    "Report"
+    "Report",
+    "ProfileTest",
+    "SharedTestResult"
 ]
