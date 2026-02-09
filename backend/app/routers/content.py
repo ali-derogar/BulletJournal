@@ -123,7 +123,13 @@ async def get_content_stats(
 
     total_tasks = db.query(Task).filter(Task.deletedAt == None).count()
     total_journals = db.query(DailyJournal).filter(DailyJournal.deletedAt == None).count()
-    total_goals = db.query(Goal).count()
+    try:
+        total_goals = db.query(Goal).count()
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error querying total goals: {str(e)}")
+        total_goals = 0
     total_reports = db.query(Report).count()
     pending_reports = db.query(Report).filter(Report.status == "pending").count()
 
@@ -134,9 +140,28 @@ async def get_content_stats(
         Task.deletedAt == None
     ).count()
 
-    # Goal statistics
-    active_goals = db.query(Goal).filter(Goal.status == "active").count()
-    completed_goals = db.query(Goal).filter(Goal.status == "completed").count()
+    # Goal statistics with error handling for SQLite missing table
+    try:
+        active_goals = db.query(Goal).filter(Goal.status == "active").count()
+        completed_goals = db.query(Goal).filter(Goal.status == "completed").count()
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error querying goals table: {str(e)}")
+        
+        # If table is missing, try to create it
+        if "no such table: goals" in str(e).lower():
+            try:
+                from app.db.session import engine, Base
+                # Import Goal to ensure it's registered in Base.metadata
+                from app.models.goal import Goal
+                Base.metadata.create_all(bind=engine, tables=[Goal.__table__])
+                logger.info("Created goals table on demand")
+            except Exception as create_error:
+                logger.error(f"Failed to create goals table: {str(create_error)}")
+        
+        active_goals = 0
+        completed_goals = 0
 
     return ContentStats(
         total_tasks=total_tasks,
@@ -245,21 +270,33 @@ async def list_goals(
 ):
     """List all goals with filters"""
 
-    query = db.query(Goal)
+    try:
+        query = db.query(Goal)
 
-    if user_id:
-        query = query.filter(Goal.userId == user_id)
+        if user_id:
+            query = query.filter(Goal.userId == user_id)
 
-    if status:
-        query = query.filter(Goal.status == status)
+        if status:
+            query = query.filter(Goal.status == status)
 
-    if type:
-        query = query.filter(Goal.type == type)
+        if type:
+            query = query.filter(Goal.type == type)
 
-    query = query.order_by(desc(Goal.createdAt))
+        query = query.order_by(desc(Goal.createdAt))
 
-    total = query.count()
-    goals = query.offset((page - 1) * size).limit(size).all()
+        total = query.count()
+        goals = query.offset((page - 1) * size).limit(size).all()
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error querying goals list: {str(e)}")
+        return {
+            "goals": [],
+            "total": 0,
+            "page": page,
+            "size": size,
+            "error": "Goals table is being initialized" if "no such table" in str(e).lower() else str(e)
+        }
 
     # Enrich with user info
     result = []

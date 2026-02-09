@@ -93,6 +93,21 @@ app.include_router(content_router, prefix="/api") # /api/admin/content
 app.include_router(notifications_router, prefix="/api") # Notifications
 app.include_router(chatroom_router, prefix="/api") # Chatroom
 
+@app.on_event("startup")
+async def startup_event():
+    """Run on application startup"""
+    try:
+        # Import all models to ensure they are registered in Base.metadata
+        from app.models import User, Task, DailyJournal, Goal, Report, Expense, SleepInfo, MoodInfo, Reflection, SystemConfig, Notification, CalendarNote
+        from app.db.session import engine, Base
+        
+        # Create all tables if they don't exist
+        # create_all is idempotent - it won't delete existing tables
+        Base.metadata.create_all(bind=engine)
+        logger.info("✓ Database tables verified/created successfully!")
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {str(e)}")
+
 @app.get("/api/health")
 @app.get("/health")
 @limiter.limit("10/minute")  # Rate limit health checks
