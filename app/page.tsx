@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDate } from "@/app/context/DateContext";
 import { useUser } from "@/app/context/UserContext";
@@ -22,8 +23,10 @@ import InstallButton from "@/components/InstallButton";
 import NotificationBell from "@/components/NotificationBell";
 import ChatRoom from "@/components/ChatRoom";
 import { useAuth } from "./context/AuthContext";
+import { hasAdminAccess } from "@/services/admin";
 
 export default function Home() {
+  const router = useRouter();
   const { currentDate, setCurrentDate } = useDate();
   const { currentUser } = useUser();
   const { isAuthenticated } = useAuth();
@@ -460,6 +463,30 @@ export default function Home() {
                             </svg>
                           </div>
                           <span className="text-sm font-semibold tracking-tight">Chatroom</span>
+                        </motion.button>
+                      )}
+
+                      {hasAdminAccess(currentUser?.role) && (
+                        <motion.button
+                          onClick={() => {
+                            router.push('/admin');
+                            setShowMenuDropdown(false);
+                          }}
+                          whileHover={{ scale: 1.02, backgroundColor: 'rgba(168, 85, 247, 0.1)' }}
+                          whileTap={{ scale: 0.98 }}
+                          className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-left transition-all text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                        >
+                          <div className="p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-semibold tracking-tight">Admin Panel</span>
                         </motion.button>
                       )}
                     </div>
