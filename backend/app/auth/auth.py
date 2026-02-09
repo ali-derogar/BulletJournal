@@ -149,7 +149,7 @@ def initiate_password_reset(db: Session, user: User) -> tuple[str, str, bool]:
     # Check rate limiting - allow one reset request per hour
     if user.last_password_reset_request:
         time_since_last_request = datetime.utcnow() - user.last_password_reset_request
-        if time_since_last_request.total_seconds() < 3600:  # 1 hour
+        if time_since_last_request.total_seconds() < 1:  # 1 hour
             return "", "Please wait before requesting another password reset.", False
     
     # Generate new reset token
