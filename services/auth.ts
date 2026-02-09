@@ -383,7 +383,7 @@ export async function verifyEmail(token: string, email: string): Promise<{ messa
 /**
  * Reset password with token
  */
-export async function resetPassword(token: string, newPassword: string): Promise<{ message: string; success: boolean }> {
+export async function resetPassword(token: string, email: string, newPassword: string): Promise<{ message: string; success: boolean }> {
   try {
     const response = await fetch('/api/auth/reset-password', {
       method: 'POST',
@@ -392,6 +392,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
       },
       body: JSON.stringify({
         token,
+        email,
         new_password: newPassword
       }),
     });

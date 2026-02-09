@@ -119,7 +119,7 @@ class EmailService:
         Returns:
             True if email was sent successfully, False otherwise
         """
-        reset_url = f"{self.frontend_url}/auth/reset-password?token={reset_token}"
+        reset_url = f"{self.frontend_url}/auth/reset-password?token={reset_token}&email={recipient_email}"
 
         html_content = f"""
         <html>

@@ -9,6 +9,7 @@ function ResetPasswordContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams ? searchParams.get('token') : null;
+    const email = searchParams ? searchParams.get('email') : null;
 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -40,7 +41,13 @@ function ResetPasswordContent() {
 
         setIsLoading(true);
         try {
-            const result = await resetPassword(token, password);
+            if (!email) {
+                setStatus('error');
+                setMessage('Missing email in reset link.');
+                setIsLoading(false);
+                return;
+            }
+            const result = await resetPassword(token, email, password);
             setStatus('success');
             setMessage(result.message || 'Password reset successfully!');
             setTimeout(() => {

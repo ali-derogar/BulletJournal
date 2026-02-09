@@ -291,15 +291,13 @@ async def reset_password_endpoint(request: ResetPasswordRequest, db: Session = D
     Returns:
         PasswordResetResponse with success status and message
     """
-    # Find user with this reset token
-    user = db.query(User).filter(
-        User.password_reset_token_hash.isnot(None)
-    ).first()
+    # Find user with this email
+    user = get_user_by_email(db, request.email)
     
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid password reset token."
+            detail="Invalid password reset request."
         )
     
     # Reset the password
