@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import { getSharedTestResult, SharedTestResultPublic } from "@/services/profile-tests";
@@ -77,12 +78,12 @@ export default function SharedTestResultPage() {
           </Icon>
           <h2 className="text-2xl font-bold mb-2">Error</h2>
           <p className="text-gray-400 mb-6">{error}</p>
-          <a
+          <Link
             href="/"
             className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
           >
             Go Home
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -276,12 +277,12 @@ export default function SharedTestResultPage() {
           className="text-center mt-12"
         >
           <p className="text-gray-400 mb-4">Want to take these tests yourself?</p>
-          <a
+          <Link
             href="/"
             className="inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors font-medium"
           >
             Go to Bullet Journal
-          </a>
+          </Link>
         </motion.div>
       </div>
     </div>

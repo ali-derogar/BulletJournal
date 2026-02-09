@@ -12,11 +12,6 @@ import {
   ShareTestResultResponse,
 } from "@/services/profile-tests";
 
-interface PsychologicalProfileProps {
-  userId: string;
-  token: string;
-}
-
 const HOLLAND_CODES = {
   R: { name: "Realistic", color: "from-red-500 to-red-600", description: "Practical, hands-on, technical" },
   I: { name: "Investigative", color: "from-blue-500 to-blue-600", description: "Analytical, curious, scientific" },
@@ -45,7 +40,7 @@ const MBTI_DESCRIPTIONS: Record<string, string> = {
   ESFP: "The Entertainer - Outgoing, spontaneous and enjoyable person",
 };
 
-export default function PsychologicalProfile({ userId, token }: PsychologicalProfileProps) {
+export default function PsychologicalProfile() {
   const [testResults, setTestResults] = useState<ProfileTestResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +60,7 @@ export default function PsychologicalProfile({ userId, token }: PsychologicalPro
       const results = await getUserTests();
       setTestResults(results);
       setError(null);
-    } catch (err) {
+    } catch {
       // It's okay if no tests have been taken yet
       setError(null);
     } finally {
@@ -73,12 +68,12 @@ export default function PsychologicalProfile({ userId, token }: PsychologicalPro
     }
   };
 
-  const handleHollandComplete = (result: any) => {
+  const handleHollandComplete = (): void => {
     setShowHollandTest(false);
     loadTestResults();
   };
 
-  const handleMBTIComplete = (result: any) => {
+  const handleMBTIComplete = (): void => {
     setShowMBTITest(false);
     loadTestResults();
   };

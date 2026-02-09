@@ -200,7 +200,7 @@ export default function ProfilePage() {
                     transition={{ delay: 0.3 }}
                     className="mt-12"
                 >
-                    <PsychologicalProfile userId={user.id} token={token} />
+                    <PsychologicalProfile />
                 </motion.div>
             </div>
         </div>

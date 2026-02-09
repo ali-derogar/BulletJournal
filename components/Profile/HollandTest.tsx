@@ -31,14 +31,15 @@ const HOLLAND_QUESTIONS = [
   { id: 18, text: "I like to maintain accurate records", code: "C" },
 ];
 
-const HOLLAND_CODES = {
-  R: { name: "Realistic", color: "from-red-500 to-red-600", description: "Practical, hands-on, technical" },
-  I: { name: "Investigative", color: "from-blue-500 to-blue-600", description: "Analytical, curious, scientific" },
-  A: { name: "Artistic", color: "from-purple-500 to-purple-600", description: "Creative, expressive, original" },
-  S: { name: "Social", color: "from-green-500 to-green-600", description: "Helpful, caring, supportive" },
-  E: { name: "Enterprising", color: "from-yellow-500 to-yellow-600", description: "Ambitious, persuasive, leadership" },
-  C: { name: "Conventional", color: "from-indigo-500 to-indigo-600", description: "Organized, detail-oriented, systematic" },
-};
+// Holland codes reference for future use
+// const HOLLAND_CODES = {
+//   R: { name: "Realistic", color: "from-red-500 to-red-600", description: "Practical, hands-on, technical" },
+//   I: { name: "Investigative", color: "from-blue-500 to-blue-600", description: "Analytical, curious, scientific" },
+//   A: { name: "Artistic", color: "from-purple-500 to-purple-600", description: "Creative, expressive, original" },
+//   S: { name: "Social", color: "from-green-500 to-green-600", description: "Helpful, caring, supportive" },
+//   E: { name: "Enterprising", color: "from-yellow-500 to-yellow-600", description: "Ambitious, persuasive, leadership" },
+//   C: { name: "Conventional", color: "from-indigo-500 to-indigo-600", description: "Organized, detail-oriented, systematic" },
+// };
 
 export default function HollandTest({ onComplete, onCancel }: HollandTestProps) {
   const [currentStep, setCurrentStep] = useState(0);

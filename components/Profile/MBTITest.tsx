@@ -29,16 +29,17 @@ const MBTI_QUESTIONS = [
   { id: 16, text: "I prefer...", pair: ["J", "P"], options: ["Structured schedules", "Spontaneous activities"] },
 ];
 
-const MBTI_TYPES = {
-  E: "Extroversion",
-  I: "Introversion",
-  S: "Sensing",
-  N: "Intuition",
-  T: "Thinking",
-  F: "Feeling",
-  J: "Judging",
-  P: "Perceiving",
-};
+// MBTI types reference for future use
+// const MBTI_TYPES = {
+//   E: "Extroversion",
+//   I: "Introversion",
+//   S: "Sensing",
+//   N: "Intuition",
+//   T: "Thinking",
+//   F: "Feeling",
+//   J: "Judging",
+//   P: "Perceiving",
+// };
 
 export default function MBTITest({ onComplete, onCancel }: MBTITestProps) {
   const [currentStep, setCurrentStep] = useState(0);
