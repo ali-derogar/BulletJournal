@@ -354,3 +354,57 @@ export async function forgotPassword(email: string): Promise<{ message: string; 
     throw new Error(apiError.message || 'Failed to initiate password reset');
   }
 }
+
+/**
+ * Verify email with token
+ */
+export async function verifyEmail(token: string, email: string): Promise<{ message: string; email_verified: boolean }> {
+  try {
+    const response = await fetch(`/api/auth/verify-email?token=${token}&email=${email}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || result.detail || 'Email verification failed');
+    }
+
+    return result;
+  } catch (error) {
+    const apiError = error as Error;
+    throw new Error(apiError.message || 'Email verification failed');
+  }
+}
+
+/**
+ * Reset password with token
+ */
+export async function resetPassword(token: string, newPassword: string): Promise<{ message: string; success: boolean }> {
+  try {
+    const response = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token,
+        new_password: newPassword
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || result.detail || 'Password reset failed');
+    }
+
+    return result;
+  } catch (error) {
+    const apiError = error as Error;
+    throw new Error(apiError.message || 'Password reset failed');
+  }
+}

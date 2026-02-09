@@ -72,6 +72,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         // Error is already set in AuthContext
         // Keep modal open so user can see the error and retry
       }
+    } else if (mode === 'login') {
       try {
         await login(email, password);
         // Only close modal if login succeeds
