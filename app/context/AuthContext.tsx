@@ -15,6 +15,7 @@ export interface AuthUser {
   xp?: number;
   role?: string;
   is_banned?: boolean;
+  is_email_verified?: boolean;
 }
 
 interface AuthContextType {
@@ -26,6 +27,7 @@ interface AuthContextType {
   register: (name: string, username: string, email: string, password: string) => Promise<void>;
   logout: (clearData?: boolean) => Promise<void>;
   updateUserName: (name: string) => Promise<void>;
+  resendVerification: () => Promise<void>;
   error: string | null;
   clearError: () => void;
 }
@@ -69,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         xp: authUser.xp,
         role: authUser.role,
         is_banned: authUser.is_banned,
+        is_email_verified: authUser.is_email_verified,
         createdAt: existingUser?.createdAt || new Date().toISOString(),
       };
 
@@ -97,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             xp: userInfo.xp,
             role: userInfo.role,
             is_banned: userInfo.is_banned,
+            is_email_verified: userInfo.is_email_verified,
           };
           setUser(authUser);
           await syncAuthUserToLocal(authUser);
@@ -126,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: updatedUser.id,
             name: updatedUser.name,
             email: updatedUser.email,
+            is_email_verified: updatedUser.is_email_verified,
           });
         } catch (err) {
           console.error('Failed to sync name update to server:', err);
@@ -174,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: userInfo.id,
         name: userInfo.name,
         email: userInfo.email,
+        is_email_verified: userInfo.is_email_verified,
       };
 
       setUser(authUser);
@@ -211,6 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: userInfo.id,
         name: userInfo.name,
         email: userInfo.email,
+        is_email_verified: userInfo.is_email_verified,
       };
 
       setUser(authUser);
@@ -273,6 +280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         xp: updatedUser.xp,
         role: updatedUser.role,
         is_banned: updatedUser.is_banned,
+        is_email_verified: updatedUser.is_email_verified,
       };
 
       setUser(authUser);
@@ -285,6 +293,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw err;
     }
   }, [user, syncAuthUserToLocal]);
+
+  // Resend verification email
+  const resendVerification = useCallback(async () => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      if (!isOnline) {
+        throw new Error('You must be online to resend verification');
+      }
+
+      await authService.resendVerification();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to resend verification';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isOnline]);
 
   // Clear error
   const clearError = useCallback(() => {
@@ -300,6 +328,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     updateUserName,
+    resendVerification,
     error,
     clearError,
   };

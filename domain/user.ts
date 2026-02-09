@@ -9,6 +9,7 @@ export interface UserProfile {
   role?: string;
   is_banned?: boolean;
   createdAt: string;
+  is_email_verified?: boolean;
   // Professional Profile Fields
   education_level?: string;
   job_title?: string;

@@ -33,6 +33,7 @@ export interface UserInfo {
   xp?: number;
   role?: string;
   is_banned?: boolean;
+  is_email_verified?: boolean;
   created_at: string;
   updatedAt: string;
 }
@@ -294,5 +295,62 @@ export async function updateUserProfile(data: { name?: string }): Promise<UserIn
   } catch (error) {
     const apiError = error as Error;
     throw new Error(apiError.message || 'Failed to update profile');
+  }
+}
+
+/**
+ * Resend email verification link
+ */
+export async function resendVerification(): Promise<{ message: string; email_verified: boolean }> {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  try {
+    const response = await fetch('/api/auth/resend-verification', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || result.detail || 'Failed to resend verification email');
+    }
+
+    return result;
+  } catch (error) {
+    const apiError = error as Error;
+    throw new Error(apiError.message || 'Failed to resend verification email');
+  }
+}
+
+/**
+ * Initiate password reset
+ */
+export async function forgotPassword(email: string): Promise<{ message: string; success: boolean }> {
+  try {
+    const response = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || result.detail || 'Failed to initiate password reset');
+    }
+
+    return result;
+  } catch (error) {
+    const apiError = error as Error;
+    throw new Error(apiError.message || 'Failed to initiate password reset');
   }
 }

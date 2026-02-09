@@ -7,6 +7,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import PWARegistration from "./PWARegistration";
 import NotificationPermissionPrompt from "@/components/NotificationPermissionPrompt";
 
+import EmailVerificationBanner from "@/components/EmailVerificationBanner";
+
 export const metadata: Metadata = {
   title: "Bullet Journal v1.1.0",
   description: "Offline-first Progressive Web Application",
@@ -65,6 +67,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
+            <EmailVerificationBanner />
             <UserProvider>
               <DateProvider>{children}</DateProvider>
               <NotificationPermissionPrompt />

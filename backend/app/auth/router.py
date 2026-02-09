@@ -161,26 +161,25 @@ async def update_user_profile(
 # NEW: Email Verification & Password Reset Endpoints
 
 @router.get("/verify-email", response_model=EmailVerificationResponse)
-async def verify_email(token: str, db: Session = Depends(get_db)):
+async def verify_email(token: str, email: str, db: Session = Depends(get_db)):
     """
     Verify user email with token
     
     Args:
         token: Email verification token from email link
+        email: User email address
         db: Database session
         
     Returns:
         EmailVerificationResponse with success status and message
     """
-    # Find user with this verification token
-    user = db.query(User).filter(
-        User.email_verification_token_hash.isnot(None)
-    ).first()
+    # Find user with this email
+    user = get_user_by_email(db, email)
     
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid verification token."
+            detail="Invalid verification request."
         )
     
     # Verify the token
@@ -196,6 +195,42 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
         message=message,
         email_verified=True
     )
+
+
+@router.post("/resend-verification", response_model=EmailVerificationResponse)
+async def resend_verification(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Resend verification email to current user
+    """
+    if current_user.is_email_verified:
+        return EmailVerificationResponse(
+            message="Email is already verified.",
+            email_verified=True
+        )
+    
+    # Generate new token
+    plain_token, hashed_token, expiry = token_manager.create_email_verification_token()
+    current_user.email_verification_token_hash = hashed_token
+    current_user.email_verification_token_expires = expiry
+    
+    try:
+        db.commit()
+        # Send verification email
+        email_service.send_verification_email(current_user.email, plain_token)
+        
+        return EmailVerificationResponse(
+            message="Verification email sent successfully.",
+            email_verified=False
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resend verification email: {str(e)}"
+        )
 
 
 @router.post("/forgot-password", response_model=PasswordResetResponse)

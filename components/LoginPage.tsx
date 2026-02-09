@@ -6,7 +6,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import InstallButton from '@/components/InstallButton';
 
 export default function LoginPage() {
-    const [mode, setMode] = useState<'login' | 'register'>('login');
+    const [mode, setMode] = useState<'login' | 'register' | 'forgot-password'>('login');
     const [name, setName] = useState('');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
@@ -15,11 +15,13 @@ export default function LoginPage() {
     const [localError, setLocalError] = useState<string | null>(null);
 
     const { login, register, isLoading, error, clearError, isOnline } = useAuth();
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLocalError(null);
         clearError();
+        setSuccessMessage(null);
 
         if (!isOnline) {
             setLocalError('You must be online to authenticate');
@@ -43,12 +45,20 @@ export default function LoginPage() {
             } catch {
                 // Error is already set in AuthContext
             }
-        } else {
             try {
                 await login(email, password);
                 // Stay on page after successful login
             } catch {
                 // Error is already set in AuthContext
+            }
+        } else if (mode === 'forgot-password') {
+            try {
+                const { forgotPassword } = await import('@/services/auth');
+                const result = await forgotPassword(email);
+                setSuccessMessage(result.message);
+                setMode('login');
+            } catch (err) {
+                setLocalError(err instanceof Error ? err.message : 'Failed to send reset link');
             }
         }
     };
@@ -69,10 +79,10 @@ export default function LoginPage() {
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                             <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                {mode === 'login' ? 'Welcome Back' : 'Join Us'}
+                                {mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Join Us' : 'Reset Password'}
                             </h2>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                {mode === 'login' ? 'Sign in to your account' : 'Create your new account'}
+                                {mode === 'login' ? 'Sign in to your account' : mode === 'register' ? 'Create your new account' : 'Enter your email to reset password'}
                             </p>
                         </div>
                         <InstallButton />
@@ -101,6 +111,16 @@ export default function LoginPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <p className="text-sm text-red-800 dark:text-red-200 font-medium">{displayError}</p>
+                    </div>
+                )}
+
+                {/* Success Message */}
+                {successMessage && (
+                    <div className="mx-6 mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800/50 rounded-xl flex items-start gap-3 shadow-sm">
+                        <svg className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <p className="text-sm text-green-800 dark:text-green-200 font-medium">{successMessage}</p>
                     </div>
                 )}
 
@@ -162,25 +182,38 @@ export default function LoginPage() {
                     </div>
 
                     {/* Password field */}
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-                            placeholder="Enter your password"
-                            required
-                            disabled={isLoading || !isOnline}
-                            minLength={8}
-                        />
-                        {mode === 'register' && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Minimum 8 characters required</p>
-                        )}
-                    </div>
+                    {mode !== 'forgot-password' && (
+                        <div>
+                            <label htmlFor="password" title="Password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Password
+                            </label>
+                            <input
+                                type="password"
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                                placeholder="Enter your password"
+                                required
+                                disabled={isLoading || !isOnline}
+                                minLength={8}
+                            />
+                            {mode === 'register' && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Minimum 8 characters required</p>
+                            )}
+                            {mode === 'login' && (
+                                <div className="flex justify-end mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setMode('forgot-password')}
+                                        className="text-xs font-semibold text-blue-600 hover:text-purple-600 dark:text-blue-400 dark:hover:text-purple-400 transition-colors"
+                                    >
+                                        Forgot Password?
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Confirm Password field (register only) */}
                     {mode === 'register' && (
@@ -214,10 +247,10 @@ export default function LoginPage() {
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span>{mode === 'login' ? 'Signing in...' : 'Creating account...'}</span>
+                                <span>{mode === 'login' ? 'Signing in...' : mode === 'register' ? 'Creating account...' : 'Sending...'}</span>
                             </>
                         ) : (
-                            <span>{mode === 'login' ? 'Sign In' : 'Create Account'}</span>
+                            <span>{mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Send Reset Link'}</span>
                         )}
                     </button>
                 </form>
@@ -225,9 +258,10 @@ export default function LoginPage() {
                 {/* Mode Toggle */}
                 <div className="px-6 pb-6 text-center">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {mode === 'login' ? "Don&apos;t have an account?" : 'Already have an account?'}
+                        {mode === 'login' ? "Don&apos;t have an account?" : mode === 'register' ? 'Already have an account?' : 'Remember your password?'}
                         {' '}
                         <button
+                            type="button"
                             onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
                             className="text-blue-600 hover:text-purple-600 dark:text-blue-400 dark:hover:text-purple-400 font-semibold transition-colors duration-200"
                             disabled={isLoading}

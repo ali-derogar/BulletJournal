@@ -68,7 +68,7 @@ class EmailService:
         Returns:
             True if email was sent successfully, False otherwise
         """
-        verification_url = f"{self.frontend_url}/auth/verify-email?token={verification_token}"
+        verification_url = f"{self.frontend_url}/auth/verify-email?token={verification_token}&email={recipient_email}"
 
         html_content = f"""
         <html>

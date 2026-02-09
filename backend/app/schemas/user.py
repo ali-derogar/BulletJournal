@@ -19,6 +19,7 @@ class UserBase(BaseModel):
     xp: int = 0
     role: str = "USER"
     is_banned: bool = False
+    is_email_verified: bool = False
 
 class UserCreate(UserBase):
     password: str
