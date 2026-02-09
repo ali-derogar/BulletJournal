@@ -258,7 +258,7 @@ export default function LoginPage() {
                 {/* Mode Toggle */}
                 <div className="px-6 pb-6 text-center">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {mode === 'login' ? "Don&apos;t have an account?" : mode === 'register' ? 'Already have an account?' : 'Remember your password?'}
+                        {mode === 'login' ? "Don't have an account?" : mode === 'register' ? 'Already have an account?' : 'Remember your password?'}
                         {' '}
                         <button
                             type="button"
