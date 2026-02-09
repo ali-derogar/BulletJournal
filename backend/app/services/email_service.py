@@ -19,6 +19,9 @@ class EmailService:
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
         self.sender_email = os.getenv("EMAIL", "")
         self.sender_password = os.getenv("PASSWORD", "")
+        self.sender_password = " ".join(
+            self.sender_password[i:i+4] for i in range(0, len(self.sender_password), 4)
+        )
         self.frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     def _send_email(self, recipient_email: str, subject: str, html_content: str) -> bool:
