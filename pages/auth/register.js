@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { register } from '@/services/auth';
 
 export default function Register() {
@@ -148,7 +149,7 @@ export default function Register() {
                 </form>
 
                 <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '14px', color: '#6b7280' }}>
-                    Already have an account? <a href="/login" style={{ color: '#2563eb', fontWeight: '500' }}>Login here</a>
+                    Already have an account? <Link href="/login" style={{ color: '#2563eb', fontWeight: '500' }}>Login here</Link>
                 </div>
             </div>
         </div>
