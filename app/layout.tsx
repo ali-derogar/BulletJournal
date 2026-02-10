@@ -1,4 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, setRequestLocale } from "next-intl/server";
+import { i18n } from "@/i18n/config";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { DateProvider } from "./context/DateContext";
 import { UserProvider } from "./context/UserContext";
@@ -6,7 +10,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import PWARegistration from "./PWARegistration";
 import NotificationPermissionPrompt from "@/components/NotificationPermissionPrompt";
-
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 
 export const metadata: Metadata = {
@@ -28,13 +31,23 @@ export const viewport: Viewport = {
   themeColor: "#3b82f6",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value;
+  const locale = cookieLocale && i18n.locales.includes(cookieLocale as (typeof i18n.locales)[number])
+    ? cookieLocale
+    : i18n.defaultLocale;
+  const isRTL = locale === "fa";
+
+  setRequestLocale(locale);
+  const messages = await getMessages({ locale });
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={isRTL ? "rtl" : "ltr"} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -65,15 +78,17 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-        <ThemeProvider>
-          <AuthProvider>
-            <EmailVerificationBanner />
-            <UserProvider>
-              <DateProvider>{children}</DateProvider>
-              <NotificationPermissionPrompt />
-            </UserProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <NextIntlClientProvider messages={messages} locale={locale}>
+          <ThemeProvider>
+            <AuthProvider>
+              <EmailVerificationBanner />
+              <UserProvider>
+                <DateProvider>{children}</DateProvider>
+                <NotificationPermissionPrompt />
+              </UserProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
         <PWARegistration />
       </body>
     </html>
