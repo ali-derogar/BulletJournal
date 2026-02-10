@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -43,9 +43,10 @@ export default function SharedTestResultPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const locale = typeof window !== "undefined" ? getLocaleFromPath(window.location.pathname) : "en";
-  const messages = locale === "fa" ? faMessages : enMessages;
-  const t = (key: string, values?: Record<string, string | number>) =>
-    formatMessage(getMessage(messages as Record<string, unknown>, key), values);
+  const messages = useMemo(() => (locale === "fa" ? faMessages : enMessages), [locale]);
+  const t = useCallback((key: string, values?: Record<string, string | number>) =>
+    formatMessage(getMessage(messages as Record<string, unknown>, key), values),
+  [messages]);
   const hollandCodes = (getMessage(messages as Record<string, unknown>, "profileTests.holland.codes") as Record<string, { name: string; description: string }>) || {};
   const mbtiDescriptions = (getMessage(messages as Record<string, unknown>, "profileTests.mbti.descriptions") as Record<string, string>) || {};
   const mbtiPreferencePairs = (getMessage(messages as Record<string, unknown>, "profileTests.mbti.preferencePairs") as Array<{ pair: string; label: string }>) || [];
@@ -67,7 +68,7 @@ export default function SharedTestResultPage() {
     if (token) {
       loadResult();
     }
-  }, [token]);
+  }, [token, t]);
 
   if (loading) {
     return (

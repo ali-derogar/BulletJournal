@@ -89,7 +89,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
       }
     };
     checkMigration();
-  }, []);
+  }, [t]);
 
   const loadAllGoals = useCallback(async () => {
     console.log("loadAllGoals: Starting to load goals for selected periods:", JSON.stringify(selectedPeriods, null, 2));
@@ -162,7 +162,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
     } finally {
       setLoading(false);
     }
-  }, [userId, onGoalProgressUpdate, selectedPeriods]);
+  }, [userId, onGoalProgressUpdate, selectedPeriods, t]);
 
   // Load all goals on mount and when selectedPeriods change
   useEffect(() => {

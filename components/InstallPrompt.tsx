@@ -6,7 +6,7 @@ import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 export default function InstallPrompt() {
   const t = useTranslations();
-  const { deferredPrompt, isInstalled, isStandalone, canInstall, handleInstall } = usePWAInstall();
+  const { isInstalled, isStandalone, canInstall, handleInstall } = usePWAInstall();
   const [showPrompt, setShowPrompt] = useState(canInstall && !isInstalled && !isStandalone);
 
   const handleInstallClick = async () => {

@@ -78,7 +78,7 @@ export default function UploadDownloadButtons() {
     } finally {
       setUploadPhase('idle');
     }
-  }, [syncCheck, user]);
+  }, [syncCheck, user, t]);
 
   // Auto-sync effect: trigger handleUpload every 10 seconds
   React.useEffect(() => {

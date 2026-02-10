@@ -4,6 +4,7 @@ import { useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { i18n } from '@/i18n/config';
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
@@ -19,7 +20,8 @@ export default function LanguageSwitcher() {
   const handleLanguageChange = (newLocale: string) => {
     // Remove current locale from pathname if it exists
     const currentPath = pathname || '/';
-    const pathWithoutLocale = currentPath.replace(`/${locale}`, '') || '/';
+    const localePattern = new RegExp(`^/(${i18n.locales.join('|')})(?=/|$)`);
+    const pathWithoutLocale = currentPath.replace(localePattern, '') || '/';
     
     // Store language preference in localStorage
     if (typeof window !== 'undefined') {
@@ -30,7 +32,8 @@ export default function LanguageSwitcher() {
     }
 
     // Navigate to new locale
-    router.push(`/${newLocale}${pathWithoutLocale}`);
+    const nextPath = pathWithoutLocale === '/' ? `/${newLocale}` : `/${newLocale}${pathWithoutLocale}`;
+    router.push(nextPath);
     router.refresh();
     setIsOpen(false);
   };

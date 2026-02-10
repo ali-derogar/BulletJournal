@@ -72,7 +72,7 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, search, roleFilter, bannedFilter]);
+  }, [page, pageSize, search, roleFilter, bannedFilter, t]);
 
   useEffect(() => {
     loadUsers();

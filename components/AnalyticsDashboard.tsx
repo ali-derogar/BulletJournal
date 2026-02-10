@@ -213,7 +213,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       console.log('📊 AnalyticsDashboard: Setting loading to false');
       setLoading(false);
     }
-  }, [currentUser?.id, period]);
+  }, [currentUser?.id, period, t]);
 
   useEffect(() => {
     console.log('📊 AnalyticsDashboard: useEffect triggered', { period, userId: currentUser?.id });
@@ -406,7 +406,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           {t('analytics.prevButton')}
         </motion.button>
         <span className="text-base md:text-lg font-black text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-center px-2">
-          {formatPeriodDisplay(period, localeTag, t)}
+          {formatPeriodDisplay(period, localeTag)}
         </span>
         <motion.button
           onClick={() => navigatePeriod('next')}
@@ -1099,7 +1099,7 @@ function formatTime(minutes: number, t: ReturnType<typeof useTranslations>): str
     : t('analytics.hoursShort', { hours });
 }
 
-function formatPeriodDisplay(period: Period, localeTag: string, t: ReturnType<typeof useTranslations>): string {
+function formatPeriodDisplay(period: Period, localeTag: string): string {
   if (period.type === 'weekly') {
     const { start, end } = getPeriodDates(period);
     return `${start.toLocaleDateString(localeTag)} - ${end.toLocaleDateString(localeTag)}`;

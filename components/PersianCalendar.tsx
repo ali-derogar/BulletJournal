@@ -32,7 +32,6 @@ interface HolidayData {
 export default function PersianCalendar({ userId }: PersianCalendarProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const localeTag = locale === "fa" ? "fa-IR" : "en-US";
   const now = new Date();
   const jNow = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
   console.log('[PersianCalendar] Current date:', now.toISOString(), 'Jalali:', jNow);

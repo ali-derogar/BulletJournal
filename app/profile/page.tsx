@@ -46,7 +46,7 @@ export default function ProfilePage() {
                 }
             })
             .finally(() => setLoading(false));
-    }, [router]);
+    }, [router, t]);
 
     if (loading) {
         return (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { verifyEmail } from '@/services/auth';
@@ -38,8 +38,9 @@ function VerifyEmailContent() {
     const router = useRouter();
     const [locale, setLocale] = useState<"en" | "fa">("en");
     const messages = locale === "fa" ? faMessages : enMessages;
-    const t = (key: string, values?: Record<string, string | number>) =>
-        formatMessage(getMessage(messages as Record<string, unknown>, `authVerify.${key}`), values);
+    const t = useCallback((key: string, values?: Record<string, string | number>) =>
+        formatMessage(getMessage(messages as Record<string, unknown>, `authVerify.${key}`), values),
+    [messages]);
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState(t('verifying'));
 
@@ -75,7 +76,7 @@ function VerifyEmailContent() {
         };
 
         verify();
-    }, [searchParams, router, locale]);
+    }, [searchParams, router, t]);
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
