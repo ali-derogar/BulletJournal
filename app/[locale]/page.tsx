@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDate } from "@/app/context/DateContext";
 import { useUser } from "@/app/context/UserContext";
@@ -27,6 +28,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { hasAdminAccess } from "@/services/admin";
 
 export default function Home() {
+  const t = useTranslations();
   const router = useRouter();
   const { currentDate, setCurrentDate } = useDate();
   const { currentUser } = useUser();
@@ -300,7 +302,7 @@ export default function Home() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </motion.svg>
-              <span className="text-[10px] sm:text-xs font-bold">Daily</span>
+              <span className="text-[10px] sm:text-xs font-bold">{t('navigation.daily')}</span>
             </motion.button>
 
             <motion.button
@@ -322,7 +324,7 @@ export default function Home() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </motion.svg>
-              <span className="text-[10px] sm:text-xs font-bold">Analytics</span>
+              <span className="text-[10px] sm:text-xs font-bold">{t('navigation.analytics')}</span>
             </motion.button>
 
             <motion.button
@@ -344,7 +346,7 @@ export default function Home() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </motion.svg>
-              <span className="text-[10px] sm:text-xs font-bold">Goals</span>
+              <span className="text-[10px] sm:text-xs font-bold">{t('navigation.goals')}</span>
             </motion.button>
 
             <motion.button
@@ -375,7 +377,7 @@ export default function Home() {
               >
                 <path d="M12,2C6.477,2,2,6.477,2,12c0,4.418,2.865,8.166,6.839,9.489c0.111,0.02,0.211-0.052,0.228-0.162 c0.017-0.109-0.047-0.216-0.155-0.246C6.18,19.344,4,16.488,4,13.25c0-4.005,3.245-7.25,7.25-7.25c4.005,0,7.25,3.245,7.25,7.25 c0,3.238-2.18,6.094-4.912,6.831c-0.108,0.03-0.172,0.137-0.155,0.246c0.017,0.11,0.117,0.182,0.228,0.162 C19.135,20.166,22,16.418,22,12C22,6.477,17.523,2,12,2z" />
               </motion.svg>
-              <span className="text-[10px] sm:text-xs font-bold">AI</span>
+              <span className="text-[10px] sm:text-xs font-bold">{t('navigation.ai')}</span>
             </motion.button>
 
             <div className="relative flex-1 min-w-0" ref={menuDropdownRef}>
@@ -401,7 +403,7 @@ export default function Home() {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </motion.svg>
-                <span className="text-[10px] sm:text-xs font-bold">More</span>
+                <span className="text-[10px] sm:text-xs font-bold">{t('navigation.more')}</span>
               </motion.button>
 
               {/* Dropdown Menu */}
@@ -438,7 +440,7 @@ export default function Home() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
-                        <span className="text-sm font-semibold tracking-tight">Calendar</span>
+                        <span className="text-sm font-semibold tracking-tight">{t('navigation.calendar')}</span>
                       </motion.button>
 
                       {isAuthenticated && (
@@ -464,7 +466,7 @@ export default function Home() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
                           </div>
-                          <span className="text-sm font-semibold tracking-tight">Chatroom</span>
+                          <span className="text-sm font-semibold tracking-tight">{t('navigation.chatroom')}</span>
                         </motion.button>
                       )}
 
@@ -488,7 +490,7 @@ export default function Home() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
                           </div>
-                          <span className="text-sm font-semibold tracking-tight">Admin Panel</span>
+                          <span className="text-sm font-semibold tracking-tight">{t('navigation.adminPanel')}</span>
                         </motion.button>
                       )}
                     </div>
