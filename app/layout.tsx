@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
-import { i18n } from "@/i18n/config";
-import { cookies } from "next/headers";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { DateProvider } from "./context/DateContext";
 import { UserProvider } from "./context/UserContext";
@@ -36,15 +34,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value;
-  const locale = cookieLocale && i18n.locales.includes(cookieLocale as (typeof i18n.locales)[number])
-    ? cookieLocale
-    : i18n.defaultLocale;
+  const locale = await getLocale();
   const isRTL = locale === "fa";
 
-  setRequestLocale(locale);
-  const messages = await getMessages({ locale });
+  const messages = await getMessages();
 
   return (
     <html lang={locale} dir={isRTL ? "rtl" : "ltr"} suppressHydrationWarning>

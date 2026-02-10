@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDate } from "@/app/context/DateContext";
 import { useUser } from "@/app/context/UserContext";
@@ -31,6 +31,8 @@ export const dynamic = "force-dynamic";
 
 export default function Home() {
   const t = useTranslations();
+  const locale = useLocale();
+  const isRTL = locale === "fa";
   const router = useRouter();
   const { currentDate, setCurrentDate } = useDate();
   const { currentUser } = useUser();
@@ -40,6 +42,10 @@ export default function Home() {
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
   const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar' | 'ai' | 'login' | 'chatroom'>('daily');
   const menuDropdownRef = useRef<HTMLDivElement>(null);
+  const footerTabs: Array<'daily' | 'analytics' | 'goals' | 'ai' | 'more'> = ['daily', 'analytics', 'goals', 'ai', 'more'];
+  const activeFooterTab: typeof footerTabs[number] =
+    currentView === 'calendar' || currentView === 'chatroom' ? 'more' : currentView === 'login' ? 'more' : currentView;
+  const activeTabIndex = footerTabs.indexOf(activeFooterTab);
 
   // Debug: Log when component renders with translations
   useEffect(() => {
@@ -281,11 +287,9 @@ export default function Home() {
               className="absolute h-1 bg-gradient-to-r from-primary via-purple-600 to-pink-600 rounded-full top-0"
               style={{
                 width: '20%',
-                left: currentView === 'daily' ? '0%' :
-                  currentView === 'analytics' ? '20%' :
-                    currentView === 'goals' ? '40%' :
-                      currentView === 'ai' ? '60%' :
-                        (currentView === 'calendar' || currentView === 'chatroom') ? '80%' : '80%'
+                insetInlineStart: `${activeTabIndex * 20}%`,
+                left: isRTL ? 'auto' : undefined,
+                right: isRTL ? 'auto' : undefined,
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />

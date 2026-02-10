@@ -24,12 +24,14 @@ export default function LanguageSwitcher() {
     // Store language preference in localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('preferredLanguage', newLocale);
+      document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000`;
       document.documentElement.lang = newLocale;
       document.documentElement.dir = newLocale === 'fa' ? 'rtl' : 'ltr';
     }
 
     // Navigate to new locale
     router.push(`/${newLocale}${pathWithoutLocale}`);
+    router.refresh();
     setIsOpen(false);
   };
 

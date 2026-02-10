@@ -624,7 +624,7 @@
     "minutesShort": "{value}د",
     "hoursMinutes": "{hours}س {minutes}د",
     "hoursShort": "{hours}س",
-    "minutesUnit": "د",
+    "minutesUnit": " دقیقه",
     "timeAnalytics": "تحلیل زمان",
     "totalTimeLabel": "زمان کل:",
     "averagePerDay": "میانگین روزانه:",

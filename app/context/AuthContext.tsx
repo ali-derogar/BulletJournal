@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import * as authService from '@/services/auth';
 import { saveUser, getUserById } from '@/storage';
 import type { UserProfile } from '@/domain';
@@ -35,6 +36,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
@@ -184,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(authUser);
       await syncAuthUserToLocal(authUser);
+      router.refresh();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       setError(errorMessage);
@@ -191,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isOnline, syncAuthUserToLocal]);
+  }, [isOnline, router, syncAuthUserToLocal]);
 
   // Login existing user
   const login = useCallback(async (email: string, password: string) => {
@@ -222,6 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(authUser);
       await syncAuthUserToLocal(authUser);
+      router.refresh();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
@@ -229,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isOnline, syncAuthUserToLocal]);
+  }, [isOnline, router, syncAuthUserToLocal]);
 
   // Logout
   const logout = useCallback(async (clearData = false) => {

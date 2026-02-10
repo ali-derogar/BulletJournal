@@ -1,5 +1,5 @@
-const CACHE_NAME = "bullet-journal-v1770724843852";
-const RUNTIME_CACHE = "bullet-journal-runtime-v1770724843852";
+const CACHE_NAME = "bullet-journal-v1770780000000";
+const RUNTIME_CACHE = "bullet-journal-runtime-v1770780000000";
 
 const PRECACHE_URLS = [
   "/",
@@ -38,22 +38,18 @@ self.addEventListener("fetch", (event) => {
   // Handle navigation requests (HTML pages)
   if (event.request.mode === "navigate") {
     event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        // Try to fetch, cache if successful, but fall back to app shell if offline
-        return fetch(event.request).then((response) => {
+      fetch(event.request, { cache: "no-store" })
+        .then((response) => {
           if (response.status === 200) {
             caches.open(RUNTIME_CACHE).then((cache) => {
               cache.put(event.request, response.clone());
             });
           }
           return response;
-        }).catch(() => {
-          return caches.match("/");
-        });
-      })
+        })
+        .catch(() =>
+          caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match("/"))
+        )
     );
     return;
   }
