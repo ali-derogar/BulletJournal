@@ -48,7 +48,8 @@ export default async function RootLayout({
     notFound();
   }
 
-  const messages = await getMessages();
+  // Get messages for the current locale
+  const messages = await getMessages({ locale });
   const isRTL = locale === 'fa';
 
   return (

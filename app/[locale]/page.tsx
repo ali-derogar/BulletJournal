@@ -39,6 +39,15 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<'daily' | 'analytics' | 'goals' | 'calendar' | 'ai' | 'login' | 'chatroom'>('daily');
   const menuDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Debug: Log when component renders with translations
+  useEffect(() => {
+    console.log('🔄 Home component rendered with translations:', {
+      daily: t('navigation.daily'),
+      analytics: t('navigation.analytics'),
+      goals: t('navigation.goals'),
+    });
+  }, [t]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     if (!showMenuDropdown) return;
