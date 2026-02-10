@@ -116,6 +116,25 @@
     "tests": "تست‌ها",
     "profile": "پروفایل"
   },
+  "dateNavigator": {
+    "previousDay": "روز قبل",
+    "nextDay": "روز بعد",
+    "openCalendar": "باز کردن تقویم",
+    "goToToday": "رفتن به امروز",
+    "today": "امروز",
+    "prev": "قبلی",
+    "next": "بعدی",
+    "chat": "چت"
+  },
+  "dayView": {
+    "currentlyViewing": "در حال مشاهده",
+    "journalTitle": "دفتر {name}",
+    "dayScore": "امتیاز روز",
+    "usefulPercent": "{percent}٪ مفید",
+    "tracked": "ثبت‌شده",
+    "estimated": "تخمینی",
+    "itemsCount": "{count} مورد"
+  },
   "tasks": {
     "title": "وظایف",
     "addTask": "افزودن وظیفه",

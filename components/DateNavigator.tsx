@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useLocale, useTranslations } from "next-intl";
 import { formatDate, addDays, parseDate } from "@/utils/date";
 
 interface DateNavigatorProps {
@@ -16,6 +17,8 @@ export default function DateNavigator({
   onOpenCalendar,
   onOpenChat,
 }: DateNavigatorProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const handlePrevDay = () => {
     onDateChange(addDays(currentDate, -1));
   };
@@ -36,7 +39,8 @@ export default function DateNavigator({
       month: "long",
       day: "numeric",
     };
-    return date.toLocaleDateString("en-US", options);
+    const localeTag = locale === "fa" ? "fa-IR" : "en-US";
+    return date.toLocaleDateString(localeTag, options);
   };
 
   const isToday = currentDate === formatDate(new Date());
@@ -50,11 +54,11 @@ export default function DateNavigator({
     >
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-purple-500/5 to-pink-500/5"></div>
       <div className="relative max-w-4xl mx-auto flex items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4">
-        <motion.button
+          <motion.button
           onClick={handlePrevDay}
           whileHover={{ scale: 1.05, x: -2 }}
           whileTap={{ scale: 0.95 }}
-          aria-label="Previous day"
+          aria-label={t("dateNavigator.previousDay")}
           className="group relative px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-lg hover:shadow-primary/50 transition-all duration-300 overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
@@ -65,7 +69,7 @@ export default function DateNavigator({
             >
               ←
             </motion.span>
-            <span className="hidden sm:inline">Prev</span>
+            <span className="hidden sm:inline">{t("dateNavigator.prev")}</span>
           </span>
         </motion.button>
 
@@ -74,7 +78,7 @@ export default function DateNavigator({
             onClick={onOpenCalendar}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            aria-label="Open calendar"
+            aria-label={t("dateNavigator.openCalendar")}
             className="group relative px-3 sm:px-6 py-2 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 hover:from-primary/20 hover:via-purple-500/20 hover:to-pink-500/20 rounded-2xl border border-primary/30 hover:border-primary/50 transition-all duration-300 shadow-lg hover:shadow-xl w-full"
           >
             <div className="flex items-center justify-center gap-2">
@@ -100,25 +104,25 @@ export default function DateNavigator({
           </motion.button>
           <div className="flex items-center gap-2">
             <motion.button
-              onClick={handleToday}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label="Go to today"
-              disabled={isToday}
-              className={`relative px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${isToday
-                ? "bg-green-500/20 text-green-600 cursor-not-allowed"
-                : "bg-gradient-to-r from-primary to-purple-600 text-white hover:shadow-lg hover:shadow-primary/50"
-                }`}
-            >
-              {isToday ? (
-                <span className="flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Today
-                </span>
-              ) : (
-                "Today"
-              )}
-            </motion.button>
+            onClick={handleToday}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label={t("dateNavigator.goToToday")}
+            disabled={isToday}
+            className={`relative px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${isToday
+              ? "bg-green-500/20 text-green-600 cursor-not-allowed"
+              : "bg-gradient-to-r from-primary to-purple-600 text-white hover:shadow-lg hover:shadow-primary/50"
+              }`}
+          >
+            {isToday ? (
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                {t("dateNavigator.today")}
+              </span>
+            ) : (
+              t("dateNavigator.today")
+            )}
+          </motion.button>
 
             {onOpenChat && (
               <motion.button
@@ -130,7 +134,7 @@ export default function DateNavigator({
                 <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                Chat
+                {t("dateNavigator.chat")}
               </motion.button>
             )}
           </div>
@@ -140,12 +144,12 @@ export default function DateNavigator({
           onClick={handleNextDay}
           whileHover={{ scale: 1.05, x: 2 }}
           whileTap={{ scale: 0.95 }}
-          aria-label="Next day"
+          aria-label={t("dateNavigator.nextDay")}
           className="group relative px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-lg hover:shadow-primary/50 transition-all duration-300 overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
           <span className="relative flex items-center gap-1 sm:gap-2">
-            <span className="hidden sm:inline">Next</span>
+            <span className="hidden sm:inline">{t("dateNavigator.next")}</span>
             <motion.span
               animate={{ x: [-2, 2, -2] }}
               transition={{ duration: 1.5, repeat: Infinity }}

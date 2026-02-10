@@ -116,6 +116,25 @@
     "tests": "Tests",
     "profile": "Profile"
   },
+  "dateNavigator": {
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "openCalendar": "Open calendar",
+    "goToToday": "Go to today",
+    "today": "Today",
+    "prev": "Prev",
+    "next": "Next",
+    "chat": "Chat"
+  },
+  "dayView": {
+    "currentlyViewing": "Currently viewing",
+    "journalTitle": "{name}'s Journal",
+    "dayScore": "Day Score",
+    "usefulPercent": "{percent}% Useful",
+    "tracked": "Tracked",
+    "estimated": "Estimated",
+    "itemsCount": "{count} items"
+  },
   "tasks": {
     "title": "Tasks",
     "addTask": "Add Task",

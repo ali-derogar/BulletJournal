@@ -82,7 +82,7 @@ export default function Home() {
             className="flex items-center justify-center sm:justify-start gap-2 sm:gap-4 min-w-0 flex-1"
           >
             <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Bullet Journal
+              {t("common.appName")}
             </h1>
 
           </motion.div>
@@ -180,17 +180,15 @@ export default function Home() {
                       <path d="M12,2C6.477,2,2,6.477,2,12c0,4.418,2.865,8.166,6.839,9.489c0.111,0.02,0.211-0.052,0.228-0.162 c0.017-0.109-0.047-0.216-0.155-0.246C6.18,19.344,4,16.488,4,13.25c0-4.005,3.245-7.25,7.25-7.25c4.005,0,7.25,3.245,7.25,7.25 c0,3.238-2.18,6.094-4.912,6.831c-0.108,0.03-0.172,0.137-0.155,0.246c0.017,0.11,0.117,0.182,0.228,0.162 C19.135,20.166,22,16.418,22,12C22,6.477,17.523,2,12,2z" />
                     </svg>
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground mb-4">AI Assistant</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-4">{t("ai.title")}</h2>
                   <p className="text-muted-foreground mb-6">
-                    برای استفاده از دستیار هوش مصنوعی، لطفاً وارد شوید
-                    <br />
-                    Please login to use the AI Assistant
+                    {t("ai.loginRequired")}
                   </p>
                   <button
                     onClick={() => setCurrentView('login')}
                     className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
                   >
-                    ورود / Login
+                    {t("common.login")}
                   </button>
                 </motion.div>
               </div>
@@ -236,17 +234,15 @@ export default function Home() {
                       <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground mb-4">Chatroom</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-4">{t("chatroom.title")}</h2>
                   <p className="text-muted-foreground mb-6">
-                    برای استفاده از چت روم، لطفاً وارد شوید
-                    <br />
-                    Please login to use the Chatroom
+                    {t("chatroom.loginRequired")}
                   </p>
                   <button
                     onClick={() => setCurrentView('login')}
                     className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
                   >
-                    ورود / Login
+                    {t("common.login")}
                   </button>
                 </motion.div>
               </div>

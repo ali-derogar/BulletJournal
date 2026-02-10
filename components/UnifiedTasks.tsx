@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 import type { Task, MoodInfo, SleepInfo } from "@/domain";
 import { getTasks, saveTask, deleteTask, getExpenses, getMood, getSleep } from "@/storage";
 import TaskCard from "./TaskCard";
@@ -14,6 +15,7 @@ interface UnifiedTasksProps {
 }
 
 export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: UnifiedTasksProps) {
+    const t = useTranslations();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [moodData, setMoodData] = useState<MoodInfo | null>(null);
     const [sleepData, setSleepData] = useState<SleepInfo | null>(null);
@@ -181,20 +183,20 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
                                     {emotionalScore.totalScore}
                                 </span>
                                 <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider px-2 py-0.5 bg-muted rounded-lg">
-                                    Day Score
+                                    {t("dayView.dayScore")}
                                 </span>
                             </div>
                             <p className="text-lg font-bold text-foreground tracking-tight">{emotionalScore.label}</p>
                             <div className="flex gap-2 mt-2">
                                 <Indicator icon="😴" label={emotionalScore.indicators.sleepQuality} color={getSleepQualityColor(emotionalScore.indicators.sleepQuality)} />
-                                <Indicator icon="🎯" label={`${Math.round(emotionalScore.indicators.usefulTaskRatio * 100)}% Useful`} color={getUsefulTaskRatioColor(emotionalScore.indicators.usefulTaskRatio)} />
+                                <Indicator icon="🎯" label={t("dayView.usefulPercent", { percent: Math.round(emotionalScore.indicators.usefulTaskRatio * 100) })} color={getUsefulTaskRatioColor(emotionalScore.indicators.usefulTaskRatio)} />
                             </div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 md:w-64">
-                        <StatBox title="Tracked" value={formatTime(totalTime)} icon="⏱️" color="text-blue-500" />
-                        <StatBox title="Estimated" value={formatTime(totalEstimated)} icon="📊" color="text-purple-500" />
+                        <StatBox title={t("dayView.tracked")} value={formatTime(totalTime)} icon="⏱️" color="text-blue-500" />
+                        <StatBox title={t("dayView.estimated")} value={formatTime(totalEstimated)} icon="📊" color="text-purple-500" />
                     </div>
                 </div>
             </motion.div>
@@ -208,10 +210,10 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
                 <div className="flex items-center justify-between mb-6 px-4">
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <span className="p-2 bg-primary/10 rounded-xl text-primary">📝</span>
-                        Tasks
+                        {t("tasks.title")}
                     </h2>
                     <span className="text-xs font-bold text-muted-foreground bg-muted px-3 py-1 rounded-full uppercase tracking-widest">
-                        {tasks.length} items
+                        {t("dayView.itemsCount", { count: tasks.length })}
                     </span>
                 </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import DailyInputs from "./DailyInputs";
 import UnifiedTasks from "./UnifiedTasks";
 import ExpenseList from "./ExpenseList";
@@ -37,6 +38,7 @@ const itemVariants = {
 };
 
 export default function DayView({ date }: DayViewProps) {
+  const t = useTranslations();
   const { currentUser } = useUser();
   const userId = currentUser?.id || "default";
 
@@ -83,9 +85,9 @@ export default function DayView({ date }: DayViewProps) {
               </svg>
             </motion.div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Currently viewing</p>
+              <p className="text-xs font-medium text-muted-foreground">{t("dayView.currentlyViewing")}</p>
               <p className="text-lg font-bold bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                {currentUser.name}&apos;s Journal
+                {t("dayView.journalTitle", { name: currentUser.name })}
               </p>
             </div>
             <motion.div
