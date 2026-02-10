@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Bullet Journal",
+    "appName": "MyJurn",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
@@ -63,7 +63,8 @@
     "noData": "No data available",
     "emptyState": "Nothing here yet",
     "tryAgain": "Try Again",
-    "goHome": "Go Home"
+    "goHome": "Go Home",
+    "offlineBanner": "📡 You are offline. All changes are saved locally."
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -89,6 +90,7 @@
     "minimumCharacters": "Minimum 8 characters required",
     "passwordsDoNotMatch": "Passwords do not match",
     "nameRequired": "Name is required",
+    "usernameRequired": "Username is required",
     "mustBeOnline": "You must be online to authenticate",
     "invalidEmail": "Invalid email address",
     "passwordTooShort": "Password must be at least 8 characters",
@@ -96,7 +98,18 @@
     "invalidCredentials": "Invalid email or password",
     "accountCreated": "Account created successfully!",
     "resetLinkSent": "Reset link sent to your email",
-    "passwordReset": "Password reset successfully"
+    "passwordReset": "Password reset successfully",
+    "fullNameLabel": "Full Name",
+    "usernameLabel": "Username",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "fullNamePlaceholder": "Enter your full name",
+    "usernamePlaceholder": "Choose a unique username",
+    "emailPlaceholder": "Enter your email address",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "resetLinkFailed": "Failed to send reset link"
   },
   "navigation": {
     "daily": "Daily",
@@ -135,6 +148,124 @@
     "estimated": "Estimated",
     "itemsCount": "{count} items"
   },
+  "dailyInputs": {
+    "sleepTitle": "Sleep",
+    "sleepTime": "Sleep Time",
+    "wakeTime": "Wake Time",
+    "duration": "Duration: {hours} hours",
+    "sleepQuality": "Sleep Quality: {score}/10",
+    "dailyReflectionTitle": "Daily Reflection",
+    "mood": "Mood: {score}/10",
+    "dayScore": "Day Score: {score}/10"
+  },
+  "reflection": {
+    "habitsTitle": "Habits",
+    "waterIntakeLabel": "Water Intake (glasses)",
+    "studyTimeLabel": "Study Time (minutes)",
+    "goalReached": "✓ Goal reached!",
+    "moreToGoal": "{count} more to reach goal",
+    "dailyReflectionTitle": "Daily Reflection",
+    "thoughtsPlaceholder": "Write your thoughts for the day...",
+    "charactersCount": "{count} characters"
+  },
+  "expenses": {
+    "userBalance": "User Balance",
+    "dailyNet": "Daily Net",
+    "noEntries": "No entries for this day.",
+    "titlePlaceholder": "Title",
+    "amountPlaceholder": "Amount",
+    "expenseType": "Expense",
+    "incomeType": "Income",
+    "addNewEntry": "Add New Entry",
+    "descriptionPlaceholder": "Description...",
+    "addEntry": "Add Entry"
+  },
+  "installPrompt": {
+    "title": "Install Bullet Journal",
+    "description": "Install this app on your device for quick access and offline use.",
+    "install": "Install",
+    "notNow": "Not now"
+  },
+  "installButton": {
+    "installTitle": "Install app",
+    "app": "App",
+    "step1Title": "Step 1",
+    "step1Text": "Tap the <share>Share</share> button in Safari's bottom menu.",
+    "step2Title": "Step 2",
+    "step2Text": "Scroll down and select <addToHome>\"Add to Home Screen\"</addToHome>.",
+    "gotIt": "Got it"
+  },
+  "backup": {
+    "title": "Backup & Restore",
+    "backup": "Backup",
+    "restore": "Restore",
+    "export": "Export Data",
+    "import": "Import Data",
+    "lastBackup": "Last Backup",
+    "backupNow": "Backup Now",
+    "restoreData": "Restore Data",
+    "selectFile": "Select File",
+    "backupSuccess": "Backup created successfully",
+    "restoreSuccess": "Data restored successfully",
+    "backupFailed": "Backup failed",
+    "restoreFailed": "Restore failed",
+    "confirmRestore": "Are you sure you want to restore? This will overwrite your current data.",
+    "backupSize": "Backup Size",
+    "backupDate": "Backup Date"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "enable": "Enable Notifications",
+    "disable": "Disable Notifications",
+    "taskReminder": "Task Reminder",
+    "goalReminder": "Goal Reminder",
+    "dailyDigest": "Daily Digest",
+    "weeklyReport": "Weekly Report",
+    "noNotifications": "No notifications",
+    "markAsRead": "Mark as Read",
+    "markAllAsRead": "Mark All as Read",
+    "deleteNotification": "Delete Notification",
+    "notificationSettings": "Notification Settings"
+  },
+  "authButton": {
+    "currentLevel": "Current Level",
+    "xp": "{value} XP",
+    "nextLevel": "To next level: {value} XP",
+    "finalLevel": "Final level ✨",
+    "logoutKeepData": "Logout (Keep Data)",
+    "logoutClearData": "Logout & Clear Data",
+    "confirmClearData": "Are you sure you want to delete all your local data? You can download it from the server on next login.",
+    "role": {
+      "admin": "Admin",
+      "superuser": "Superuser"
+    }
+  },
+  "taskTimer": {
+    "minutesShort": "{value}m",
+    "hoursMinutes": "{hours}h {minutes}m",
+    "minutesPlaceholder": "Minutes",
+    "est": "Est:",
+    "editEstimate": "Edit estimate",
+    "clearEstimate": "Clear estimate",
+    "addEstimate": "Add Estimate",
+    "running": "Running",
+    "tracked": "Tracked",
+    "total": "total",
+    "totalLabel": "Total: {time}",
+    "vsEstimate": "{diff} vs est",
+    "startTimer": "Start timer",
+    "start": "Start",
+    "resumeTimer": "Resume timer",
+    "resume": "Resume",
+    "resetTimer": "Reset timer",
+    "reset": "Reset",
+    "pauseTimer": "Pause timer",
+    "pause": "Pause",
+    "addTimeManual": "Add time manually",
+    "addTime": "Add Time",
+    "manualTimePlaceholder": "30",
+    "minutesLabel": "minutes"
+  },
   "tasks": {
     "title": "Tasks",
     "addTask": "Add Task",
@@ -144,7 +275,11 @@
     "description": "Description",
     "dueDate": "Due Date",
     "priority": "Priority",
-    "status": "Status",
+    "status": {
+      "todo": "To Do",
+      "inProgress": "Doing",
+      "done": "Done"
+    },
     "completed": "Completed",
     "pending": "Pending",
     "inProgress": "In Progress",
@@ -161,7 +296,18 @@
     "resumeTimer": "Resume Timer",
     "timeSpent": "Time Spent",
     "estimatedTime": "Estimated Time",
-    "actualTime": "Actual Time"
+    "actualTime": "Actual Time",
+    "copyToNextDayOn": "Copy to next day",
+    "copyToNextDayOff": "Do not copy to next day",
+    "focusProgress": "Focus Progress",
+    "estimation": "Estimation",
+    "trackedTime": "Tracked Time",
+    "addTime": "Add",
+    "resume": "Resume",
+    "startFocus": "Start Focus",
+    "pause": "Pause",
+    "reset": "Reset",
+    "noTasksStart": "No tasks yet. Start your day!"
   },
   "goals": {
     "title": "Goals",
@@ -170,7 +316,12 @@
     "deleteGoal": "Delete Goal",
     "goalName": "Goal Name",
     "goalDescription": "Goal Description",
-    "period": "Period",
+    "period": {
+      "year": "Year",
+      "quarter": "Quarter",
+      "month": "Month",
+      "week": "Week"
+    },
     "yearly": "Yearly",
     "monthly": "Monthly",
     "weekly": "Weekly",
@@ -187,7 +338,78 @@
     "weeklyGoals": "Weekly Goals",
     "goalProgress": "Goal Progress",
     "markAsComplete": "Mark as Complete",
-    "updateProgress": "Update Progress"
+    "updateProgress": "Update Progress",
+    "selectPeriod": "Select Period",
+    "resetToCurrentPeriods": "Reset to current periods",
+    "current": "Current",
+    "loading": "Loading Goals...",
+    "periodType": {
+      "yearly": "Yearly",
+      "quarterly": "Quarterly",
+      "monthly": "Monthly",
+      "weekly": "Weekly"
+    },
+    "periodGoals": "{period} Goals",
+    "completedCount": "Completed ({count})",
+    "failedCount": "Failed ({count})",
+    "noArchived": "No archived goals",
+    "noArchivedDescription": "Completed or failed goals for the selected periods will appear here",
+    "noPeriodGoals": "No {period} goals set",
+    "noGoalsYet": "No goals yet",
+    "noGoalsDescription": "Set your first goal to start tracking progress",
+    "addFirstGoal": "Add Your First Goal",
+    "refreshPage": "Refresh Page",
+    "retryMigration": "Retry Migration",
+    "errors": {
+      "initFailed": "Failed to initialize goals database. Please refresh the page.",
+      "loadFailed": "Failed to load goals",
+      "migrationFailed": "Migration failed. Please clear browser data and refresh.",
+      "saveFailed": "Failed to save goal. Please try again."
+    },
+    "addNewGoal": "Add New Goal",
+    "titleLabel": "Title *",
+    "titlePlaceholder": "e.g., Read 10 books",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional description...",
+    "typeLabel": "Goal Type *",
+    "periodLabel": "Period *",
+    "quarterOptions": {
+      "q1": "Q1 (Jan-Mar)",
+      "q2": "Q2 (Apr-Jun)",
+      "q3": "Q3 (Jul-Sep)",
+      "q4": "Q4 (Oct-Dec)"
+    },
+    "weekNumber": "Week Number",
+    "weekOption": "Week {week}",
+    "selectedPeriod": "Selected Period:",
+    "targetLabel": "Target *",
+    "unitLabel": "Unit *",
+    "unitPlaceholder": "e.g., books, hours",
+    "progressTracking": "Progress Tracking *",
+    "manualProgress": "Manual progress tracking",
+    "linkedTasksComingSoon": "Link to tasks (coming soon)",
+    "currentProgress": "Current Progress",
+    "saving": "Saving...",
+    "updateGoal": "Update Goal",
+    "calendar": {
+      "selectYear": "Select Year",
+      "selectPeriod": "{year} - Select Period",
+      "selectWeek": "{year} - Select Week",
+      "yearlyGoals": "{year} Yearly Goals",
+      "quarterlyGoals": "Quarterly Goals",
+      "monthlyGoals": "Monthly Goals",
+      "weeklyGoals": "Weekly Goals",
+      "quarter": "Q{quarter}",
+      "selectWeekButton": "Select Week",
+      "backToYear": "← Back to Year Selection",
+      "backToPeriod": "← Back to Period Selection"
+    },
+    "status": {
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "linkedTasks": "Linked to {count} task(s)",
+    "completedOn": "Completed {date}"
   },
   "journal": {
     "title": "Journal",
@@ -274,7 +496,46 @@
     "deleteAccount": "Delete Account",
     "deleteAccountWarning": "This action cannot be undone",
     "profileUpdated": "Profile updated successfully",
-    "passwordChanged": "Password changed successfully"
+    "passwordChanged": "Password changed successfully",
+    "holland": {
+      "title": "Holland Career Interest Test",
+      "close": "Close",
+      "progress": "Question {current} of {total}",
+      "answers": {
+        "stronglyDisagree": "Strongly Disagree",
+        "disagree": "Disagree",
+        "agree": "Agree",
+        "stronglyAgree": "Strongly Agree"
+      },
+      "previous": "Previous",
+      "next": "Next",
+      "submitting": "Submitting...",
+      "submit": "Submit Test",
+      "errors": {
+        "answerAll": "Please answer all questions",
+        "submitFailed": "Failed to submit test"
+      },
+      "questions": {
+        "q1": "I like to work with tools and machines",
+        "q2": "I like to solve complex problems",
+        "q3": "I like to create artistic works",
+        "q4": "I like to help and support others",
+        "q5": "I like to lead and influence people",
+        "q6": "I like to organize and plan activities",
+        "q7": "I enjoy working with my hands",
+        "q8": "I like to analyze and research",
+        "q9": "I like to express myself creatively",
+        "q10": "I like to work in teams",
+        "q11": "I like to take charge of situations",
+        "q12": "I like to follow procedures and rules",
+        "q13": "I like to build and construct things",
+        "q14": "I like to understand how things work",
+        "q15": "I like to design and decorate spaces",
+        "q16": "I like to counsel and advise others",
+        "q17": "I like to motivate and inspire people",
+        "q18": "I like to maintain accurate records"
+      }
+    }
   },
   "analytics": {
     "title": "Analytics",
@@ -293,7 +554,104 @@
     "productivity": "Productivity",
     "consistency": "Consistency",
     "trend": "Trend",
-    "noData": "No data available"
+    "noData": "No data available",
+    "points": "{count} pt",
+    "notEnoughData": "Not enough data",
+    "sparklineAria": "sparkline",
+    "minValue": "min {value}",
+    "maxValue": "max {value}",
+    "now": "Now",
+    "prev": "Prev",
+    "loadFailed": "Failed to load analytics",
+    "loading": "Loading Analytics...",
+    "authRequired": "Analytics requires authentication. Please log in to view your productivity data.",
+    "networkError": "Unable to load analytics data. Please ensure the backend server is running and try again.",
+    "aiReviewFailed": "AI review failed",
+    "dashboardTitle": "Analytics Dashboard",
+    "aiReview": "AI Review",
+    "analyzing": "Analyzing…",
+    "prevButton": "Prev",
+    "nextButton": "Next",
+    "totalTime": "Total Time",
+    "avgPerDay": "Avg {time}/day",
+    "tasksCompletedLabel": "Tasks Completed",
+    "completionRate": "{rate}% completion rate",
+    "activeDays": "Active Days",
+    "totalDays": "of {total} total days",
+    "avgSleep": "Avg Sleep",
+    "sleepDaysLogged": "{count} day(s) logged",
+    "sleepQuality": "Sleep Quality",
+    "scaleOneToTen": "1-10 scale",
+    "mood": "Mood",
+    "dayScore": "Day score {score}",
+    "water": "Water",
+    "glassesSum": "glasses (sum)",
+    "study": "Study",
+    "minutesSum": "minutes (sum)",
+    "trends": "Trends",
+    "time": "Time",
+    "completion": "Completion",
+    "goals": "Goals",
+    "wellbeing": "Wellbeing",
+    "sleepHours": "Sleep Hours",
+    "moodRating": "Mood Rating",
+    "studyMinutes": "Study Minutes",
+    "noWellbeing": "No wellbeing series available for this period.",
+    "aiReport": "AI Report",
+    "history": "History",
+    "selectPreviousReport": "Select a previous report…",
+    "report": {
+      "summary": "Summary",
+      "strengths": "Strengths",
+      "critiques": "Critiques",
+      "rootCauses": "Root Causes",
+      "recommendations": "Recommendations",
+      "goalAlignment": "Goal Alignment",
+      "plan7Days": "Plan (7 Days)",
+      "plan30Days": "Plan (30 Days)",
+      "questions": "Questions"
+    },
+    "reportFormatUnavailable": "AI report format cannot be displayed. Please click AI Review again.",
+    "demoData": "Demo Data",
+    "demoDataDescription": "You're viewing sample analytics data. Connect to the backend server for real data.",
+    "note": "Note",
+    "incompleteData": "This period has incomplete data ({count} missing days). Analytics may not be fully representative.",
+    "refresh": "Refresh",
+    "period": {
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "periodTitle": "{type} {year}/{period}",
+    "minutesShort": "{value}m",
+    "hoursMinutes": "{hours}h {minutes}m",
+    "hoursShort": "{hours}h",
+    "minutesUnit": "m",
+    "timeAnalytics": "Time Analytics",
+    "totalTimeLabel": "Total Time:",
+    "averagePerDay": "Average per Day:",
+    "averagePerTask": "Average per Task:",
+    "activeDaysLabel": "Active Days:",
+    "estimatedVsActual": "Estimated vs Actual",
+    "estimated": "Estimated:",
+    "actual": "Actual:",
+    "difference": "Difference:",
+    "timeByUsefulness": "Time by Usefulness",
+    "useful": "Useful:",
+    "notUseful": "Not Useful:",
+    "taskAnalytics": "Task Analytics",
+    "created": "Created:",
+    "completed": "Completed:",
+    "completionRateLabel": "Completion Rate:",
+    "tasksPerDay": "Tasks per Day:",
+    "mostProductive": "Most Productive:",
+    "trendsVsPrevious": "Trends vs Previous Period",
+    "timeSpent": "Time Spent",
+    "taskCompletion": "Task Completion",
+    "goalSuccess": "Goal Success",
+    "trendUp": "↑",
+    "trendDown": "↓",
+    "trendStable": "→",
+    "insights": "Insights"
   },
   "ai": {
     "title": "AI Assistant",
@@ -338,39 +696,51 @@
     "description": "Description",
     "noEvents": "No events",
     "upcomingEvents": "Upcoming Events",
-    "pastEvents": "Past Events"
-  },
-  "backup": {
-    "title": "Backup & Restore",
-    "backup": "Backup",
-    "restore": "Restore",
-    "export": "Export Data",
-    "import": "Import Data",
-    "lastBackup": "Last Backup",
-    "backupNow": "Backup Now",
-    "restoreData": "Restore Data",
-    "selectFile": "Select File",
-    "backupSuccess": "Backup created successfully",
-    "restoreSuccess": "Data restored successfully",
-    "backupFailed": "Backup failed",
-    "restoreFailed": "Restore failed",
-    "confirmRestore": "Are you sure you want to restore? This will overwrite your current data.",
-    "backupSize": "Backup Size",
-    "backupDate": "Backup Date"
-  },
-  "notifications": {
-    "title": "Notifications",
-    "enable": "Enable Notifications",
-    "disable": "Disable Notifications",
-    "taskReminder": "Task Reminder",
-    "goalReminder": "Goal Reminder",
-    "dailyDigest": "Daily Digest",
-    "weeklyReport": "Weekly Report",
-    "noNotifications": "No notifications",
-    "markAsRead": "Mark as Read",
-    "markAllAsRead": "Mark All as Read",
-    "deleteNotification": "Delete Notification",
-    "notificationSettings": "Notification Settings"
+    "pastEvents": "Past Events",
+    "persianMonths": {
+      "1": "Farvardin",
+      "2": "Ordibehesht",
+      "3": "Khordad",
+      "4": "Tir",
+      "5": "Mordad",
+      "6": "Shahrivar",
+      "7": "Mehr",
+      "8": "Aban",
+      "9": "Azar",
+      "10": "Dey",
+      "11": "Bahman",
+      "12": "Esfand"
+    },
+    "persianWeekdays": {
+      "0": "Sat",
+      "1": "Sun",
+      "2": "Mon",
+      "3": "Tue",
+      "4": "Wed",
+      "5": "Thu",
+      "6": "Fri"
+    },
+    "nextMonth": "Next month",
+    "previousMonth": "Previous month",
+    "hasNote": "Has note",
+    "eventsHeader": "{month} Events",
+    "eventsCount": "{count} events",
+    "holidays": "Holidays",
+    "all": "All",
+    "allWithCount": "All ({count})",
+    "holidaysWithCount": "🎉 Holidays ({count})",
+    "eventsWithCount": "📅 Events ({count})",
+    "guide": "Calendar Guide",
+    "officialHoliday": "Official Holiday",
+    "friday": "Friday",
+    "dayOfWeek": "Day of Week",
+    "gregorianDate": "Gregorian Date",
+    "event": "Event",
+    "readMore": "▼ Read More",
+    "readLess": "▲ Read Less",
+    "personalNote": "Personal Note",
+    "notePlaceholder": "Write a note for this day...",
+    "noteAutosave": "Your notes are saved automatically"
   },
   "errors": {
     "pageNotFound": "Page Not Found",
@@ -412,5 +782,1091 @@
     "noResults": "No results found",
     "selectOption": "Please select an option",
     "fillAllFields": "Please fill all required fields"
+  },
+  "time": {
+    "minutes": "{minutes}m",
+    "hoursMinutes": "{hours}h {minutes}m"
+  },
+  "sync": {
+    "button": {
+      "loading": "Loading...",
+      "saving": "Saving...",
+      "syncNow": "Sync Now",
+      "title": "Sync your data with the server"
+    },
+    "stats": {
+      "tasks": "{count, plural, one {# task} other {# tasks}}",
+      "expenses": "{count, plural, one {# expense} other {# expenses}}",
+      "journals": "{count, plural, one {# journal} other {# journals}}",
+      "goals": "{count, plural, one {# goal} other {# goals}}",
+      "notes": "{count, plural, one {# note} other {# notes}}",
+      "noChanges": "No changes"
+    },
+    "conflictsResolved": "{count, plural, one {# conflict resolved} other {# conflicts resolved}}",
+    "reason": {
+      "offline": "You are offline. Connect to the internet to sync.",
+      "notLoggedIn": "You must be logged in to sync."
+    },
+    "errors": {
+      "syncFailed": "Sync failed",
+      "uploadFailed": "Upload failed",
+      "unknownError": "Unknown error"
+    },
+    "close": "Close",
+    "tryAgain": "Try Again"
+  },
+  "syncStatus": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "offline": "Offline",
+    "notLoggedIn": "Not logged in",
+    "error": "Sync error",
+    "synced": "Synced {time}",
+    "ready": "Ready to sync"
+  },
+  "userSelector": {
+    "moreCount": "+{count} more",
+    "searchPlaceholder": "Search users by name or email...",
+    "searching": "Searching...",
+    "noUsersFound": "No users found",
+    "startTyping": "Start typing to search users",
+    "selectedCount": "{count, plural, one {# user selected} other {# users selected}}",
+    "helperEmpty": "Search and select users to send notification"
+  },
+  "chatRoom": {
+    "selectionTitle": "Select Chatroom by Level",
+    "currentLevel": "Your current level:",
+    "errors": {
+      "levelLocked": "You need to level up to enter {level} chatroom! 🌱"
+    },
+    "locked": "🔒 Locked",
+    "higherLevelHint": "✨ You're above this level, but you can join!",
+    "homeLevel": "🏠 Your home",
+    "back": "← Back",
+    "roomTitle": "{room} Chatroom",
+    "higherLevelNotice": "You're above this level; it's better to stay in your level ✨",
+    "welcome": "Welcome to {room} chatroom!",
+    "beFirst": "Be the first to send a message...",
+    "placeholder": "Type your message...",
+    "defaultInitial": "U",
+    "levels": {
+      "Iron": "Iron",
+      "Bronze": "Bronze",
+      "Silver": "Silver",
+      "Gold": "Gold",
+      "Platinum": "Platinum",
+      "Diamond": "Diamond"
+    }
+  },
+  "admin": {
+    "verifyingPermissions": "Verifying permissions...",
+    "common": {
+      "loading": "Loading...",
+      "saving": "Saving...",
+      "deleting": "Deleting...",
+      "delete": "Delete",
+      "close": "Close",
+      "previous": "Previous",
+      "next": "Next",
+      "pagination": "Page {page} of {total}",
+      "notAvailable": "N/A",
+      "idShort": "ID: {id}...",
+      "ellipsis": "...",
+      "dash": "—",
+      "unknownError": "Unknown error",
+      "tryAgain": "Try again"
+    },
+    "layout": {
+      "title": "Admin Panel",
+      "nav": {
+        "dashboard": "Dashboard",
+        "users": "Users",
+        "content": "Content",
+        "notifications": "Notifications"
+      },
+      "roles": {
+        "admin": "Admin",
+        "superuser": "Superuser"
+      },
+      "backToApp": "Back to App",
+      "logout": "Logout"
+    },
+    "notifications": {
+      "title": "Notification System",
+      "subtitle": "Send notifications to users and monitor stats",
+      "stats": {
+        "totalNotifications": "Total Notifications",
+        "unread": "Unread",
+        "muted": "Muted",
+        "pushSubscriptions": "Push Subscriptions"
+      },
+      "config": {
+        "title": "Permission Prompt Configuration",
+        "subtitle": "Customize the message users see when asked for notification permission.",
+        "promptLabel": "Prompt Message",
+        "promptPlaceholder": "Enter the message for the notification permission prompt...",
+        "promptHelp": "This message appears in the custom UI before the browser's native prompt.",
+        "save": "Save Configuration"
+      },
+      "form": {
+        "title": "Send Notification",
+        "titleLabel": "Title *",
+        "titlePlaceholder": "Notification title...",
+        "messageLabel": "Message *",
+        "messagePlaceholder": "Notification message...",
+        "typeLabel": "Type",
+        "types": {
+          "info": "Info (ℹ️)",
+          "success": "Success (✅)",
+          "warning": "Warning (⚠️)",
+          "error": "Error (❌)"
+        },
+        "linkLabel": "Link (optional)",
+        "linkPlaceholder": "/path/to/page",
+        "targetLabel": "Send To",
+        "targets": {
+          "allUsers": "All Users",
+          "specificRole": "Specific Role:",
+          "specificUsers": "Specific Users:"
+        },
+        "roles": {
+          "user": "User",
+          "admin": "Admin",
+          "superuser": "Superuser"
+        },
+        "preview": {
+          "all": "Will send to all users",
+          "role": "Will send to all {role}s",
+          "specific": "Will send to {count} user(s)"
+        },
+        "sending": "Sending...",
+        "send": "Send Notification"
+      },
+      "alerts": {
+        "fillTitleMessage": "Please fill in title and message",
+        "selectAtLeastOne": "Please select at least one user",
+        "sentSuccess": "Notification sent successfully to {count} users!",
+        "sendFailed": "Failed to send notification: {error}",
+        "promptEmpty": "Prompt message cannot be empty",
+        "configSaved": "Notification prompt message updated successfully!",
+        "configFailed": "Failed to update config"
+      },
+      "recent": {
+        "title": "Recent Notifications",
+        "subtitle": "Last 10 notifications sent",
+        "empty": "No notifications sent yet",
+        "read": "Read",
+        "muted": "Muted",
+        "link": "Link: {link}",
+        "by": "By: {id}..."
+      }
+    },
+    "tasks": {
+      "title": "Tasks Management",
+      "subtitle": "View and manage all user tasks",
+      "confirmDelete": "Are you sure you want to delete this task?",
+      "deleteReasonPrompt": "Please provide a reason for deletion:",
+      "deleteFailed": "Failed to delete task",
+      "loading": "Loading tasks...",
+      "empty": "No tasks found",
+      "filters": {
+        "searchLabel": "Search Title",
+        "searchPlaceholder": "Search in titles...",
+        "statusLabel": "Status",
+        "statusAll": "All Statuses",
+        "userIdLabel": "User ID",
+        "userIdPlaceholder": "Filter by user ID...",
+        "perPageLabel": "Per Page",
+        "apply": "Apply Filters"
+      },
+      "total": "Total: {count} tasks",
+      "table": {
+        "title": "Title",
+        "user": "User",
+        "date": "Date",
+        "status": "Status",
+        "timeSpent": "Time Spent",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "status": {
+        "todo": "To Do",
+        "inProgress": "In Progress",
+        "done": "Done"
+      },
+      "timeSpentValue": "{minutes} min"
+    },
+    "goals": {
+      "title": "Goals Management",
+      "subtitle": "View and manage all user goals",
+      "confirmDelete": "Are you sure you want to permanently delete this goal? This action cannot be undone.",
+      "deleteReasonPrompt": "Please provide a reason for deletion:",
+      "deleteFailed": "Failed to delete goal",
+      "loading": "Loading goals...",
+      "empty": "No goals found",
+      "filters": {
+        "statusLabel": "Status",
+        "statusAll": "All Statuses",
+        "typeLabel": "Type",
+        "typeAll": "All Types",
+        "userIdLabel": "User ID",
+        "userIdPlaceholder": "Filter by user ID...",
+        "perPageLabel": "Per Page"
+      },
+      "status": {
+        "active": "Active",
+        "completed": "Completed",
+        "failed": "Failed",
+        "paused": "Paused"
+      },
+      "type": {
+        "yearly": "Yearly",
+        "quarterly": "Quarterly",
+        "monthly": "Monthly",
+        "weekly": "Weekly"
+      },
+      "total": "Total: {count} goals",
+      "table": {
+        "title": "Title",
+        "user": "User",
+        "type": "Type",
+        "status": "Status",
+        "period": "Period",
+        "progress": "Progress",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "viewDetails": "View Details",
+      "period": {
+        "year": "Year: {year}",
+        "quarter": "Q{quarter}",
+        "month": "Month: {month}",
+        "week": "Week: {week}",
+        "yearInline": "Year {year}",
+        "quarterInline": ", Quarter {quarter}",
+        "monthInline": ", Month {month}",
+        "weekInline": ", Week {week}"
+      },
+      "progress": {
+        "value": "{current}/{target} {unit}",
+        "percent": "{percent}%"
+      },
+      "details": {
+        "title": "Goal Details",
+        "fields": {
+          "title": "Title:",
+          "description": "Description:",
+          "user": "User:",
+          "type": "Type:",
+          "status": "Status:",
+          "progress": "Progress:",
+          "period": "Period:",
+          "milestones": "Milestones:",
+          "created": "Created:"
+        },
+        "deletePermanent": "Delete Goal (Permanent)"
+      }
+    },
+    "reports": {
+      "title": "Content Reports",
+      "subtitle": "Review and moderate reported content",
+      "reviewFailed": "Failed to review report",
+      "status": {
+        "pending": "Pending",
+        "reviewed": "Reviewed",
+        "dismissed": "Dismissed",
+        "actioned": "Actioned"
+      },
+      "filters": {
+        "statusLabel": "Status",
+        "statusAll": "All Statuses",
+        "contentTypeLabel": "Content Type",
+        "contentTypeAll": "All Types",
+        "perPageLabel": "Per Page"
+      },
+      "contentType": {
+        "task": "Task",
+        "journal": "Journal",
+        "goal": "Goal",
+        "profile": "Profile"
+      },
+      "reason": {
+        "spam": "Spam",
+        "inappropriate": "Inappropriate",
+        "harassment": "Harassment",
+        "other": "Other"
+      },
+      "total": "Total: {count} reports",
+      "loading": "Loading reports...",
+      "empty": "No reports found",
+      "table": {
+        "reporter": "Reporter",
+        "reportedUser": "Reported User",
+        "content": "Content",
+        "reason": "Reason",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "review": "Review",
+      "modal": {
+        "title": "Review Report",
+        "reportId": "Report ID: {id}",
+        "fields": {
+          "reporter": "Reporter:",
+          "reportedUser": "Reported User:",
+          "contentType": "Content Type:",
+          "reason": "Reason:",
+          "reporterDescription": "Reporter's Description:",
+          "currentStatus": "Current Status:",
+          "previousNotes": "Previous Admin Notes:"
+        },
+        "noDescription": "No description provided",
+        "actions": {
+          "title": "Take Action",
+          "notesOptional": "Admin notes (optional):",
+          "reviewedHelp": "No issue found",
+          "dismissedHelp": "Not valid",
+          "actionedPrompt": "Please describe the action taken:",
+          "actionedHelp": "Content removed",
+          "footer": "After taking action, you will be prompted to add admin notes"
+        }
+      }
+    },
+    "journals": {
+      "title": "Journals Management",
+      "subtitle": "View and manage all user journal entries",
+      "confirmDelete": "Are you sure you want to delete this journal entry?",
+      "deleteReasonPrompt": "Please provide a reason for deletion:",
+      "deleteFailed": "Failed to delete journal",
+      "loading": "Loading journals...",
+      "empty": "No journals found",
+      "filters": {
+        "userIdLabel": "User ID",
+        "userIdPlaceholder": "Filter by user ID...",
+        "perPageLabel": "Per Page"
+      },
+      "total": "Total: {count} journals",
+      "table": {
+        "user": "User",
+        "date": "Date",
+        "preview": "Content Preview",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "preview": {
+        "tasksLabel": "Tasks:",
+        "expensesLabel": "Expenses:",
+        "moodId": "Mood ID:",
+        "sleepId": "Sleep ID:",
+        "tasksCount": "{count, plural, one {# task} other {# tasks}}",
+        "expensesCount": "{count, plural, one {# item} other {# items}}"
+      },
+      "viewDetails": "View Details",
+      "details": {
+        "title": "Journal Entry",
+        "fields": {
+          "user": "User:",
+          "date": "Date:",
+          "tasks": "Tasks:",
+          "expenses": "Expenses:",
+          "moodId": "Mood ID:",
+          "sleepId": "Sleep ID:"
+        },
+        "tasksCount": "{count, plural, one {# task} other {# tasks}}",
+        "expensesCount": "{count, plural, one {# item} other {# items}}",
+        "delete": "Delete Journal"
+      }
+    },
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "subtitle": "Overview of system metrics and user activity",
+      "loadFailed": "Failed to load stats",
+      "cards": {
+        "totalUsers": "Total Users",
+        "activeToday": "Active Today",
+        "newUsers7d": "New Users (7d)",
+        "bannedUsers": "Banned Users"
+      },
+      "roleDistribution": "Role Distribution",
+      "roles": {
+        "superusers": "Superusers",
+        "admins": "Admins",
+        "users": "Users"
+      }
+    },
+    "contentOverview": {
+      "title": "Content Management",
+      "subtitle": "Manage user-generated content and moderate reports",
+      "loadFailed": "Failed to load stats",
+      "stats": {
+        "totalTasks": "Total Tasks",
+        "totalJournals": "Total Journals",
+        "totalGoals": "Total Goals",
+        "reports": "Reports",
+        "tasksCreatedToday": "{count} created today",
+        "goalsSummary": "{active} active, {completed} completed",
+        "pendingReview": "{count} pending review"
+      },
+      "management": {
+        "tasks": {
+          "title": "Tasks",
+          "description": "View and manage all user tasks. Search by user, status, or keyword."
+        },
+        "journals": {
+          "title": "Journals",
+          "description": "View and manage all daily journals. Browse by user or date."
+        },
+        "goals": {
+          "title": "Goals",
+          "description": "View and manage user goals. Filter by type, status, or time period."
+        },
+        "reports": {
+          "title": "Reported Content",
+          "description": "Review user-reported content. Take action on inappropriate material.",
+          "badge": "{count} pending"
+        }
+      },
+      "quickStats": {
+        "title": "Quick Stats",
+        "tasksToday": "Tasks Today",
+        "activeGoals": "Active Goals",
+        "completedGoals": "Completed Goals",
+        "pendingReports": "Pending Reports"
+      },
+      "overview": {
+        "title": "Content Overview",
+        "totalItems": "Total Items",
+        "distribution": "Distribution",
+        "tasks": "Tasks: {count}",
+        "journals": "Journals: {count}",
+        "goals": "Goals: {count}"
+      }
+    },
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage users, roles, and permissions",
+      "filters": {
+        "searchLabel": "Search",
+        "searchPlaceholder": "Email, name, or username...",
+        "roleLabel": "Role",
+        "statusLabel": "Status"
+      },
+      "roleOptions": {
+        "allRoles": "All Roles",
+        "user": "User",
+        "admin": "Admin",
+        "superuser": "Superuser"
+      },
+      "statusOptions": {
+        "allUsers": "All Users",
+        "activeOnly": "Active Only",
+        "bannedOnly": "Banned Only"
+      },
+      "errors": {
+        "loadFailed": "Failed to load users",
+        "updateStatusFailed": "Failed to update user status",
+        "updateRoleFailed": "Failed to update role",
+        "updateGamificationFailed": "Failed to update gamification"
+      },
+      "empty": "No users found",
+      "table": {
+        "user": "User",
+        "role": "Role",
+        "xpLevel": "XP / Level",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "pagination": {
+        "showing": "Showing {start} to {end} of {total} users",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "xpLabel": "{value} XP",
+      "status": {
+        "banned": "Banned",
+        "active": "Active"
+      },
+      "actions": {
+        "ban": "Ban",
+        "unban": "Unban",
+        "editXp": "Edit XP",
+        "changeRole": "Change Role"
+      },
+      "confirm": {
+        "ban": "Are you sure you want to ban {name}?",
+        "unban": "Are you sure you want to unban {name}?"
+      },
+      "roleModal": {
+        "title": "Change User Role",
+        "description": "Change role for {name}",
+        "descriptions": {
+          "user": "Standard user access",
+          "admin": "Can manage users and view stats",
+          "superuser": "Full system access"
+        },
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "gamificationModal": {
+        "title": "Edit Gamification",
+        "description": "Edit XP and level for {name}",
+        "xpLabel": "XP",
+        "levelLabel": "Level",
+        "cancel": "Cancel",
+        "save": "Save"
+      }
+    }
+  },
+  "register": {
+    "headTitle": "User Registration",
+    "title": "Create Account",
+    "subtitle": "Please fill in your details to register",
+    "fields": {
+      "fullName": "Full Name",
+      "username": "Username",
+      "email": "Email Address",
+      "password": "Password"
+    },
+    "placeholders": {
+      "fullName": "John Doe",
+      "username": "johndoe123",
+      "email": "john@example.com",
+      "password": "••••••••"
+    },
+    "errors": {
+      "allFieldsRequired": "All fields are required",
+      "invalidEmail": "Please enter a valid email address",
+      "passwordTooShort": "Password must be at least 8 characters",
+      "failed": "Registration failed. Please try again."
+    },
+    "success": "Registration successful! You can now log in.",
+    "registering": "Registering...",
+    "submit": "Register",
+    "haveAccount": "Already have an account?",
+    "loginHere": "Login here"
+  },
+  "authReset": {
+    "errors": {
+      "missingToken": "Invalid or missing reset token.",
+      "passwordTooShort": "Password must be at least 8 characters long.",
+      "passwordMismatch": "Passwords do not match.",
+      "missingEmail": "Missing email in reset link.",
+      "resetFailed": "Failed to reset password"
+    },
+    "success": "Password reset successfully!",
+    "invalidLinkTitle": "Invalid Link",
+    "invalidLinkDescription": "This password reset link is invalid or has expired.",
+    "backToHome": "Back to Home",
+    "title": "Reset Password",
+    "subtitle": "Enter your new password below",
+    "redirecting": "Redirecting to login...",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Min 8 characters",
+    "confirmPassword": "Confirm New Password",
+    "confirmPasswordPlaceholder": "Repeat new password",
+    "updating": "Updating...",
+    "updatePassword": "Update Password"
+  },
+  "authVerify": {
+    "verifying": "Verifying your email...",
+    "errors": {
+      "invalidLink": "Invalid verification link. Missing token or email.",
+      "verifyFailed": "Failed to verify email"
+    },
+    "success": "Email verified successfully!",
+    "states": {
+      "loading": "Verifying...",
+      "success": "Verified!",
+      "error": "Verification Failed"
+    },
+    "goHome": "Go to Home",
+    "redirecting": "Redirecting you in a few seconds..."
+  },
+  "emailVerification": {
+    "mustBeOnline": "You must be online to resend verification",
+    "sent": "Verification email sent!",
+    "resendFailed": "Failed to resend",
+    "banner": "Your email address is not verified. Please check your inbox.",
+    "resend": "Resend Link"
+  },
+  "userManagement": {
+    "errors": {
+      "nameRequired": "Name cannot be empty",
+      "operationFailed": "Operation failed",
+      "switchFailed": "Failed to switch user",
+      "deleteFailed": "Failed to delete user"
+    },
+    "loading": "Loading users...",
+    "currentUser": "Current User",
+    "noUserSelected": "No user selected",
+    "hideUsers": "Hide Users",
+    "switchUser": "Switch User",
+    "allUsers": "All Users",
+    "newUser": "+ New User",
+    "empty": "No users found",
+    "idLabel": "ID: {id}",
+    "switch": "Switch",
+    "edit": "Edit",
+    "delete": "Delete",
+    "dialog": {
+      "createTitle": "Create New User",
+      "editTitle": "Edit User",
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter user name",
+      "cancel": "Cancel",
+      "create": "Create",
+      "save": "Save"
+    },
+    "confirmDelete": "Are you sure you want to delete this user profile?"
+  },
+  "userSwitcher": {
+    "loading": "Loading...",
+    "selectUser": "Select User",
+    "switchUser": "Switch user"
+  },
+  "userErrorBoundary": {
+    "title": "Something went wrong",
+    "userMessage": "An error occurred while loading data for user \"{userId}\".",
+    "genericMessage": "An unexpected error occurred.",
+    "tryAgain": "Try Again"
+  },
+  "aiChat": {
+    "newChatTitle": "New Chat",
+    "confirmDelete": "Are you sure you want to delete this chat?",
+    "status": {
+      "consulting": "Consulting agent...",
+      "syncing": "Syncing changes...",
+      "processing": "Processing"
+    },
+    "errors": {
+      "agentCommunication": "Sorry, I encountered an error communicating with the agent. Please try again."
+    },
+    "header": {
+      "history": "History",
+      "title": "AI Assistant",
+      "subtitle": "Intelligence Engine",
+      "profile": "Profile"
+    },
+    "sessions": {
+      "title": "Recent Chats",
+      "newConversation": "New Conversation"
+    },
+    "features": {
+      "taskTips": "Task Tips",
+      "goalAdvice": "Goal Advice",
+      "focusBoost": "Focus Boost",
+      "dailyReview": "Daily Review"
+    },
+    "empty": {
+      "title": "Power up your day",
+      "subtitle": "Your intelligent productivity partner is ready. How can we optimize your flow today?"
+    },
+    "inputPlaceholder": "Ask your assistant anything...",
+    "footer": "Secured by Advanced AI Architecture",
+    "floatingTooltip": "AI Assistant Online"
+  },
+  "profileForm": {
+    "messages": {
+      "updated": "Profile updated successfully!",
+      "saveFailed": "Failed to save changes. Please try again."
+    },
+    "avatar": {
+      "title": "Profile Avatar",
+      "alt": "Avatar",
+      "fallbackInitial": "?",
+      "choosePreset": "Choose a preset",
+      "presetAlt": "Preset {index}",
+      "uploadLabel": "Or upload your own",
+      "selectImage": "Select Image",
+      "fileHint": "JPG, PNG or GIF. Max 5MB."
+    },
+    "personal": {
+      "title": "Personal Details",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "John Doe",
+      "location": "Location",
+      "locationPlaceholder": "New York, USA",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell us about yourself..."
+    },
+    "professional": {
+      "title": "Professional Info",
+      "jobTitle": "Job Title",
+      "jobTitlePlaceholder": "Senior Software Engineer",
+      "educationLevel": "Education Level",
+      "educationPlaceholder": "Master's in Computer Science",
+      "skills": "Skills (Comma separated)",
+      "skillsPlaceholder": "React, Python, Design..."
+    },
+    "private": {
+      "title": "Goals & Private Info",
+      "income": "Annual Income",
+      "incomePlaceholder": "150,000",
+      "mbti": "MBTI Type",
+      "mbtiPlaceholder": "Select MBTI",
+      "generalGoal": "General Goal",
+      "generalGoalPlaceholder": "Build a startup..."
+    },
+    "actions": {
+      "saving": "Saving...",
+      "save": "Save Changes"
+    }
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "message": "We encountered an unexpected error. Your data is safe and stored locally.",
+    "tryAgain": "Try again",
+    "goHome": "Go to home",
+    "details": "Error details"
+  },
+  "profilePage": {
+    "title": "Your Profile",
+    "subtitle": "Manage your personal details and profile tests",
+    "profileActive": "Profile Active",
+    "goHome": "Go to home",
+    "noJobTitle": "No job title",
+    "noLocation": "No location",
+    "errors": {
+      "loadFailed": "Failed to load profile data",
+      "connectionTitle": "Connection error"
+    },
+    "stats": {
+      "xp": "XP",
+      "goals": "Goals",
+      "goalsValue": "{current}/{total}"
+    },
+    "levelTitle": "Level: {level}",
+    "levels": {
+      "Iron": "Iron",
+      "Bronze": "Bronze",
+      "Silver": "Silver",
+      "Gold": "Gold",
+      "Platinum": "Platinum",
+      "Diamond": "Diamond"
+    },
+    "mbti": {
+      "label": "MBTI",
+      "description": "Personality insights based on your test results"
+    }
+  },
+  "profileTests": {
+    "header": {
+      "title": "Psychological Profile",
+      "subtitle": "Discover your career interests and personality type"
+    },
+    "errors": {
+      "shareFailed": "Failed to create share link"
+    },
+    "common": {
+      "takenOn": "Taken on {date}"
+    },
+    "holland": {
+      "title": "Holland Career Interest Test",
+      "subtitle": "Discover your RIASEC career interests",
+      "dominantTypes": "Your Dominant Types",
+      "scoreBreakdown": "Score Breakdown",
+      "shareResult": "Share Result",
+      "shareCreating": "Creating Link...",
+      "takeTest": "Take Holland Test",
+      "codes": {
+        "R": {
+          "name": "Realistic",
+          "description": "Practical, hands-on, technical"
+        },
+        "I": {
+          "name": "Investigative",
+          "description": "Analytical, curious, scientific"
+        },
+        "A": {
+          "name": "Artistic",
+          "description": "Creative, expressive, original"
+        },
+        "S": {
+          "name": "Social",
+          "description": "Helpful, caring, supportive"
+        },
+        "E": {
+          "name": "Enterprising",
+          "description": "Ambitious, persuasive, leadership"
+        },
+        "C": {
+          "name": "Conventional",
+          "description": "Organized, detail-oriented, systematic"
+        }
+      }
+    },
+    "mbti": {
+      "title": "MBTI Personality Test",
+      "subtitle": "Understand your personality type",
+      "personalityType": "Your Personality Type",
+      "uniqueType": "Unique personality type",
+      "preferenceScores": "Preference Scores",
+      "shareResult": "Share Result",
+      "shareCreating": "Creating Link...",
+      "takeTest": "Take MBTI Test",
+      "descriptions": {
+        "INTJ": "The Architect - Strategic thinker with a plan for everything",
+        "INTP": "The Logician - Innovative inventor with an unquenchable thirst for knowledge",
+        "ENTJ": "The Commander - Bold, imaginative, and strong-willed leader",
+        "ENTP": "The Debater - Smart and curious thinker who loves a good debate",
+        "INFJ": "The Advocate - Quiet and mystical, yet very inspiring and tireless idealist",
+        "INFP": "The Mediator - Poetic, kind and altruistic people",
+        "ENFJ": "The Protagonist - Natural-born leader and people person",
+        "ENFP": "The Campaigner - Enthusiastic, creative, and sociable free spirit",
+        "ISTJ": "The Logistician - Practical and fact-oriented reliable worker",
+        "ISFJ": "The Defender - Dedicated and warm protector of those in need",
+        "ESTJ": "The Executive - Excellent administrator and natural leader",
+        "ESFJ": "The Consul - Extraordinarily caring, social and popular person",
+        "ISTP": "The Virtuoso - Bold and practical experimenter",
+        "ISFP": "The Adventurer - Flexible and charming artist",
+        "ESTP": "The Entrepreneur - Smart, energetic and perceptive people-person",
+        "ESFP": "The Entertainer - Outgoing, spontaneous and enjoyable person"
+      },
+      "preferencePairs": [
+        {
+          "pair": "E/I",
+          "label": "Extroversion/Introversion"
+        },
+        {
+          "pair": "S/N",
+          "label": "Sensing/Intuition"
+        },
+        {
+          "pair": "T/F",
+          "label": "Thinking/Feeling"
+        },
+        {
+          "pair": "J/P",
+          "label": "Judging/Perceiving"
+        }
+      ]
+    },
+    "shareModal": {
+      "title": "Share Your Result",
+      "shareLink": "Share Link",
+      "copy": "Copy",
+      "expiresOn": "Expires on {date}",
+      "done": "Done"
+    },
+    "mbtiTest": {
+      "title": "MBTI Personality Test",
+      "questionProgress": "Question {current} of {total}",
+      "previous": "Previous",
+      "next": "Next",
+      "submit": "Submit Test",
+      "submitting": "Submitting...",
+      "errors": {
+        "answerAll": "Please answer all questions",
+        "submitFailed": "Failed to submit test"
+      },
+      "questions": [
+        {
+          "id": 1,
+          "text": "At a party, I...",
+          "pair": [
+            "E",
+            "I"
+          ],
+          "options": [
+            "Interact with many, including strangers",
+            "Interact with a few, known to me"
+          ]
+        },
+        {
+          "id": 2,
+          "text": "I am more...",
+          "pair": [
+            "S",
+            "N"
+          ],
+          "options": [
+            "Realistic than speculative",
+            "Speculative than realistic"
+          ]
+        },
+        {
+          "id": 3,
+          "text": "I value more in myself...",
+          "pair": [
+            "T",
+            "F"
+          ],
+          "options": [
+            "Clearheadedness",
+            "Warmheartedness"
+          ]
+        },
+        {
+          "id": 4,
+          "text": "I am more...",
+          "pair": [
+            "J",
+            "P"
+          ],
+          "options": [
+            "Organized than flexible",
+            "Flexible than organized"
+          ]
+        },
+        {
+          "id": 5,
+          "text": "I prefer to...",
+          "pair": [
+            "E",
+            "I"
+          ],
+          "options": [
+            "Be in a busy environment",
+            "Work in quiet, focused settings"
+          ]
+        },
+        {
+          "id": 6,
+          "text": "I focus more on...",
+          "pair": [
+            "S",
+            "N"
+          ],
+          "options": [
+            "What is real and actual",
+            "What could be possible and theoretical"
+          ]
+        },
+        {
+          "id": 7,
+          "text": "When deciding, I rely more on...",
+          "pair": [
+            "T",
+            "F"
+          ],
+          "options": [
+            "Objective logic",
+            "Personal values"
+          ]
+        },
+        {
+          "id": 8,
+          "text": "I prefer to...",
+          "pair": [
+            "J",
+            "P"
+          ],
+          "options": [
+            "Have things decided",
+            "Keep options open"
+          ]
+        },
+        {
+          "id": 9,
+          "text": "I am energized by...",
+          "pair": [
+            "E",
+            "I"
+          ],
+          "options": [
+            "Interaction with others",
+            "Solitary reflection"
+          ]
+        },
+        {
+          "id": 10,
+          "text": "I prefer...",
+          "pair": [
+            "S",
+            "N"
+          ],
+          "options": [
+            "Practical solutions",
+            "Creative possibilities"
+          ]
+        },
+        {
+          "id": 11,
+          "text": "I am more...",
+          "pair": [
+            "T",
+            "F"
+          ],
+          "options": [
+            "Objective and impersonal",
+            "Subjective and personal"
+          ]
+        },
+        {
+          "id": 12,
+          "text": "I like to...",
+          "pair": [
+            "J",
+            "P"
+          ],
+          "options": [
+            "Plan my activities",
+            "Go with the flow"
+          ]
+        },
+        {
+          "id": 13,
+          "text": "I enjoy...",
+          "pair": [
+            "E",
+            "I"
+          ],
+          "options": [
+            "Group activities and discussions",
+            "Individual projects and hobbies"
+          ]
+        },
+        {
+          "id": 14,
+          "text": "I trust more in...",
+          "pair": [
+            "S",
+            "N"
+          ],
+          "options": [
+            "Experience and facts",
+            "Intuition and imagination"
+          ]
+        },
+        {
+          "id": 15,
+          "text": "I am more...",
+          "pair": [
+            "T",
+            "F"
+          ],
+          "options": [
+            "Firm than gentle",
+            "Gentle than firm"
+          ]
+        },
+        {
+          "id": 16,
+          "text": "I prefer...",
+          "pair": [
+            "J",
+            "P"
+          ],
+          "options": [
+            "Structured schedules",
+            "Spontaneous activities"
+          ]
+        }
+      ]
+    }
+  },
+  "sharedTest": {
+    "title": "Shared Test Result",
+    "subtitleHolland": "Holland Career Interest Test",
+    "subtitleMbti": "MBTI Personality Test",
+    "errorTitle": "Error",
+    "goHome": "Go Home",
+    "loadFailed": "Failed to load shared result",
+    "holland": {
+      "dominantTypes": "Dominant Career Interest Types"
+    },
+    "footerQuestion": "Want to take these tests yourself?",
+    "footerCta": "Go to Bullet Journal"
   }
 }

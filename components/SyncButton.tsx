@@ -2,14 +2,16 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { performSync, canSync, formatSyncStats } from '@/services/sync';
+import { performSync, canSync } from '@/services/sync';
 import type { SyncResult, SyncPhase } from '@/services/sync';
+import { useTranslations } from 'next-intl';
 
 export default function SyncButton() {
   const { user, isOnline, isAuthenticated } = useAuth();
   const [syncPhase, setSyncPhase] = useState<SyncPhase>('idle');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const t = useTranslations('sync');
 
   // Check if sync is allowed
   const syncCheck = canSync(isOnline, isAuthenticated);
@@ -40,8 +42,8 @@ export default function SyncButton() {
       console.error('Sync error:', error);
       setSyncResult({
         success: false,
-        message: 'Sync failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        message: t('errors.syncFailed'),
+        error: error instanceof Error ? error.message : t('errors.unknownError'),
       });
       setShowResult(true);
     } finally {
@@ -55,6 +57,19 @@ export default function SyncButton() {
   if (!isAuthenticated) {
     return null;
   }
+
+  const syncReason = syncCheck.reasonKey ? t(syncCheck.reasonKey) : syncCheck.reason;
+  const formatStats = (stats?: SyncResult['stats']) => {
+    if (!stats) return '';
+    const parts: string[] = [];
+    if (stats.uploadedTasks > 0) parts.push(t('stats.tasks', { count: stats.uploadedTasks }));
+    if (stats.uploadedExpenses > 0) parts.push(t('stats.expenses', { count: stats.uploadedExpenses }));
+    if (stats.uploadedJournals > 0) parts.push(t('stats.journals', { count: stats.uploadedJournals }));
+    if (stats.uploadedGoals > 0) parts.push(t('stats.goals', { count: stats.uploadedGoals }));
+    if (stats.uploadedCalendarNotes > 0) parts.push(t('stats.notes', { count: stats.uploadedCalendarNotes }));
+    if (parts.length === 0) return t('stats.noChanges');
+    return parts.join(', ');
+  };
 
   return (
     <div className="relative">
@@ -74,7 +89,7 @@ export default function SyncButton() {
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }
         `}
-        title={syncCheck.reason || 'Sync your data with the server'}
+        title={syncReason || t('button.title')}
       >
         {/* Sync Icon */}
         {syncPhase === 'loading' ? (
@@ -107,7 +122,7 @@ export default function SyncButton() {
         )}
 
         <span className="hidden sm:inline">
-          {syncPhase === 'loading' ? 'Loading...' : syncPhase === 'saving' ? 'Saving...' : 'Sync Now'}
+          {syncPhase === 'loading' ? t('button.loading') : syncPhase === 'saving' ? t('button.saving') : t('button.syncNow')}
         </span>
       </button>
 
@@ -139,10 +154,10 @@ export default function SyncButton() {
 
               {syncResult.success && syncResult.stats && (
                 <p className="text-xs text-green-700 mt-1">
-                  {formatSyncStats(syncResult.stats)}
+                  {formatStats(syncResult.stats)}
                   {syncResult.stats.conflictsResolved > 0 && (
                     <span className="block mt-1">
-                      {syncResult.stats.conflictsResolved} conflict{syncResult.stats.conflictsResolved > 1 ? 's' : ''} resolved
+                      {t('conflictsResolved', { count: syncResult.stats.conflictsResolved })}
                     </span>
                   )}
                 </p>
@@ -154,11 +169,11 @@ export default function SyncButton() {
             </div>
 
             {/* Close Button */}
-            <button
-              onClick={() => setShowResult(false)}
-              className={`flex-shrink-0 ${syncResult.success ? 'text-green-400 hover:text-green-600' : 'text-red-400 hover:text-red-600'}`}
-              aria-label="Close"
-            >
+              <button
+                onClick={() => setShowResult(false)}
+                className={`flex-shrink-0 ${syncResult.success ? 'text-green-400 hover:text-green-600' : 'text-red-400 hover:text-red-600'}`}
+                aria-label={t('close')}
+              >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -168,9 +183,9 @@ export default function SyncButton() {
       )}
 
       {/* Offline/Not Logged In Warning (on hover) */}
-      {!syncCheck.allowed && syncCheck.reason && (
+      {!syncCheck.allowed && syncReason && (
         <div className="hidden group-hover:block absolute bottom-full right-0 mb-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg">
-          {syncCheck.reason}
+          {syncReason}
         </div>
       )}
     </div>

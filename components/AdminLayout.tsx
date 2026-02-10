@@ -11,12 +11,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
+import { useTranslations } from 'next-intl';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const t = useTranslations('admin.layout');
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -31,7 +33,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const navigation = [
     {
-      name: 'Dashboard',
+      name: t('nav.dashboard'),
       href: '/admin',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,7 +47,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       ),
     },
     {
-      name: 'Users',
+      name: t('nav.users'),
       href: '/admin/users',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +61,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       ),
     },
     {
-      name: 'Content',
+      name: t('nav.content'),
       href: '/admin/content',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +75,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       ),
     },
     {
-      name: 'Notifications',
+      name: t('nav.notifications'),
       href: '/admin/notifications',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +101,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
             {sidebarOpen && (
-              <h1 className="text-xl font-bold">Admin Panel</h1>
+              <h1 className="text-xl font-bold">{t('title')}</h1>
             )}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -152,7 +154,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user?.name}</p>
                 <p className="text-xs text-gray-400">
-                  {isSuperuser ? 'Superuser' : 'Admin'}
+                  {isSuperuser ? t('roles.superuser') : t('roles.admin')}
                 </p>
               </div>
             )}
@@ -163,13 +165,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 href="/"
                 className="block w-full text-center px-3 py-2 text-sm bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
               >
-                Back to App
+                {t('backToApp')}
               </Link>
               <button
                 onClick={handleLogout}
                 className="w-full px-3 py-2 text-sm bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
               >
-                Logout
+                {t('logout')}
               </button>
             </div>
           )}

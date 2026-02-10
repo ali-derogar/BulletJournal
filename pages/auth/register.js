@@ -1,9 +1,22 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { register } from '@/services/auth';
+import enMessages from '@/messages/en.json';
+import faMessages from '@/messages/fa.json';
+
+const MESSAGES = { en: enMessages, fa: faMessages };
+const getLocaleFromPath = (path) => (path && path.startsWith('/fa') ? 'fa' : 'en');
+const getMessage = (messages, key) => key.split('.').reduce((acc, part) => (acc ? acc[part] : undefined), messages);
+const formatMessage = (template, values = {}) =>
+  String(template || '').replace(/\{(\w+)\}/g, (_, k) => (values[k] !== undefined ? String(values[k]) : `{${k}}`));
 
 export default function Register() {
+    const router = useRouter();
+    const locale = getLocaleFromPath(router.asPath || '');
+    const messages = MESSAGES[locale] || MESSAGES.en;
+    const t = (key, values) => formatMessage(getMessage(messages, key) || key, values);
     const [formData, setFormData] = useState({
         name: '',
         username: '',
@@ -29,17 +42,17 @@ export default function Register() {
 
         // Basic validation
         if (!formData.name || !formData.username || !formData.email || !formData.password) {
-            setStatus({ type: 'error', message: 'All fields are required' });
+            setStatus({ type: 'error', message: t('register.errors.allFieldsRequired') });
             return;
         }
 
         if (!validateEmail(formData.email)) {
-            setStatus({ type: 'error', message: 'Please enter a valid email address' });
+            setStatus({ type: 'error', message: t('register.errors.invalidEmail') });
             return;
         }
 
         if (formData.password.length < 8) {
-            setStatus({ type: 'error', message: 'Password must be at least 8 characters' });
+            setStatus({ type: 'error', message: t('register.errors.passwordTooShort') });
             return;
         }
 
@@ -47,10 +60,10 @@ export default function Register() {
 
         try {
             await register(formData);
-            setStatus({ type: 'success', message: 'Registration successful! You can now log in.' });
+            setStatus({ type: 'success', message: t('register.success') });
             setFormData({ name: '', username: '', email: '', password: '' });
         } catch (error) {
-            setStatus({ type: 'error', message: error.message || 'Registration failed. Please try again.' });
+            setStatus({ type: 'error', message: error.message || t('register.errors.failed') });
         } finally {
             setIsLoading(false);
         }
@@ -59,12 +72,12 @@ export default function Register() {
     return (
         <div style={{ minHeight: '100-vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', padding: '20px' }}>
             <Head>
-                <title>User Registration</title>
+                <title>{t('register.headTitle')}</title>
             </Head>
 
             <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', maxWidth: '400px', width: '100%' }}>
-                <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', textAlign: 'center' }}>Create Account</h1>
-                <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', marginBottom: '24px' }}>Please fill in your details to register</p>
+                <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', textAlign: 'center' }}>{t('register.title')}</h1>
+                <p style={{ color: '#6b7280', fontSize: '14px', textAlign: 'center', marginBottom: '24px' }}>{t('register.subtitle')}</p>
 
                 {status.message && (
                     <div style={{
@@ -82,49 +95,49 @@ export default function Register() {
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Full Name</label>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>{t('register.fields.fullName')}</label>
                         <input
                             name="name"
                             type="text"
                             value={formData.name}
                             onChange={handleChange}
-                            placeholder="John Doe"
+                            placeholder={t('register.placeholders.fullName')}
                             style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none', transition: 'border-color 0.2s' }}
                         />
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Username</label>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>{t('register.fields.username')}</label>
                         <input
                             name="username"
                             type="text"
                             value={formData.username}
                             onChange={handleChange}
-                            placeholder="johndoe123"
+                            placeholder={t('register.placeholders.username')}
                             style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}
                         />
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Email Address</label>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>{t('register.fields.email')}</label>
                         <input
                             name="email"
                             type="email"
                             value={formData.email}
                             onChange={handleChange}
-                            placeholder="john@example.com"
+                            placeholder={t('register.placeholders.email')}
                             style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}
                         />
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Password</label>
+                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>{t('register.fields.password')}</label>
                         <input
                             name="password"
                             type="password"
                             value={formData.password}
                             onChange={handleChange}
-                            placeholder="••••••••"
+                            placeholder={t('register.placeholders.password')}
                             style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', outline: 'none' }}
                         />
                     </div>
@@ -144,12 +157,13 @@ export default function Register() {
                             transition: 'background-color 0.2s'
                         }}
                     >
-                        {isLoading ? 'Registering...' : 'Register'}
+                        {isLoading ? t('register.registering') : t('register.submit')}
                     </button>
                 </form>
 
                 <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '14px', color: '#6b7280' }}>
-                    Already have an account? <Link href="/login" style={{ color: '#2563eb', fontWeight: '500' }}>Login here</Link>
+                    {t('register.haveAccount')}{' '}
+                    <Link href="/login" style={{ color: '#2563eb', fontWeight: '500' }}>{t('register.loginHere')}</Link>
                 </div>
             </div>
         </div>

@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useUser } from "@/app/context/UserContext";
+import { useTranslations } from "next-intl";
 
 export default function UserManagement() {
+  const t = useTranslations("userManagement");
   const {
     currentUser,
     allUsers,
@@ -49,7 +51,7 @@ export default function UserManagement() {
 
     const trimmedName = userName.trim();
     if (!trimmedName) {
-      setError("Name cannot be empty");
+      setError(t("errors.nameRequired"));
       return;
     }
 
@@ -61,7 +63,7 @@ export default function UserManagement() {
       }
       handleCloseDialog();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Operation failed");
+      setError(err instanceof Error ? err.message : t("errors.operationFailed"));
     }
   };
 
@@ -70,26 +72,26 @@ export default function UserManagement() {
       await switchUser(userId);
       setShowUserList(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to switch user");
+      setError(err instanceof Error ? err.message : t("errors.switchFailed"));
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user profile?")) {
+    if (!confirm(t("confirmDelete"))) {
       return;
     }
 
     try {
       await removeUser(userId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete user");
+      setError(err instanceof Error ? err.message : t("errors.deleteFailed"));
     }
   };
 
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg p-4 shadow">
-        <div className="text-gray-600">Loading users...</div>
+        <div className="text-gray-600">{t("loading")}</div>
       </div>
     );
   }
@@ -99,16 +101,16 @@ export default function UserManagement() {
       {/* Current User Display */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-gray-900">Current User</h3>
+          <h3 className="font-semibold text-gray-900">{t("currentUser")}</h3>
           <p className="text-sm text-gray-600">
-            {currentUser?.name || "No user selected"}
+            {currentUser?.name || t("noUserSelected")}
           </p>
         </div>
         <button
           onClick={() => setShowUserList(!showUserList)}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
         >
-          {showUserList ? "Hide Users" : "Switch User"}
+          {showUserList ? t("hideUsers") : t("switchUser")}
         </button>
       </div>
 
@@ -116,17 +118,17 @@ export default function UserManagement() {
       {showUserList && (
         <div className="border rounded-lg p-3 space-y-2">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-gray-900">All Users</h4>
+            <h4 className="font-medium text-gray-900">{t("allUsers")}</h4>
             <button
               onClick={handleOpenCreateDialog}
               className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
             >
-              + New User
+              {t("newUser")}
             </button>
           </div>
 
           {allUsers.length === 0 ? (
-            <p className="text-sm text-gray-500">No users found</p>
+            <p className="text-sm text-gray-500">{t("empty")}</p>
           ) : (
             <div className="space-y-2">
               {allUsers.map((user) => (
@@ -140,7 +142,7 @@ export default function UserManagement() {
                 >
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-500">ID: {user.id}</p>
+                    <p className="text-xs text-gray-500">{t("idLabel", { id: user.id })}</p>
                   </div>
 
                   <div className="flex gap-2">
@@ -149,7 +151,7 @@ export default function UserManagement() {
                         onClick={() => handleSwitchUser(user.id)}
                         className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs"
                       >
-                        Switch
+                        {t("switch")}
                       </button>
                     )}
 
@@ -157,7 +159,7 @@ export default function UserManagement() {
                       onClick={() => handleOpenEditDialog(user.id, user.name)}
                       className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-xs"
                     >
-                      Edit
+                      {t("edit")}
                     </button>
 
                     {user.id !== "default" && (
@@ -166,7 +168,7 @@ export default function UserManagement() {
                         className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
                         disabled={currentUser?.id === user.id}
                       >
-                        Delete
+                        {t("delete")}
                       </button>
                     )}
                   </div>
@@ -182,7 +184,7 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {dialogMode === "create" ? "Create New User" : "Edit User"}
+              {dialogMode === "create" ? t("dialog.createTitle") : t("dialog.editTitle")}
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -191,7 +193,7 @@ export default function UserManagement() {
                   htmlFor="userName"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Name
+                  {t("dialog.nameLabel")}
                 </label>
                 <input
                   id="userName"
@@ -199,7 +201,7 @@ export default function UserManagement() {
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter user name"
+                  placeholder={t("dialog.namePlaceholder")}
                   autoFocus
                 />
               </div>
@@ -216,13 +218,13 @@ export default function UserManagement() {
                   onClick={handleCloseDialog}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                 >
-                  Cancel
+                  {t("dialog.cancel")}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
-                  {dialogMode === "create" ? "Create" : "Save"}
+                  {dialogMode === "create" ? t("dialog.create") : t("dialog.save")}
                 </button>
               </div>
             </form>

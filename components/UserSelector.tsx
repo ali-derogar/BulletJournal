@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getUsers, type UserListParams } from '@/services/admin';
+import { useTranslations } from 'next-intl';
 
 interface User {
   id: string;
@@ -16,6 +17,7 @@ interface UserSelectorProps {
 }
 
 export default function UserSelector({ selectedUserIds, onSelectionChange }: UserSelectorProps) {
+  const t = useTranslations('userSelector');
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
@@ -102,7 +104,7 @@ export default function UserSelector({ selectedUserIds, onSelectionChange }: Use
           ))}
           {selectedUserIds.length > selectedUsers.length && (
             <div className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-sm">
-              +{selectedUserIds.length - selectedUsers.length} more
+              {t('moreCount', { count: selectedUserIds.length - selectedUsers.length })}
             </div>
           )}
         </div>
@@ -118,7 +120,7 @@ export default function UserSelector({ selectedUserIds, onSelectionChange }: Use
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search users by name or email..."
+          placeholder={t('searchPlaceholder')}
           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -139,10 +141,10 @@ export default function UserSelector({ selectedUserIds, onSelectionChange }: Use
       {isOpen && (
         <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-64 overflow-y-auto">
           {loading ? (
-            <div className="p-4 text-center text-gray-500">Searching...</div>
+            <div className="p-4 text-center text-gray-500">{t('searching')}</div>
           ) : users.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
-              {searchQuery ? 'No users found' : 'Start typing to search users'}
+              {searchQuery ? t('noUsersFound') : t('startTyping')}
             </div>
           ) : (
             <div className="py-1">
@@ -182,8 +184,8 @@ export default function UserSelector({ selectedUserIds, onSelectionChange }: Use
       {/* Helper Text */}
       <div className="mt-1 text-xs text-gray-500">
         {selectedUserIds.length > 0
-          ? `${selectedUserIds.length} user(s) selected`
-          : 'Search and select users to send notification'}
+          ? t('selectedCount', { count: selectedUserIds.length })
+          : t('helperEmpty')}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { getLastSyncAt } from '@/storage/syncMeta';
+import { useLocale, useTranslations } from 'next-intl';
 
 export type SyncStatusType = 'offline' | 'not-logged-in' | 'synced' | 'error' | 'loading' | 'saving' | 'ready';
 
@@ -15,6 +16,8 @@ interface SyncStatusProps {
 export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, compact = false }: SyncStatusProps) {
   const { user, isOnline, isAuthenticated } = useAuth();
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const t = useTranslations('syncStatus');
+  const locale = useLocale();
 
   // Update current time every minute for time-ago calculations
   useEffect(() => {
@@ -32,7 +35,7 @@ export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, c
     if (syncPhase === 'loading') {
       return {
         type: 'loading',
-        message: 'Loading...',
+        message: t('loading'),
         color: 'text-blue-600 bg-blue-50 border-blue-200',
         icon: (
           <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,7 +53,7 @@ export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, c
     if (syncPhase === 'saving') {
       return {
         type: 'saving',
-        message: 'Saving...',
+        message: t('saving'),
         color: 'text-purple-600 bg-purple-50 border-purple-200',
         icon: (
           <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +71,7 @@ export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, c
     if (!isOnline) {
       return {
         type: 'offline',
-        message: 'Offline',
+        message: t('offline'),
         color: 'text-red-600 bg-red-50 border-red-200',
         icon: (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,7 +89,7 @@ export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, c
     if (!isAuthenticated) {
       return {
         type: 'not-logged-in',
-        message: 'Not logged in',
+        message: t('notLoggedIn'),
         color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
         icon: (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +107,7 @@ export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, c
     if (lastSyncError) {
       return {
         type: 'error',
-        message: 'Sync error',
+        message: t('error'),
         color: 'text-red-600 bg-red-50 border-red-200',
         icon: (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,22 +130,23 @@ export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, c
       const now = new Date(currentTime);
       const diffMinutes = Math.floor((now.getTime() - syncDate.getTime()) / 1000 / 60);
 
+      const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
       let timeAgo = '';
       if (diffMinutes < 1) {
-        timeAgo = 'Just now';
+        timeAgo = rtf.format(0, 'minute');
       } else if (diffMinutes < 60) {
-        timeAgo = `${diffMinutes}m ago`;
+        timeAgo = rtf.format(-diffMinutes, 'minute');
       } else if (diffMinutes < 1440) {
         const hours = Math.floor(diffMinutes / 60);
-        timeAgo = `${hours}h ago`;
+        timeAgo = rtf.format(-hours, 'hour');
       } else {
         const days = Math.floor(diffMinutes / 1440);
-        timeAgo = `${days}d ago`;
+        timeAgo = rtf.format(-days, 'day');
       }
 
       return {
         type: 'synced',
-        message: `Synced ${timeAgo}`,
+        message: t('synced', { time: timeAgo }),
         color: 'text-green-600 bg-green-50 border-green-200',
         icon: (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +159,7 @@ export default function SyncStatus({ syncPhase = 'idle', lastSyncError = null, c
     // Ready to sync (never synced before)
     return {
       type: 'ready',
-      message: 'Ready to sync',
+      message: t('ready'),
       color: 'text-gray-600 bg-gray-50 border-gray-200',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

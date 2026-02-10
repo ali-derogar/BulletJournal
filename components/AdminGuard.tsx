@@ -15,6 +15,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { hasAdminAccess } from '@/services/admin';
+import { useTranslations } from 'next-intl';
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ interface AdminGuardProps {
 export default function AdminGuard({ children, requireSuperuser = false }: AdminGuardProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const t = useTranslations('admin');
 
   useEffect(() => {
     // Wait for auth check to complete
@@ -52,7 +54,7 @@ export default function AdminGuard({ children, requireSuperuser = false }: Admin
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying permissions...</p>
+          <p className="text-gray-600">{t('verifyingPermissions')}</p>
         </div>
       </div>
     );

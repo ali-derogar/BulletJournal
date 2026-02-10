@@ -6,33 +6,34 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import { getSharedTestResult, SharedTestResultPublic } from "@/services/profile-tests";
+import enMessages from "@/messages/en.json";
+import faMessages from "@/messages/fa.json";
 
-const HOLLAND_CODES = {
-  R: { name: "Realistic", color: "from-red-500 to-red-600", description: "Practical, hands-on, technical" },
-  I: { name: "Investigative", color: "from-blue-500 to-blue-600", description: "Analytical, curious, scientific" },
-  A: { name: "Artistic", color: "from-purple-500 to-purple-600", description: "Creative, expressive, original" },
-  S: { name: "Social", color: "from-green-500 to-green-600", description: "Helpful, caring, supportive" },
-  E: { name: "Enterprising", color: "from-yellow-500 to-yellow-600", description: "Ambitious, persuasive, leadership" },
-  C: { name: "Conventional", color: "from-indigo-500 to-indigo-600", description: "Organized, detail-oriented, systematic" },
+const HOLLAND_COLORS = {
+  R: "from-red-500 to-red-600",
+  I: "from-blue-500 to-blue-600",
+  A: "from-purple-500 to-purple-600",
+  S: "from-green-500 to-green-600",
+  E: "from-yellow-500 to-yellow-600",
+  C: "from-indigo-500 to-indigo-600",
 };
 
-const MBTI_DESCRIPTIONS: Record<string, string> = {
-  INTJ: "The Architect - Strategic thinker with a plan for everything",
-  INTP: "The Logician - Innovative inventor with an unquenchable thirst for knowledge",
-  ENTJ: "The Commander - Bold, imaginative, and strong-willed leader",
-  ENTP: "The Debater - Smart and curious thinker who loves a good debate",
-  INFJ: "The Advocate - Quiet and mystical, yet very inspiring and tireless idealist",
-  INFP: "The Mediator - Poetic, kind and altruistic people",
-  ENFJ: "The Protagonist - Natural-born leader and people person",
-  ENFP: "The Campaigner - Enthusiastic, creative, and sociable free spirit",
-  ISTJ: "The Logistician - Practical and fact-oriented reliable worker",
-  ISFJ: "The Defender - Dedicated and warm protector of those in need",
-  ESTJ: "The Executive - Excellent administrator and natural leader",
-  ESFJ: "The Consul - Extraordinarily caring, social and popular person",
-  ISTP: "The Virtuoso - Bold and practical experimenter",
-  ISFP: "The Adventurer - Flexible and charming artist",
-  ESTP: "The Entrepreneur - Smart, energetic and perceptive people-person",
-  ESFP: "The Entertainer - Outgoing, spontaneous and enjoyable person",
+const getLocaleFromPath = (path: string) => (path && path.startsWith("/fa") ? "fa" : "en");
+const getMessage = (messages: Record<string, unknown>, key: string) => {
+  let current: unknown = messages;
+  for (const part of key.split(".")) {
+    if (current && typeof current === "object") {
+      current = (current as Record<string, unknown>)[part];
+    } else {
+      return undefined;
+    }
+  }
+  return current;
+};
+const formatMessage = (template: unknown, values?: Record<string, string | number>) => {
+  if (typeof template !== "string") return "";
+  if (!values) return template;
+  return template.replace(/\{(\w+)\}/g, (_, k) => (values[k] !== undefined ? String(values[k]) : `{${k}}`));
 };
 
 export default function SharedTestResultPage() {
@@ -41,6 +42,13 @@ export default function SharedTestResultPage() {
   const [result, setResult] = useState<SharedTestResultPublic | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const locale = typeof window !== "undefined" ? getLocaleFromPath(window.location.pathname) : "en";
+  const messages = locale === "fa" ? faMessages : enMessages;
+  const t = (key: string, values?: Record<string, string | number>) =>
+    formatMessage(getMessage(messages as Record<string, unknown>, key), values);
+  const hollandCodes = (getMessage(messages as Record<string, unknown>, "profileTests.holland.codes") as Record<string, { name: string; description: string }>) || {};
+  const mbtiDescriptions = (getMessage(messages as Record<string, unknown>, "profileTests.mbti.descriptions") as Record<string, string>) || {};
+  const mbtiPreferencePairs = (getMessage(messages as Record<string, unknown>, "profileTests.mbti.preferencePairs") as Array<{ pair: string; label: string }>) || [];
 
   useEffect(() => {
     const loadResult = async () => {
@@ -50,7 +58,7 @@ export default function SharedTestResultPage() {
         setResult(data);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load shared result");
+        setError(err instanceof Error ? err.message : t("sharedTest.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -76,13 +84,13 @@ export default function SharedTestResultPage() {
           <Icon className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </Icon>
-          <h2 className="text-2xl font-bold mb-2">Error</h2>
+          <h2 className="text-2xl font-bold mb-2">{t("sharedTest.errorTitle")}</h2>
           <p className="text-gray-400 mb-6">{error}</p>
           <Link
             href="/"
             className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
           >
-            Go Home
+            {t("sharedTest.goHome")}
           </Link>
         </div>
       </div>
@@ -109,10 +117,10 @@ export default function SharedTestResultPage() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-4">
-            Shared Test Result
+            {t("sharedTest.title")}
           </h1>
           <p className="text-gray-400">
-            {result.test_type === "holland" ? "Holland Career Interest Test" : "MBTI Personality Test"}
+            {result.test_type === "holland" ? t("sharedTest.subtitleHolland") : t("sharedTest.subtitleMbti")}
           </p>
         </motion.div>
 
@@ -129,26 +137,26 @@ export default function SharedTestResultPage() {
                 <Icon className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </Icon>
-                <h2 className="text-2xl font-bold text-white">Holland Career Interest Test</h2>
+                <h2 className="text-2xl font-bold text-white">{t("profileTests.holland.title")}</h2>
               </div>
 
               {/* Dominant Types */}
               <div className="mb-8">
-                <p className="text-sm text-gray-400 mb-4">Dominant Career Interest Types</p>
+                <p className="text-sm text-gray-400 mb-4">{t("sharedTest.holland.dominantTypes")}</p>
                 <div className="grid grid-cols-3 gap-4">
                   {result.holland_dominant.split("").map((code) => (
                     <motion.div
                       key={code}
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className={`bg-gradient-to-br ${HOLLAND_CODES[code as keyof typeof HOLLAND_CODES]?.color || "from-gray-500 to-gray-600"} rounded-2xl p-6 text-center`}
+                      className={`bg-gradient-to-br ${HOLLAND_COLORS[code as keyof typeof HOLLAND_COLORS] || "from-gray-500 to-gray-600"} rounded-2xl p-6 text-center`}
                     >
                       <div className="text-3xl font-bold text-white mb-2">{code}</div>
                       <div className="text-sm text-white/90 font-medium mb-1">
-                        {HOLLAND_CODES[code as keyof typeof HOLLAND_CODES]?.name}
+                        {hollandCodes?.[code]?.name}
                       </div>
                       <div className="text-xs text-white/70">
-                        {HOLLAND_CODES[code as keyof typeof HOLLAND_CODES]?.description}
+                        {hollandCodes?.[code]?.description}
                       </div>
                     </motion.div>
                   ))}
@@ -157,14 +165,14 @@ export default function SharedTestResultPage() {
 
               {/* Score Breakdown */}
               <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-                <p className="text-sm text-gray-400 mb-4 uppercase tracking-widest">Score Breakdown</p>
+                <p className="text-sm text-gray-400 mb-4 uppercase tracking-widest">{t("profileTests.holland.scoreBreakdown")}</p>
                 <div className="space-y-3">
                   {Object.entries(result.holland_scores || {}).map(([code, score]) => (
                     <div key={code} className="flex items-center gap-3">
                       <span className="w-8 font-bold text-white">{code}</span>
                       <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
                         <motion.div
-                          className={`h-full bg-gradient-to-r ${HOLLAND_CODES[code as keyof typeof HOLLAND_CODES]?.color || "from-gray-500 to-gray-600"}`}
+                          className={`h-full bg-gradient-to-r ${HOLLAND_COLORS[code as keyof typeof HOLLAND_COLORS] || "from-gray-500 to-gray-600"}`}
                           initial={{ width: 0 }}
                           animate={{ width: `${(score / 3) * 100}%` }}
                           transition={{ duration: 0.8, delay: 0.1 }}
@@ -178,10 +186,10 @@ export default function SharedTestResultPage() {
 
               {/* Info */}
               <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between text-sm text-gray-400">
-                <span>Test taken on {new Date(result.created_at).toLocaleDateString()}</span>
+                <span>{t("profileTests.common.takenOn", { date: new Date(result.created_at).toLocaleDateString(locale) })}</span>
                 {result.expires_at && (
                   <span className="text-yellow-400">
-                    Expires on {new Date(result.expires_at).toLocaleDateString()}
+                    {t("profileTests.shareModal.expiresOn", { date: new Date(result.expires_at).toLocaleDateString(locale) })}
                   </span>
                 )}
               </div>
@@ -202,7 +210,7 @@ export default function SharedTestResultPage() {
                 <Icon className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </Icon>
-                <h2 className="text-2xl font-bold text-white">MBTI Personality Test</h2>
+                <h2 className="text-2xl font-bold text-white">{t("profileTests.mbti.title")}</h2>
               </div>
 
               {/* MBTI Type */}
@@ -214,21 +222,16 @@ export default function SharedTestResultPage() {
                 >
                   <div className="text-5xl font-bold text-white mb-3">{result.mbti_type}</div>
                   <p className="text-lg text-white/90">
-                    {MBTI_DESCRIPTIONS[result.mbti_type] || "Unique personality type"}
+                    {mbtiDescriptions?.[result.mbti_type] || t("profileTests.mbti.uniqueType")}
                   </p>
                 </motion.div>
               </div>
 
               {/* Preference Scores */}
               <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-                <p className="text-sm text-gray-400 mb-4 uppercase tracking-widest">Preference Scores</p>
+                <p className="text-sm text-gray-400 mb-4 uppercase tracking-widest">{t("profileTests.mbti.preferenceScores")}</p>
                 <div className="grid grid-cols-2 gap-6">
-                  {[
-                    { pair: "E/I", label: "Extroversion/Introversion" },
-                    { pair: "S/N", label: "Sensing/Intuition" },
-                    { pair: "T/F", label: "Thinking/Feeling" },
-                    { pair: "J/P", label: "Judging/Perceiving" },
-                  ].map(({ pair, label }) => {
+                  {mbtiPreferencePairs.map(({ pair, label }) => {
                     const [first, second] = pair.split("/");
                     const firstScore = result.mbti_scores?.[first] || 0;
                     const secondScore = result.mbti_scores?.[second] || 0;
@@ -258,10 +261,10 @@ export default function SharedTestResultPage() {
 
               {/* Info */}
               <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between text-sm text-gray-400">
-                <span>Test taken on {new Date(result.created_at).toLocaleDateString()}</span>
+                <span>{t("profileTests.common.takenOn", { date: new Date(result.created_at).toLocaleDateString(locale) })}</span>
                 {result.expires_at && (
                   <span className="text-yellow-400">
-                    Expires on {new Date(result.expires_at).toLocaleDateString()}
+                    {t("profileTests.shareModal.expiresOn", { date: new Date(result.expires_at).toLocaleDateString(locale) })}
                   </span>
                 )}
               </div>
@@ -276,12 +279,12 @@ export default function SharedTestResultPage() {
           transition={{ delay: 0.3 }}
           className="text-center mt-12"
         >
-          <p className="text-gray-400 mb-4">Want to take these tests yourself?</p>
+          <p className="text-gray-400 mb-4">{t("sharedTest.footerQuestion")}</p>
           <Link
             href="/"
             className="inline-block px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors font-medium"
           >
-            Go to Bullet Journal
+            {t("sharedTest.footerCta")}
           </Link>
         </motion.div>
       </div>

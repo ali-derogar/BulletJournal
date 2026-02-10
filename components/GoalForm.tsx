@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import type { Goal, GoalType } from "@/domain";
 import { validateGoal, getCurrentPeriod, formatPeriodLabel } from "@/utils/goalUtils";
+import { useLocale, useTranslations } from "next-intl";
 
 interface GoalFormProps {
   goal?: Goal;
@@ -20,6 +21,9 @@ interface GoalFormProps {
 }
 
 export default function GoalForm({ goal, onSave, onCancel, userId = "default", currentPeriod }: GoalFormProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+  const localeTag = locale === "fa" ? "fa-IR" : "en-US";
   console.log("GoalForm rendered with:", { goal, userId, currentPeriod });
 
   const [formData, setFormData] = useState<Partial<Goal>>(() => {
@@ -89,7 +93,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
       console.log("GoalForm: onSave completed successfully");
     } catch (error) {
       console.error("GoalForm: Error saving goal:", error);
-      setErrors(["Failed to save goal. Please try again."]);
+      setErrors([t("goals.errors.saveFailed")]);
     } finally {
       setIsSubmitting(false);
     }
@@ -110,6 +114,11 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
     }));
   };
 
+  const monthNames = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(localeTag, { month: "long" });
+    return Array.from({ length: 12 }, (_, i) => formatter.format(new Date(2020, i, 1)));
+  }, [localeTag]);
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <motion.div
@@ -121,7 +130,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-card-foreground">
-            {isEditing ? "Edit Goal" : "Add New Goal"}
+            {isEditing ? t("goals.editGoal") : t("goals.addNewGoal")}
           </h2>
           <button
             onClick={onCancel}
@@ -150,14 +159,14 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-1">
-              Title *
+              {t("goals.titleLabel")}
             </label>
             <input
               type="text"
               value={formData.title || ""}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
-              placeholder="e.g., Read 10 books"
+              placeholder={t("goals.titlePlaceholder")}
               required
             />
           </div>
@@ -165,28 +174,28 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-1">
-              Description
+              {t("goals.descriptionLabel")}
             </label>
             <textarea
               value={formData.description || ""}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none bg-background text-foreground placeholder:text-muted-foreground"
               rows={2}
-              placeholder="Optional description..."
+              placeholder={t("goals.descriptionPlaceholder")}
             />
           </div>
 
           {/* Type */}
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-2">
-              Goal Type *
+              {t("goals.typeLabel")}
             </label>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { value: "yearly", label: "Yearly", icon: "📅" },
-                { value: "quarterly", label: "Quarterly", icon: "🗓️" },
-                { value: "monthly", label: "Monthly", icon: "📆" },
-                { value: "weekly", label: "Weekly", icon: "📋" },
+                { value: "yearly", label: t("goals.periodType.yearly"), icon: "📅" },
+                { value: "quarterly", label: t("goals.periodType.quarterly"), icon: "🗓️" },
+                { value: "monthly", label: t("goals.periodType.monthly"), icon: "📆" },
+                { value: "weekly", label: t("goals.periodType.weekly"), icon: "📋" },
               ].map(({ value, label, icon }) => (
                 <button
                   key={value}
@@ -208,12 +217,12 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
           {/* Period Selection */}
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-2">
-              Period *
+              {t("goals.periodLabel")}
             </label>
             <div className="space-y-3">
               {/* Year Selection - Always shown */}
               <div>
-                <label className="block text-xs text-muted-foreground mb-1">Year</label>
+                <label className="block text-xs text-muted-foreground mb-1">{t("goals.period.year")}</label>
                 <select
                   value={formData.year || new Date().getFullYear()}
                   onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) }))}
@@ -233,16 +242,13 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
               {/* Month Selection - For monthly goals */}
               {formData.type === "monthly" && (
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Month</label>
+                  <label className="block text-xs text-muted-foreground mb-1">{t("goals.period.month")}</label>
                   <select
                     value={formData.month || new Date().getMonth() + 1}
                     onChange={(e) => setFormData(prev => ({ ...prev, month: parseInt(e.target.value) }))}
                     className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
                   >
-                    {[
-                      "January", "February", "March", "April", "May", "June",
-                      "July", "August", "September", "October", "November", "December"
-                    ].map((monthName, index) => (
+                    {monthNames.map((monthName, index) => (
                       <option key={index + 1} value={index + 1}>
                         {monthName}
                       </option>
@@ -254,16 +260,16 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
               {/* Quarter Selection - For quarterly goals */}
               {formData.type === "quarterly" && (
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Quarter</label>
+                  <label className="block text-xs text-muted-foreground mb-1">{t("goals.period.quarter")}</label>
                   <select
                     value={formData.quarter || Math.ceil((new Date().getMonth() + 1) / 3)}
                     onChange={(e) => setFormData(prev => ({ ...prev, quarter: parseInt(e.target.value) }))}
                     className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground"
                   >
-                    <option value={1}>Q1 (Jan-Mar)</option>
-                    <option value={2}>Q2 (Apr-Jun)</option>
-                    <option value={3}>Q3 (Jul-Sep)</option>
-                    <option value={4}>Q4 (Oct-Dec)</option>
+                    <option value={1}>{t("goals.quarterOptions.q1")}</option>
+                    <option value={2}>{t("goals.quarterOptions.q2")}</option>
+                    <option value={3}>{t("goals.quarterOptions.q3")}</option>
+                    <option value={4}>{t("goals.quarterOptions.q4")}</option>
                   </select>
                 </div>
               )}
@@ -271,7 +277,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
               {/* Week Selection - For weekly goals */}
               {formData.type === "weekly" && (
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Week Number</label>
+                  <label className="block text-xs text-muted-foreground mb-1">{t("goals.weekNumber")}</label>
                   <select
                     value={formData.week || 1}
                     onChange={(e) => setFormData(prev => ({ ...prev, week: parseInt(e.target.value) }))}
@@ -279,7 +285,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
                   >
                     {Array.from({ length: 52 }, (_, i) => (
                       <option key={i + 1} value={i + 1}>
-                        Week {i + 1}
+                        {t("goals.weekOption", { week: i + 1 })}
                       </option>
                     ))}
                   </select>
@@ -289,7 +295,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
 
             {/* Period Preview */}
             <div className="mt-3 p-3 bg-secondary/50 rounded-lg border border-border/50">
-              <div className="text-xs text-muted-foreground mb-1">Selected Period:</div>
+              <div className="text-xs text-muted-foreground mb-1">{t("goals.selectedPeriod")}</div>
               <div className="font-medium text-card-foreground">
                 {formatPeriodLabel(
                   formData.type!,
@@ -306,7 +312,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-card-foreground mb-1">
-                Target *
+                {t("goals.targetLabel")}
               </label>
               <input
                 type="number"
@@ -319,14 +325,14 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
             </div>
             <div>
               <label className="block text-sm font-medium text-card-foreground mb-1">
-                Unit *
+                {t("goals.unitLabel")}
               </label>
               <input
                 type="text"
                 value={formData.unit || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
                 className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
-                placeholder="e.g., books, hours"
+                placeholder={t("goals.unitPlaceholder")}
                 required
               />
             </div>
@@ -335,7 +341,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
           {/* Progress Type */}
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-2">
-              Progress Tracking *
+              {t("goals.progressTracking")}
             </label>
             <div className="space-y-2">
               <label className="flex items-center">
@@ -347,7 +353,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
                   onChange={(e) => setFormData(prev => ({ ...prev, progressType: e.target.value as "manual" | "task-linked" }))}
                   className="mr-2"
                 />
-                <span className="text-sm">Manual progress tracking</span>
+                <span className="text-sm">{t("goals.manualProgress")}</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -358,7 +364,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
                   onChange={(e) => setFormData(prev => ({ ...prev, progressType: e.target.value as "manual" | "task-linked" }))}
                   className="mr-2"
                 />
-                <span className="text-sm">Link to tasks (coming soon)</span>
+                <span className="text-sm">{t("goals.linkedTasksComingSoon")}</span>
               </label>
             </div>
           </div>
@@ -367,7 +373,7 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
           {isEditing && formData.progressType === "manual" && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Current Progress
+                {t("goals.currentProgress")}
               </label>
               <input
                 type="number"
@@ -387,14 +393,14 @@ export default function GoalForm({ goal, onSave, onCancel, userId = "default", c
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 disabled:opacity-50 transition-all duration-200 border border-border/50 hover:border-border"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-primary/30"
             >
-              {isSubmitting ? "Saving..." : (isEditing ? "Update Goal" : "Add Goal")}
+              {isSubmitting ? t("goals.saving") : (isEditing ? t("goals.updateGoal") : t("goals.addGoal"))}
             </button>
           </div>
         </form>

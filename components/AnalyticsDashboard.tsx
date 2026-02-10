@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useLocale, useTranslations } from 'next-intl';
 import type { AnalyticsData, Period, PeriodType } from '@/domain/analytics';
 import { getAnalytics, requestAIReview } from '@/services/analytics';
 import { getCurrentPeriod, getPreviousPeriod, getNextPeriod, getPeriodDates } from '@/utils/analytics';
@@ -21,12 +22,14 @@ function SparklineCard({
   data: Record<string, number>;
   className: string;
 }) {
+  const t = useTranslations();
+  const pointsCount = Object.keys(data || {}).length;
   return (
     <div className="rounded-2xl border border-border/60 bg-background/40 p-3 sm:p-4">
       <div className="flex items-center justify-between gap-3 mb-2">
         <h4 className="text-sm font-bold text-muted-foreground truncate">{title}</h4>
         <span className="text-xs font-semibold text-muted-foreground">
-          {Object.keys(data || {}).length} pt
+          {t('analytics.points', { count: pointsCount })}
         </span>
       </div>
       <Sparkline data={data} className={className} />
@@ -43,6 +46,7 @@ function Sparkline({
   className: string;
   height?: number;
 }) {
+  const t = useTranslations();
   const entries = Object.entries(data || {}).sort(([a], [b]) => a.localeCompare(b));
   const values = entries.map(([, v]) => (Number.isFinite(v) ? v : 0));
   const n = values.length;
@@ -50,7 +54,7 @@ function Sparkline({
   if (n < 2) {
     return (
       <div className="h-14 rounded-xl bg-muted/30 border border-border flex items-center justify-center">
-        <span className="text-xs text-muted-foreground font-medium">Not enough data</span>
+        <span className="text-xs text-muted-foreground font-medium">{t('analytics.notEnoughData')}</span>
       </div>
     );
   }
@@ -77,7 +81,7 @@ function Sparkline({
 
   return (
     <div className="w-full">
-      <svg viewBox={`0 0 ${w} ${h}`} className={`w-full ${className}`} aria-label={"sparkline"}>
+      <svg viewBox={`0 0 ${w} ${h}`} className={`w-full ${className}`} aria-label={t('analytics.sparklineAria')}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
@@ -89,8 +93,8 @@ function Sparkline({
         <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="4" fill="currentColor" />
       </svg>
       <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground font-medium">
-        <span>min {formatCompact(min)}</span>
-        <span>max {formatCompact(max)}</span>
+        <span>{t('analytics.minValue', { value: formatCompact(min) })}</span>
+        <span>{t('analytics.maxValue', { value: formatCompact(max) })}</span>
       </div>
     </div>
   );
@@ -109,6 +113,7 @@ function CompareBars({
   previous: number;
   className: string;
 }) {
+  const t = useTranslations();
   const c = Number.isFinite(current) ? current : 0;
   const p = Number.isFinite(previous) ? previous : 0;
   const max = Math.max(c, p, 1);
@@ -124,7 +129,7 @@ function CompareBars({
 
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="w-14 text-xs text-muted-foreground font-semibold">Now</span>
+          <span className="w-14 text-xs text-muted-foreground font-semibold">{t('analytics.now')}</span>
           <div className="flex-1 h-3 rounded-full bg-muted/30 border border-border overflow-hidden">
             <div className={`h-full ${className}`} style={{ width: `${cPct}%`, backgroundColor: 'currentColor' }} />
           </div>
@@ -132,7 +137,7 @@ function CompareBars({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="w-14 text-xs text-muted-foreground font-semibold">Prev</span>
+          <span className="w-14 text-xs text-muted-foreground font-semibold">{t('analytics.prev')}</span>
           <div className="flex-1 h-3 rounded-full bg-muted/30 border border-border overflow-hidden">
             <div className={`h-full ${className}`} style={{ width: `${pPct}%`, opacity: 0.55, backgroundColor: 'currentColor' }} />
           </div>
@@ -169,6 +174,9 @@ type AIParsedReport = {
 };
 
 export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: AnalyticsDashboardProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+  const localeTag = locale === 'fa' ? 'fa-IR' : 'en-US';
   const { currentUser } = useUser();
   const [period, setPeriod] = useState<Period>(getCurrentPeriod(initialPeriodType));
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -200,7 +208,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       console.log('📊 AnalyticsDashboard: Analytics state updated');
     } catch (err) {
       console.log('📊 AnalyticsDashboard: Error occurred', err);
-      setError(err instanceof Error ? err.message : 'Failed to load analytics');
+      setError(err instanceof Error ? err.message : t('analytics.loadFailed'));
     } finally {
       console.log('📊 AnalyticsDashboard: Setting loading to false');
       setLoading(false);
@@ -263,7 +271,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
               <span className="text-3xl">📊</span>
             </div>
           </div>
-          <p className="text-lg md:text-xl text-muted-foreground font-semibold">Loading Analytics...</p>
+          <p className="text-lg md:text-xl text-muted-foreground font-semibold">{t('analytics.loading')}</p>
         </motion.div>
       </div>
     );
@@ -280,9 +288,9 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
             <div className="flex-1">
               <p className={isAuthError ? 'text-yellow-800' : 'text-red-800'}>
                 {isAuthError
-                  ? 'Analytics requires authentication. Please log in to view your productivity data.'
+                  ? t('analytics.authRequired')
                   : error.includes('Network error') || error.includes('fetch')
-                    ? 'Unable to load analytics data. Please ensure the backend server is running and try again.'
+                    ? t('analytics.networkError')
                     : error
                 }
               </p>
@@ -292,7 +300,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
                 onClick={loadAnalytics}
                 className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
               >
-                Retry
+                {t('common.tryAgain')}
               </button>
             )}
           </div>
@@ -316,7 +324,12 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
       if (currentUser?.id) {
         const nowIso = new Date().toISOString();
         const periodKey = `${period.type}:${period.year}:${period.period}`;
-        const title = `${period.type} ${period.year}/${period.period}`;
+        const periodTypeLabel = period.type === 'weekly' ? t('analytics.period.weekly') : t('analytics.period.monthly');
+        const title = t('analytics.periodTitle', {
+          type: periodTypeLabel,
+          year: period.year,
+          period: period.period
+        });
 
         const record: AIReportRecord = {
           id: `ai-report-${currentUser.id}-${Date.now()}`,
@@ -334,7 +347,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
         setSelectedAiReportId(record.id);
       }
     } catch (e) {
-      setAiError(e instanceof Error ? e.message : 'AI review failed');
+      setAiError(e instanceof Error ? e.message : t('analytics.aiReviewFailed'));
     } finally {
       setAiLoading(false);
     }
@@ -359,7 +372,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           <div className="text-white flex-1 min-w-0">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 flex items-center gap-3">
               <span className="text-2xl md:text-3xl">📊</span>
-              <span className="truncate">Analytics Dashboard</span>
+              <span className="truncate">{t('analytics.dashboardTitle')}</span>
             </h1>
             <PeriodSelector period={period} onPeriodChange={handlePeriodChange} />
           </div>
@@ -369,9 +382,9 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
               onClick={runAIReview}
               disabled={aiLoading}
               className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white font-bold shadow-lg backdrop-blur-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-              title="AI Review"
+              title={t('analytics.aiReview')}
             >
-              {aiLoading ? 'Analyzing…' : 'AI Review'}
+              {aiLoading ? t('analytics.analyzing') : t('analytics.aiReview')}
             </button>
           </div>
         </div>
@@ -390,10 +403,10 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           whileTap={{ scale: 0.95 }}
           className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
         >
-          ← Prev
+          {t('analytics.prevButton')}
         </motion.button>
         <span className="text-base md:text-lg font-black text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-center px-2">
-          {formatPeriodDisplay(period)}
+          {formatPeriodDisplay(period, localeTag, t)}
         </span>
         <motion.button
           onClick={() => navigatePeriod('next')}
@@ -402,57 +415,57 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           disabled={isCurrentPeriod(period)}
           className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-secondary to-secondary/80 hover:from-primary hover:to-purple-600 rounded-xl font-bold text-secondary-foreground hover:text-white shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-secondary disabled:hover:to-secondary/80 text-sm sm:text-base"
         >
-          Next →
+          {t('analytics.nextButton')}
         </motion.button>
       </motion.div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <MetricCard
-          title="Total Time"
-          value={formatTime(analytics.time.totalTimeSpent)}
-          subtitle={`Avg ${formatTime(analytics.time.averageTimePerDay)}/day`}
+          title={t('analytics.totalTime')}
+          value={formatTime(analytics.time.totalTimeSpent, t)}
+          subtitle={t('analytics.avgPerDay', { time: formatTime(analytics.time.averageTimePerDay, t) })}
         />
         <MetricCard
-          title="Tasks Completed"
+          title={t('analytics.tasksCompleted')}
           value={analytics.tasks.totalTasksCompleted.toString()}
-          subtitle={`${analytics.tasks.taskCompletionRate.toFixed(1)}% completion rate`}
+          subtitle={t('analytics.completionRate', { rate: analytics.tasks.taskCompletionRate.toFixed(1) })}
         />
         <MetricCard
-          title="Active Days"
+          title={t('analytics.activeDays')}
           value={analytics.time.activeDaysCount.toString()}
-          subtitle={`of ${analytics.dataQuality.totalDays} total days`}
+          subtitle={t('analytics.totalDays', { total: analytics.dataQuality.totalDays })}
         />
       </div>
 
       {/* Wellbeing Cards */}
       {analytics.wellbeing && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <MetricCard
+          title={t('analytics.avgSleep')}
+          value={t('analytics.hoursShort', { hours: analytics.wellbeing.avgSleepHours.toFixed(1) })}
+          subtitle={t('analytics.sleepDaysLogged', { count: analytics.wellbeing.sleepDays })}
+        />
           <MetricCard
-            title="Avg Sleep"
-            value={`${analytics.wellbeing.avgSleepHours.toFixed(1)}h`}
-            subtitle={`${analytics.wellbeing.sleepDays} day(s) logged`}
-          />
-          <MetricCard
-            title="Sleep Quality"
+            title={t('analytics.sleepQuality')}
             value={analytics.wellbeing.avgSleepQuality.toFixed(1)}
-            subtitle="1-10 scale"
+            subtitle={t('analytics.scaleOneToTen')}
           />
           <MetricCard
-            title="Mood"
+            title={t('analytics.mood')}
             value={analytics.wellbeing.avgMoodRating.toFixed(1)}
-            subtitle={`Day score ${analytics.wellbeing.avgDayScore.toFixed(1)}`}
+            subtitle={t('analytics.dayScore', { score: analytics.wellbeing.avgDayScore.toFixed(1) })}
           />
           <MetricCard
-            title="Water"
+            title={t('analytics.water')}
             value={analytics.wellbeing.totalWaterIntake.toString()}
-            subtitle="glasses (sum)"
+            subtitle={t('analytics.glassesSum')}
           />
-          <MetricCard
-            title="Study"
-            value={`${analytics.wellbeing.totalStudyMinutes}m`}
-            subtitle="minutes (sum)"
-          />
+        <MetricCard
+          title={t('analytics.study')}
+          value={t('analytics.minutesShort', { value: analytics.wellbeing.totalStudyMinutes })}
+          subtitle={t('analytics.minutesSum')}
+        />
         </div>
       )}
 
@@ -465,26 +478,26 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
         >
           <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text mb-4 flex items-center gap-2">
             <span>📈</span>
-            Trends
+            {t('analytics.trends')}
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <CompareBars
-              title="Time"
-              unit="m"
+              title={t('analytics.time')}
+              unit={t('analytics.minutesUnit')}
               current={analytics.trends.totalTimeSpent.current}
               previous={analytics.trends.totalTimeSpent.previous}
               className="text-indigo-600 dark:text-indigo-400"
             />
             <CompareBars
-              title="Completion"
+              title={t('analytics.completion')}
               unit="%"
               current={analytics.trends.taskCompletionRate.current}
               previous={analytics.trends.taskCompletionRate.previous}
               className="text-emerald-600 dark:text-emerald-400"
             />
             <CompareBars
-              title="Goals"
+              title={t('analytics.goals')}
               unit="%"
               current={analytics.trends.goalSuccessRate.current}
               previous={analytics.trends.goalSuccessRate.previous}
@@ -501,35 +514,35 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
         >
           <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 dark:from-blue-400 dark:via-cyan-400 dark:to-teal-400 bg-clip-text mb-4 flex items-center gap-2">
             <span>🌙</span>
-            Wellbeing
+            {t('analytics.wellbeing')}
           </h3>
 
           {analytics.wellbeing?.series ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <SparklineCard
-                title="Sleep Hours"
+                title={t('analytics.sleepHours')}
                 className="text-indigo-600 dark:text-indigo-400"
                 data={analytics.wellbeing.series.sleepHoursByDay}
               />
               <SparklineCard
-                title="Mood Rating"
+                title={t('analytics.moodRating')}
                 className="text-emerald-600 dark:text-emerald-400"
                 data={analytics.wellbeing.series.moodRatingByDay}
               />
               <SparklineCard
-                title="Water"
+                title={t('analytics.water')}
                 className="text-blue-600 dark:text-blue-400"
                 data={analytics.wellbeing.series.waterIntakeByDay}
               />
               <SparklineCard
-                title="Study Minutes"
+                title={t('analytics.studyMinutes')}
                 className="text-amber-600 dark:text-amber-400"
                 data={analytics.wellbeing.series.studyMinutesByDay}
               />
             </div>
           ) : (
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
-              <p className="text-sm text-muted-foreground font-medium">No wellbeing series available for this period.</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('analytics.noWellbeing')}</p>
             </div>
           )}
         </motion.div>
@@ -545,12 +558,12 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
         >
           <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 dark:from-purple-400 dark:via-pink-400 dark:to-red-400 bg-clip-text mb-4 flex items-center gap-2">
             <span>🧠</span>
-            AI Report
+            {t('analytics.aiReport')}
           </h3>
 
           {aiHistory.length > 0 && (
             <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
-              <label className="text-sm font-bold text-muted-foreground">History</label>
+              <label className="text-sm font-bold text-muted-foreground">{t('analytics.history')}</label>
               <select
                 className="w-full sm:w-[360px] px-3 py-2.5 rounded-xl border border-border bg-background text-foreground"
                 value={selectedAiReportId || ''}
@@ -563,10 +576,10 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
                   }
                 }}
               >
-                <option value="">Select a previous report…</option>
+                <option value="">{t('analytics.selectPreviousReport')}</option>
                 {aiHistory.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.title} — {new Date(r.createdAt).toLocaleString()}
+                    {r.title} — {new Date(r.createdAt).toLocaleString(localeTag)}
                   </option>
                 ))}
               </select>
@@ -700,15 +713,15 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
             const plan30 = normalizePlanItems(parsed?.plan_30_days);
 
             const sections: Array<{ title: string; items?: string[]; text?: string }> = [
-              { title: 'Summary', text: parsed?.summary ? String(parsed.summary) : '' },
-              { title: 'Strengths', items: toStringList(parsed?.strengths) },
-              { title: 'Critiques', items: toStringList(parsed?.critiques) },
-              { title: 'Root Causes', items: toStringList(parsed?.root_causes) },
-              { title: 'Recommendations', items: toStringList(parsed?.recommendations) },
-              { title: 'Goal Alignment', text: parsed?.goal_alignment ? toText(parsed.goal_alignment) : '' },
-              { title: 'Plan (7 Days)', items: plan7 },
-              { title: 'Plan (30 Days)', items: plan30 },
-              { title: 'Questions', items: toStringList(parsed?.questions) },
+              { title: t('analytics.report.summary'), text: parsed?.summary ? String(parsed.summary) : '' },
+              { title: t('analytics.report.strengths'), items: toStringList(parsed?.strengths) },
+              { title: t('analytics.report.critiques'), items: toStringList(parsed?.critiques) },
+              { title: t('analytics.report.rootCauses'), items: toStringList(parsed?.root_causes) },
+              { title: t('analytics.report.recommendations'), items: toStringList(parsed?.recommendations) },
+              { title: t('analytics.report.goalAlignment'), text: parsed?.goal_alignment ? toText(parsed.goal_alignment) : '' },
+              { title: t('analytics.report.plan7Days'), items: plan7 },
+              { title: t('analytics.report.plan30Days'), items: plan30 },
+              { title: t('analytics.report.questions'), items: toStringList(parsed?.questions) },
             ];
 
             const hasAnySection = sections.some((s) => (s.text && s.text.trim().length > 0) || (s.items && s.items.length > 0));
@@ -717,7 +730,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
               return (
                 <div className="bg-muted/30 rounded-lg p-3 border border-border">
                   <p className="text-sm text-muted-foreground font-medium">
-                    فرمت گزارش AI قابل نمایش نیست. لطفاً دوباره روی AI Review بزنید.
+                    {t('analytics.reportFormatUnavailable')}
                   </p>
                 </div>
               );
@@ -768,14 +781,14 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-blue-800 dark:text-blue-200 text-sm">
-                <strong>Demo Data:</strong> You&apos;re viewing sample analytics data. Connect to the backend server for real data.
+                <strong>{t('analytics.demoData')}:</strong> {t('analytics.demoDataDescription')}
               </p>
             </div>
             <button
               onClick={loadAnalytics}
               className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
             >
-              Retry
+              {t('common.tryAgain')}
             </button>
           </div>
         </div>
@@ -787,15 +800,14 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-                <strong>Note:</strong> This period has incomplete data ({analytics.dataQuality.missingDays} missing days).
-                Analytics may not be fully representative.
+                <strong>{t('analytics.note')}:</strong> {t('analytics.incompleteData', { count: analytics.dataQuality.missingDays })}
               </p>
             </div>
             <button
               onClick={loadAnalytics}
               className="ml-4 px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
             >
-              Refresh
+              {t('analytics.refresh')}
             </button>
           </div>
         </div>
@@ -805,6 +817,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
 }
 
 function PeriodSelector({ period, onPeriodChange }: { period: Period; onPeriodChange: (period: Period) => void }) {
+  const t = useTranslations();
   return (
     <div className="flex items-center space-x-4">
       <select
@@ -816,8 +829,8 @@ function PeriodSelector({ period, onPeriodChange }: { period: Period; onPeriodCh
         }}
         className="px-4 py-2 border-2 border-white/30 rounded-xl bg-white/20 dark:bg-white/10 text-white font-bold shadow-lg backdrop-blur-sm hover:bg-white/30 dark:hover:bg-white/20 transition-all cursor-pointer"
       >
-        <option value="weekly" className="text-gray-900">📅 Weekly</option>
-        <option value="monthly" className="text-gray-900">📆 Monthly</option>
+        <option value="weekly" className="text-gray-900">📅 {t('analytics.period.weekly')}</option>
+        <option value="monthly" className="text-gray-900">📆 {t('analytics.period.monthly')}</option>
       </select>
     </div>
   );
@@ -843,6 +856,7 @@ function MetricCard({ title, value, subtitle }: { title: string; value: string; 
 }
 
 function TimeAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
+  const t = useTranslations();
   const { estimatedVsActual, timeByUsefulness } = analytics.time;
 
   return (
@@ -854,25 +868,25 @@ function TimeAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
     >
       <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 dark:from-blue-400 dark:via-cyan-400 dark:to-teal-400 bg-clip-text mb-4 flex items-center gap-2">
         <span>⏱️</span>
-        Time Analytics
+        {t('analytics.timeAnalytics')}
       </h3>
       <div className="space-y-4">
         {/* Basic Time Stats */}
         <div className="space-y-3">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Total Time:</span>
-            <span className="font-medium text-foreground">{formatTime(analytics.time.totalTimeSpent)}</span>
+            <span className="text-muted-foreground">{t('analytics.totalTimeLabel')}</span>
+            <span className="font-medium text-foreground">{formatTime(analytics.time.totalTimeSpent, t)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Average per Day:</span>
-            <span className="font-medium text-foreground">{formatTime(analytics.time.averageTimePerDay)}</span>
+            <span className="text-muted-foreground">{t('analytics.averagePerDay')}</span>
+            <span className="font-medium text-foreground">{formatTime(analytics.time.averageTimePerDay, t)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Average per Task:</span>
-            <span className="font-medium text-foreground">{formatTime(analytics.time.averageTimePerTask)}</span>
+            <span className="text-muted-foreground">{t('analytics.averagePerTask')}</span>
+            <span className="font-medium text-foreground">{formatTime(analytics.time.averageTimePerTask, t)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Active Days:</span>
+            <span className="text-muted-foreground">{t('analytics.activeDaysLabel')}</span>
             <span className="font-medium text-foreground">{analytics.time.activeDaysCount}</span>
           </div>
         </div>
@@ -880,20 +894,20 @@ function TimeAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
         {/* Estimated vs Actual */}
         {(estimatedVsActual.totalEstimated > 0 || estimatedVsActual.totalActual > 0) && (
           <div className="border-t border-border pt-4">
-            <h4 className="text-sm font-medium text-foreground mb-2">Estimated vs Actual</h4>
+            <h4 className="text-sm font-medium text-foreground mb-2">{t('analytics.estimatedVsActual')}</h4>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Estimated:</span>
-                <span className="font-medium">{formatTime(estimatedVsActual.totalEstimated)}</span>
+                <span className="text-muted-foreground">{t('analytics.estimated')}</span>
+                <span className="font-medium">{formatTime(estimatedVsActual.totalEstimated, t)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Actual:</span>
-                <span className="font-medium">{formatTime(estimatedVsActual.totalActual)}</span>
+                <span className="text-muted-foreground">{t('analytics.actual')}</span>
+                <span className="font-medium">{formatTime(estimatedVsActual.totalActual, t)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Difference:</span>
+                <span className="text-muted-foreground">{t('analytics.difference')}</span>
                 <span className={`font-medium ${estimatedVsActual.difference >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {estimatedVsActual.difference >= 0 ? '+' : ''}{formatTime(Math.abs(estimatedVsActual.difference))}
+                  {estimatedVsActual.difference >= 0 ? '+' : ''}{formatTime(Math.abs(estimatedVsActual.difference), t)}
                 </span>
               </div>
             </div>
@@ -903,19 +917,19 @@ function TimeAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
         {/* Time by Usefulness */}
         {(timeByUsefulness.useful > 0 || timeByUsefulness.notUseful > 0) && (
           <div className="border-t border-border pt-4">
-            <h4 className="text-sm font-medium text-foreground mb-2">Time by Usefulness</h4>
+            <h4 className="text-sm font-medium text-foreground mb-2">{t('analytics.timeByUsefulness')}</h4>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center">
-                  <span className="mr-1">👍</span> Useful:
+                  <span className="mr-1">👍</span> {t('analytics.useful')}
                 </span>
-                <span className="font-medium text-green-600 dark:text-green-400">{formatTime(timeByUsefulness.useful)}</span>
+                <span className="font-medium text-green-600 dark:text-green-400">{formatTime(timeByUsefulness.useful, t)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground flex items-center">
-                  <span className="mr-1">👎</span> Not Useful:
+                  <span className="mr-1">👎</span> {t('analytics.notUseful')}
                 </span>
-                <span className="font-medium text-red-600 dark:text-red-400">{formatTime(timeByUsefulness.notUseful)}</span>
+                <span className="font-medium text-red-600 dark:text-red-400">{formatTime(timeByUsefulness.notUseful, t)}</span>
               </div>
             </div>
           </div>
@@ -926,6 +940,7 @@ function TimeAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
 }
 
 function TaskAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
+  const t = useTranslations();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -935,28 +950,28 @@ function TaskAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
     >
       <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 dark:from-green-400 dark:via-emerald-400 dark:to-teal-400 bg-clip-text mb-4 flex items-center gap-2">
         <span>✅</span>
-        Task Analytics
+        {t('analytics.taskAnalytics')}
       </h3>
       <div className="space-y-3">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Created:</span>
+          <span className="text-muted-foreground">{t('analytics.created')}</span>
           <span className="font-medium text-foreground">{analytics.tasks.totalTasksCreated}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Completed:</span>
+          <span className="text-muted-foreground">{t('analytics.completed')}</span>
           <span className="font-medium text-foreground">{analytics.tasks.totalTasksCompleted}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Completion Rate:</span>
+          <span className="text-muted-foreground">{t('analytics.completionRateLabel')}</span>
           <span className="font-medium text-foreground">{analytics.tasks.taskCompletionRate.toFixed(1)}%</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Tasks per Day:</span>
+          <span className="text-muted-foreground">{t('analytics.tasksPerDay')}</span>
           <span className="font-medium text-foreground">{analytics.tasks.tasksPerDay.toFixed(1)}</span>
         </div>
         {analytics.tasks.mostProductiveDay && (
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Most Productive:</span>
+            <span className="text-muted-foreground">{t('analytics.mostProductive')}</span>
             <span className="font-medium text-foreground">{analytics.tasks.mostProductiveDay}</span>
           </div>
         )}
@@ -967,6 +982,7 @@ function TaskAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
 
 
 function TrendAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
+  const t = useTranslations();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -976,21 +992,21 @@ function TrendAnalyticsCard({ analytics }: { analytics: AnalyticsData }) {
     >
       <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 dark:from-orange-400 dark:via-red-400 dark:to-pink-400 bg-clip-text mb-4 flex items-center gap-2">
         <span>📈</span>
-        Trends vs Previous Period
+        {t('analytics.trendsVsPrevious')}
       </h3>
       <div className="space-y-3">
         <TrendItem
-          label="Time Spent"
+          label={t('analytics.timeSpent')}
           trend={analytics.trends.totalTimeSpent}
-          formatter={formatTime}
+          formatter={(v) => formatTime(v, t)}
         />
         <TrendItem
-          label="Task Completion"
+          label={t('analytics.taskCompletion')}
           trend={analytics.trends.taskCompletionRate}
           formatter={(v) => `${v.toFixed(1)}%`}
         />
         <TrendItem
-          label="Goal Success"
+          label={t('analytics.goalSuccess')}
           trend={analytics.trends.goalSuccessRate}
           formatter={(v) => `${v.toFixed(1)}%`}
         />
@@ -1008,6 +1024,7 @@ function TrendItem({
   trend: { current: number; previous: number; change: number; trend: string };
   formatter: (value: number) => string;
 }) {
+  const t = useTranslations();
   const getTrendColor = (trend: string) => {
     switch (trend) {
       case 'increase': return 'text-green-600 dark:text-green-400';
@@ -1018,9 +1035,9 @@ function TrendItem({
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'increase': return '↑';
-      case 'decrease': return '↓';
-      default: return '→';
+      case 'increase': return t('analytics.trendUp');
+      case 'decrease': return t('analytics.trendDown');
+      default: return t('analytics.trendStable');
     }
   };
 
@@ -1039,6 +1056,7 @@ function TrendItem({
 }
 
 function InsightsCard({ insights }: { insights: string[] }) {
+  const t = useTranslations();
   if (insights.length === 0) return null;
 
   return (
@@ -1050,7 +1068,7 @@ function InsightsCard({ insights }: { insights: string[] }) {
     >
       <h3 className="text-xl font-black text-transparent bg-gradient-to-r from-yellow-600 via-amber-600 to-orange-600 dark:from-yellow-400 dark:via-amber-400 dark:to-orange-400 bg-clip-text mb-4 flex items-center gap-2">
         <span>💡</span>
-        Insights
+        {t('analytics.insights')}
       </h3>
       <ul className="space-y-3">
         {insights.map((insight, index) => (
@@ -1070,25 +1088,25 @@ function InsightsCard({ insights }: { insights: string[] }) {
   );
 }
 
-function formatTime(minutes: number): string {
+function formatTime(minutes: number, t: ReturnType<typeof useTranslations>): string {
   if (minutes < 60) {
-    return `${Math.round(minutes)}m`;
+    return t('analytics.minutesShort', { value: Math.round(minutes) });
   }
   const hours = Math.floor(minutes / 60);
   const mins = Math.round(minutes % 60);
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  return mins > 0
+    ? t('analytics.hoursMinutes', { hours, minutes: mins })
+    : t('analytics.hoursShort', { hours });
 }
 
-function formatPeriodDisplay(period: Period): string {
+function formatPeriodDisplay(period: Period, localeTag: string, t: ReturnType<typeof useTranslations>): string {
   if (period.type === 'weekly') {
     const { start, end } = getPeriodDates(period);
-    return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+    return `${start.toLocaleDateString(localeTag)} - ${end.toLocaleDateString(localeTag)}`;
   } else {
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return `${monthNames[period.period - 1]} ${period.year}`;
+    const month = new Intl.DateTimeFormat(localeTag, { month: 'long' })
+      .format(new Date(period.year, period.period - 1, 1));
+    return `${month} ${period.year}`;
   }
 }
 

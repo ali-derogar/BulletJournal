@@ -190,18 +190,19 @@ function validateSyncData(data: SyncRequest): { valid: boolean; errors: string[]
 export function canSync(isOnline: boolean, isAuthenticated: boolean): {
   allowed: boolean;
   reason?: string;
+  reasonKey?: 'sync.reason.offline' | 'sync.reason.notLoggedIn';
 } {
   if (!isOnline) {
     return {
       allowed: false,
-      reason: 'You are offline. Connect to the internet to sync.',
+      reasonKey: 'sync.reason.offline',
     };
   }
 
   if (!isAuthenticated) {
     return {
       allowed: false,
-      reason: 'You must be logged in to sync.',
+      reasonKey: 'sync.reason.notLoggedIn',
     };
   }
 

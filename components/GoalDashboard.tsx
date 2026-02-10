@@ -10,14 +10,17 @@ import GoalCard from "./GoalCard";
 import GoalForm from "./GoalForm";
 import { formatPeriodLabel, getCurrentPeriod } from "@/utils/goalUtils";
 import { checkDatabaseMigration, migrateDatabase } from "@/utils/databaseMigration";
+import { useTranslations } from "next-intl";
 
 interface GoalDashboardProps {
   onGoalProgressUpdate?: (goalProgress: number) => void;
 }
 
 export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardProps) {
+  const t = useTranslations();
   const { currentUser } = useUser();
   const userId = currentUser?.id || "default";
+  const getPeriodLabel = (periodType: GoalType) => t(`goals.periodType.${periodType}` as const);
 
   console.log("GoalDashboard mounted/rendered, userId:", userId);
 
@@ -82,7 +85,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
         }
       } catch (error) {
         console.error("Database migration failed:", error);
-        setError("Failed to initialize goals database. Please refresh the page.");
+        setError(t("goals.errors.initFailed"));
       }
     };
     checkMigration();
@@ -155,7 +158,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
       }
     } catch (error) {
       console.error("Error loading goals:", error);
-      setError(error instanceof Error ? error.message : "Failed to load goals");
+      setError(error instanceof Error ? error.message : t("goals.errors.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -327,7 +330,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
               whileTap={{ scale: 0.95 }}
               className="px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm bg-white/20 dark:bg-white/10 text-white rounded-xl hover:bg-white/30 dark:hover:bg-white/20 transition-all duration-300 font-bold shadow-lg"
             >
-              📅 Select Period
+              📅 {t("goals.selectPeriod")}
             </motion.button>
             {!isShowingCurrentPeriods() && (
               <motion.button
@@ -335,9 +338,9 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm bg-white/20 dark:bg-white/10 text-white rounded-xl hover:bg-white/30 dark:hover:bg-white/20 transition-all duration-300 font-bold shadow-lg"
-                title="Reset to current periods"
+                title={t("goals.resetToCurrentPeriods")}
               >
-                🔄 Current
+                🔄 {t("goals.current")}
               </motion.button>
             )}
             <motion.button
@@ -349,7 +352,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
               whileTap={{ scale: 0.95 }}
               className="px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm bg-white dark:bg-gray-100 text-emerald-600 dark:text-emerald-700 rounded-xl hover:shadow-2xl transition-all duration-300 font-black shadow-lg"
             >
-              ➕ Add Goal
+              ➕ {t("goals.addGoal")}
             </motion.button>
           </div>
         </div>
@@ -375,7 +378,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                     onClick={() => window.location.reload()}
                     className="px-3 py-1 bg-destructive text-destructive-foreground text-sm rounded hover:bg-destructive/90 transition-colors"
                   >
-                    Refresh Page
+                    {t("goals.refreshPage")}
                   </button>
                 )}
                 {error.includes("Failed to initialize") && (
@@ -386,12 +389,12 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                         setError(null);
                         window.location.reload();
                       } catch {
-                        setError("Migration failed. Please clear browser data and refresh.");
+                        setError(t("goals.errors.migrationFailed"));
                       }
                     }}
                     className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded hover:bg-primary/90 transition-colors ml-2"
                   >
-                    Retry Migration
+                    {t("goals.retryMigration")}
                   </button>
                 )}
               </div>
@@ -407,7 +410,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                 <span className="text-2xl">🎯</span>
               </div>
             </div>
-            <p className="text-base md:text-lg text-muted-foreground font-semibold">Loading Goals...</p>
+            <p className="text-base md:text-lg text-muted-foreground font-semibold">{t("goals.loading")}</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -419,21 +422,21 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                 className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-xl border-2 border-blue-200 dark:border-blue-800 shadow-lg"
               >
                 <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                  <div className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">Year</div>
+                  <div className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">{t("goals.period.year")}</div>
                   <div className="text-lg font-black text-foreground">{selectedPeriods.yearly.year}</div>
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                  <div className="text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">Quarter</div>
+                  <div className="text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">{t("goals.period.quarter")}</div>
                   <div className="text-lg font-black text-foreground">Q{selectedPeriods.quarterly.quarter} {selectedPeriods.quarterly.year}</div>
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                  <div className="text-xs font-bold text-pink-600 dark:text-pink-400 mb-1">Month</div>
+                  <div className="text-xs font-bold text-pink-600 dark:text-pink-400 mb-1">{t("goals.period.month")}</div>
                   <div className="text-sm font-black text-foreground">
                     {formatPeriodLabel("monthly", selectedPeriods.monthly.year, undefined, selectedPeriods.monthly.month)}
                   </div>
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                  <div className="text-xs font-bold text-teal-600 dark:text-teal-400 mb-1">Week</div>
+                  <div className="text-xs font-bold text-teal-600 dark:text-teal-400 mb-1">{t("goals.period.week")}</div>
                   <div className="text-lg font-black text-foreground">W{selectedPeriods.weekly.week} {selectedPeriods.weekly.year}</div>
                 </div>
               </motion.div>
@@ -461,7 +464,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                     <div key={periodType}>
                       <h3 className="text-lg md:text-xl font-black text-transparent bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 dark:from-emerald-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text mb-4 capitalize flex items-center gap-2">
                         <span>📊</span>
-                        {periodType} Goals
+                        {t("goals.periodGoals", { period: getPeriodLabel(type) })}
                         <span className="ml-2 text-xs md:text-sm font-bold text-muted-foreground">
                           ({formatPeriodLabel(type, period.year, quarter, month, week)})
                         </span>
@@ -472,7 +475,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                         <div className="mb-4">
                           <h4 className="text-sm font-medium text-card-foreground mb-2 flex items-center gap-2">
                             <span className="text-lg">✅</span>
-                            Completed ({goals.completed.length})
+                            {t("goals.completedCount", { count: goals.completed.length })}
                           </h4>
                           <div className="space-y-2">
                             <AnimatePresence>
@@ -495,7 +498,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                         <div>
                           <h4 className="text-sm font-medium text-card-foreground mb-2 flex items-center gap-2">
                             <span className="text-lg">❌</span>
-                            Failed ({goals.failed.length})
+                            {t("goals.failedCount", { count: goals.failed.length })}
                           </h4>
                           <div className="space-y-2">
                             <AnimatePresence>
@@ -523,9 +526,9 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                     className="text-center py-16"
                   >
                     <div className="text-6xl md:text-7xl mb-6 opacity-40">📦</div>
-                    <h3 className="text-xl md:text-2xl font-black text-foreground mb-3">No archived goals</h3>
+                    <h3 className="text-xl md:text-2xl font-black text-foreground mb-3">{t("goals.noArchived")}</h3>
                     <p className="text-base md:text-lg text-muted-foreground max-w-md mx-auto">
-                      Completed or failed goals for the selected periods will appear here
+                      {t("goals.noArchivedDescription")}
                     </p>
                   </motion.div>
                 )}
@@ -543,13 +546,13 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                 <div key={periodType}>
                   <h3 className="text-lg md:text-xl font-black text-transparent bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 dark:from-emerald-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text mb-4 capitalize flex items-center gap-2">
                     <span>🎯</span>
-                    {periodType} Goals
+                    {t("goals.periodGoals", { period: getPeriodLabel(type) })}
                     <span className="ml-2 text-xs md:text-sm font-bold text-muted-foreground">
                       ({formatPeriodLabel(type, period.year, quarter, month, week)})
                     </span>
                   </h3>
                   {goals.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No {periodType} goals set</p>
+                    <p className="text-sm text-muted-foreground">{t("goals.noPeriodGoals", { period: getPeriodLabel(type) })}</p>
                   ) : (
                     <div className="space-y-3">
                       <AnimatePresence>
@@ -575,9 +578,9 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                 className="text-center py-16"
               >
                 <div className="text-6xl md:text-7xl mb-6 opacity-50">🎯</div>
-                <h3 className="text-2xl md:text-3xl font-black text-foreground mb-3">No goals yet</h3>
+                <h3 className="text-2xl md:text-3xl font-black text-foreground mb-3">{t("goals.noGoalsYet")}</h3>
                 <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-md mx-auto">
-                  Set your first goal to start tracking progress
+                  {t("goals.noGoalsDescription")}
                 </p>
                 <motion.button
                   onClick={() => {
@@ -588,7 +591,7 @@ export default function GoalDashboard({ onGoalProgressUpdate }: GoalDashboardPro
                   whileTap={{ scale: 0.95 }}
                   className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-700 dark:to-teal-700 text-white font-black rounded-xl hover:shadow-2xl transition-all duration-300 shadow-lg"
                 >
-                  ✨ Add Your First Goal
+                  ✨ {t("goals.addFirstGoal")}
                 </motion.button>
               </motion.div>
             )}

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { getNotificationConfig, requestPushPermission, subscribeToPush } from "@/services/notifications";
 import { useUser } from "@/app/context/UserContext";
 
 export default function NotificationPermissionPrompt() {
+    const t = useTranslations();
     const { currentUser } = useUser();
     const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
     const [configMessage, setConfigMessage] = useState("");
@@ -13,6 +15,7 @@ export default function NotificationPermissionPrompt() {
     const [isDismissed, setIsDismissed] = useState(false);
 
     const [permissionStatus, setPermissionStatus] = useState<PermissionState | "unknown">("unknown");
+    const isSecureContext = typeof window !== "undefined" ? window.isSecureContext : true;
 
     useEffect(() => {
         if (!currentUser) return;
@@ -119,35 +122,35 @@ export default function NotificationPermissionPrompt() {
                         </div>
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-card-foreground mb-1">
-                                Stay Updated
+                                {t("notifications.promptTitle")}
                             </h3>
                             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                                {configMessage || "To receive AI-generated messages and important updates, please allow notification access."}
+                                {configMessage || t("notifications.promptDescription")}
                             </p>
 
-                            {(permission === "denied" || permissionStatus === "denied" || (typeof window !== "undefined" && !window.isSecureContext)) ? (
+                            {(permission === "denied" || permissionStatus === "denied" || !isSecureContext) ? (
                                 <div className="space-y-3">
-                                    {typeof window !== "undefined" && !window.isSecureContext ? (
+                                    {!isSecureContext ? (
                                         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400 font-medium">
-                                            ⚠️ Security Restriction: Notifications require HTTPS.
+                                            {t("notifications.securityRestriction")}
                                         </div>
                                     ) : (
                                         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-600 dark:text-red-400 font-medium">
-                                            ⚠️ Notifications are blocked by your browser settings.
+                                            {t("notifications.blockedByBrowser")}
                                         </div>
                                     )}
                                     <div className="text-xs text-muted-foreground">
-                                        {typeof window !== "undefined" && !window.isSecureContext
-                                            ? "Please access this site via localhost or HTTPS."
-                                            : "Click the lock icon 🔒 in your address bar and toggle \"Notifications\" to ON."
+                                        {!isSecureContext
+                                            ? t("notifications.requireHttps")
+                                            : t("notifications.allowInBrowser")
                                         }
                                     </div>
-                                    {(!window.isSecureContext) ? null : (
+                                    {!isSecureContext ? null : (
                                         <button
                                             onClick={handleRequestPermission}
                                             className="w-full px-3 py-2 bg-secondary text-secondary-foreground text-xs font-medium rounded-lg hover:bg-secondary/80"
                                         >
-                                            Try Again
+                                            {t("common.tryAgain")}
                                         </button>
                                     )}
                                 </div>
@@ -157,13 +160,13 @@ export default function NotificationPermissionPrompt() {
                                         onClick={handleRequestPermission}
                                         className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity"
                                     >
-                                        Allow
+                                        {t("notifications.allow")}
                                     </button>
                                     <button
                                         onClick={handleDismiss}
                                         className="px-4 py-2 bg-muted text-muted-foreground font-medium rounded-xl hover:bg-muted/80 transition-colors"
                                     >
-                                        Later
+                                        {t("notifications.later")}
                                     </button>
                                 </div>
                             )}

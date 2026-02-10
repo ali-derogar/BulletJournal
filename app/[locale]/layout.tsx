@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import { getMessages } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
 import "../globals.css";
 import { DateProvider } from "../context/DateContext";
@@ -11,6 +11,8 @@ import PWARegistration from "../PWARegistration";
 import NotificationPermissionPrompt from "@/components/NotificationPermissionPrompt";
 import EmailVerificationBanner from "@/components/EmailVerificationBanner";
 import { i18n } from "@/i18n/config";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Bullet Journal v1.1.0",
@@ -47,6 +49,8 @@ export default async function RootLayout({
   if (!i18n.locales.includes(locale as typeof i18n.locales[number])) {
     notFound();
   }
+
+  setRequestLocale(locale);
 
   // Get messages for the current locale
   const messages = await getMessages({ locale });

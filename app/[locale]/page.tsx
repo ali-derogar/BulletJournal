@@ -27,6 +27,8 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/app/context/AuthContext";
 import { hasAdminAccess } from "@/services/admin";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   const t = useTranslations();
   const router = useRouter();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import type { Expense } from "@/domain";
 import { getExpenses, saveExpense, deleteExpense, getAllExpenses } from "@/storage";
 
@@ -10,6 +11,7 @@ interface ExpenseListProps {
 }
 
 export default function ExpenseList({ date, userId }: ExpenseListProps) {
+  const t = useTranslations();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [newTitle, setNewTitle] = useState("");
@@ -171,13 +173,13 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
     <div className="bg-card rounded-lg p-4 shadow space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4 border-border">
         <div>
-          <h2 className="text-lg font-semibold text-card-foreground">User Balance</h2>
+          <h2 className="text-lg font-semibold text-card-foreground">{t("expenses.userBalance")}</h2>
           <div className={`text-2xl font-bold ${totalBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
             ${totalBalance.toFixed(2)}
           </div>
         </div>
         <div className="text-right">
-          <h2 className="text-sm font-medium text-muted-foreground">Daily Net</h2>
+          <h2 className="text-sm font-medium text-muted-foreground">{t("expenses.dailyNet")}</h2>
           <div className={`text-xl font-bold ${(dailyTotalIncome - dailyTotalExpense) >= 0 ? "text-green-600" : "text-red-600"}`}>
             ${(dailyTotalIncome - dailyTotalExpense).toFixed(2)}
           </div>
@@ -186,7 +188,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
 
       <div className="space-y-2 mb-4">
         {expenses.length === 0 ? (
-          <p className="text-center text-muted-foreground py-4 italic">No entries for this day.</p>
+          <p className="text-center text-muted-foreground py-4 italic">{t("expenses.noEntries")}</p>
         ) : (
           expenses.map((expense) => (
             <div
@@ -201,7 +203,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                       value={editingTitle}
                       onChange={(e) => setEditingTitle(e.target.value)}
                       className="flex-1 px-2 py-1 border rounded"
-                      placeholder="Title"
+                      placeholder={t("expenses.titlePlaceholder")}
                       autoFocus
                     />
                     <input
@@ -209,7 +211,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                       value={editingAmount}
                       onChange={(e) => setEditingAmount(e.target.value)}
                       className="flex-1 sm:w-32 px-2 py-1 border rounded"
-                      placeholder="Amount"
+                      placeholder={t("expenses.amountPlaceholder")}
                       step="0.01"
                       min="0"
                     />
@@ -222,7 +224,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                           checked={editingType === 'expense'}
                           onChange={() => setEditingType('expense')}
                         />
-                        Expense
+                        {t("expenses.expenseType")}
                       </label>
                       <label className="flex items-center gap-1 text-sm cursor-pointer text-green-600 font-medium">
                         <input
@@ -230,7 +232,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                           checked={editingType === 'income'}
                           onChange={() => setEditingType('income')}
                         />
-                        Income
+                        {t("expenses.incomeType")}
                       </label>
                     </div>
                     <div className="flex gap-2">
@@ -238,13 +240,13 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                         onClick={() => handleSaveEdit(expense.id)}
                         className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
                       >
-                        Save
+                        {t("common.save")}
                       </button>
                       <button
                         onClick={handleCancelEdit}
                         className="px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500"
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                     </div>
                   </div>
@@ -264,13 +266,13 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                         onClick={() => handleStartEdit(expense)}
                         className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-sm"
                       >
-                        Edit
+                        {t("common.edit")}
                       </button>
                       <button
                         onClick={() => handleDeleteExpense(expense.id)}
                         className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-sm"
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     </div>
                   </div>
@@ -282,13 +284,13 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
       </div>
 
       <div className="p-3 border rounded-lg bg-muted/50 space-y-3">
-        <h3 className="text-sm font-semibold text-foreground/80">Add New Entry</h3>
+        <h3 className="text-sm font-semibold text-foreground/80">{t("expenses.addNewEntry")}</h3>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            placeholder="Description..."
+            placeholder={t("expenses.descriptionPlaceholder")}
             className="flex-1 px-3 py-2 border rounded text-sm"
           />
           <input
@@ -296,7 +298,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
             value={newAmount}
             onChange={(e) => setNewAmount(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleAddExpense()}
-            placeholder="Amount"
+            placeholder={t("expenses.amountPlaceholder")}
             className="sm:w-32 px-3 py-2 border rounded text-sm"
             step="0.01"
             min="0"
@@ -313,7 +315,7 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                 onChange={() => setNewType('expense')}
                 className="w-4 h-4 accent-red-500"
               />
-              Expense
+              {t("expenses.expenseType")}
             </label>
             <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-green-700">
               <input
@@ -324,14 +326,14 @@ export default function ExpenseList({ date, userId }: ExpenseListProps) {
                 onChange={() => setNewType('income')}
                 className="w-4 h-4 accent-green-600"
               />
-              Income
+              {t("expenses.incomeType")}
             </label>
           </div>
           <button
             onClick={handleAddExpense}
             className="px-6 py-2 bg-primary text-primary-foreground font-medium rounded-md hover:opacity-90 transition-opacity whitespace-nowrap"
           >
-            Add Entry
+            {t("expenses.addEntry")}
           </button>
         </div>
       </div>

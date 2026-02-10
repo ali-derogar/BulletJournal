@@ -140,10 +140,12 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
     );
 
     const formatTime = (minutes: number): string => {
-        if (minutes < 1) return "0m";
+        if (minutes < 1) return t("time.minutes", { minutes: 0 });
         const hours = Math.floor(minutes / 60);
         const mins = Math.floor(minutes % 60);
-        return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+        return hours > 0
+          ? t("time.hoursMinutes", { hours, minutes: mins })
+          : t("time.minutes", { minutes: mins });
     };
 
     const totalTime = tasks.reduce((acc, t) => {
@@ -269,7 +271,7 @@ export default function UnifiedTasks({ date, userId, goalProgress = 0.5 }: Unifi
 
                     {tasks.length === 0 && (
                         <div className="text-center py-12 border-2 border-dashed border-muted rounded-2xl">
-                            <p className="text-muted-foreground font-medium">No tasks yet. Start your day!</p>
+                            <p className="text-muted-foreground font-medium">{t("tasks.noTasksStart")}</p>
                         </div>
                     )}
 

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import type { Task, TaskStatus } from "@/domain";
 
 interface TaskCardProps {
@@ -34,6 +35,7 @@ export default function TaskCard({
   isExpanded = false,
   onToggleExpand,
 }: TaskCardProps) {
+  const t = useTranslations();
   const [isEditingEstimate, setIsEditingEstimate] = useState(false);
   const [isEditingActual, setIsEditingActual] = useState(false);
   const [estimateInput, setEstimateInput] = useState("");
@@ -69,7 +71,7 @@ export default function TaskCard({
 
   // Format time helper (HH:MM:SS format when running)
   const formatTime = (minutes: number, showSeconds = false): string => {
-    if (minutes <= 0) return showSeconds ? "00:00" : "0m";
+    if (minutes <= 0) return showSeconds ? "00:00" : t("time.minutes", { minutes: 0 });
     const totalSeconds = Math.floor(minutes * 60);
     const hours = Math.floor(totalSeconds / 3600);
     const mins = Math.floor((totalSeconds % 3600) / 60);
@@ -80,8 +82,8 @@ export default function TaskCard({
       return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
-    if (hours > 0) return `${hours}h ${mins}m`;
-    return `${mins}m`;
+    if (hours > 0) return t("time.hoursMinutes", { hours, minutes: mins });
+    return t("time.minutes", { minutes: mins });
   };
 
   // Handle estimate save
@@ -177,9 +179,9 @@ export default function TaskCard({
                   onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
                   className="px-2 py-0.5 text-[10px] font-black uppercase bg-muted border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring text-muted-foreground tracking-widest"
                 >
-                  <option value="todo">To Do</option>
-                  <option value="in-progress">Doing</option>
-                  <option value="done">Done</option>
+                  <option value="todo">{t("tasks.status.todo")}</option>
+                  <option value="in-progress">{t("tasks.status.inProgress")}</option>
+                  <option value="done">{t("tasks.status.done")}</option>
                 </select>
               </motion.div>
 
@@ -215,7 +217,7 @@ export default function TaskCard({
                 ? "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
                 : "text-muted-foreground/40 hover:text-yellow-500 hover:bg-yellow-50/50 dark:hover:bg-yellow-900/10"
             }`}
-            title={task.isCopiedToNextDay ? "عدم کپی برای روز بعد" : "کپی برای روز بعد"}
+            title={task.isCopiedToNextDay ? t("tasks.copyToNextDayOff") : t("tasks.copyToNextDayOn")}
           >
             <svg className="w-5 h-5" fill={task.isCopiedToNextDay ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -257,7 +259,7 @@ export default function TaskCard({
               {task.estimatedTime && task.estimatedTime > 0 && (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    <span>Focus Progress</span>
+                    <span>{t("tasks.focusProgress")}</span>
                     <span>{Math.round(progressPercentage)}%</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
@@ -273,7 +275,7 @@ export default function TaskCard({
               {/* Time Details Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-muted/50 rounded-2xl border border-border/50">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Estimation</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">{t("tasks.estimation")}</label>
                   {isEditingEstimate ? (
                     <div className="flex items-center gap-2">
                       <input
@@ -295,13 +297,13 @@ export default function TaskCard({
                       }}
                     >
                       {task.estimatedTime ? formatTime(task.estimatedTime) : "—"}
-                      <span className="text-[10px] text-primary">Edit</span>
+                      <span className="text-[10px] text-primary">{t("common.edit")}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="p-3 bg-muted/50 rounded-2xl border border-border/50">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">Tracked Time</label>
+                  <label className="text-[10px] font-black uppercase text-muted-foreground mb-1 block">{t("tasks.trackedTime")}</label>
                   {isEditingActual ? (
                     <div className="flex items-center gap-2">
                       <input
@@ -325,7 +327,7 @@ export default function TaskCard({
                       <div className={task.timerRunning ? "text-green-500" : "text-foreground"}>
                         {formatTime(totalTime, task.timerRunning)}
                       </div>
-                      <span className="text-[10px] text-primary">Add</span>
+                      <span className="text-[10px] text-primary">{t("tasks.addTime")}</span>
                     </div>
                   )}
                 </div>
@@ -343,7 +345,7 @@ export default function TaskCard({
                         onClick={() => onStartTimer(task)}
                         className="px-6 py-2.5 bg-primary text-white text-sm font-black rounded-xl shadow-lg shadow-primary/20"
                       >
-                        ▶ {task.spentTime > 0 ? "Resume" : "Start Focus"}
+                        ▶ {task.spentTime > 0 ? t("tasks.resume") : t("tasks.startFocus")}
                       </motion.button>
                     ) : (
                       <div className="flex gap-2">
@@ -353,7 +355,7 @@ export default function TaskCard({
                           onClick={() => onPauseTimer(task)}
                           className="px-6 py-2.5 bg-yellow-500 text-white text-sm font-black rounded-xl shadow-lg shadow-yellow-500/20"
                         >
-                          ⏸ Pause
+                          ⏸ {t("tasks.pause")}
                         </motion.button>
                       </div>
                     )}
@@ -364,7 +366,7 @@ export default function TaskCard({
                       onClick={() => onStopTimer(task)}
                       className="px-4 py-2.5 bg-muted text-muted-foreground text-sm font-bold rounded-xl"
                     >
-                      Reset
+                      {t("tasks.reset")}
                     </button>
                   )}
                 </div>

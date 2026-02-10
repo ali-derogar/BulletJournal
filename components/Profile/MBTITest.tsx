@@ -4,30 +4,19 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import { submitMBTITest } from "@/services/profile-tests";
+import { useTranslations } from "next-intl";
 
 interface MBTITestProps {
   onComplete: (result: { type: string; scores: Record<string, number> }) => void;
   onCancel: () => void;
 }
 
-const MBTI_QUESTIONS = [
-  { id: 1, text: "At a party, I...", pair: ["E", "I"], options: ["Interact with many, including strangers", "Interact with a few, known to me"] },
-  { id: 2, text: "I am more...", pair: ["S", "N"], options: ["Realistic than speculative", "Speculative than realistic"] },
-  { id: 3, text: "I value more in myself...", pair: ["T", "F"], options: ["Clearheadedness", "Warmheartedness"] },
-  { id: 4, text: "I am more...", pair: ["J", "P"], options: ["Organized than flexible", "Flexible than organized"] },
-  { id: 5, text: "I prefer to...", pair: ["E", "I"], options: ["Be in a busy environment", "Work in quiet, focused settings"] },
-  { id: 6, text: "I focus more on...", pair: ["S", "N"], options: ["What is real and actual", "What could be possible and theoretical"] },
-  { id: 7, text: "When deciding, I rely more on...", pair: ["T", "F"], options: ["Objective logic", "Personal values"] },
-  { id: 8, text: "I prefer to...", pair: ["J", "P"], options: ["Have things decided", "Keep options open"] },
-  { id: 9, text: "I am energized by...", pair: ["E", "I"], options: ["Interaction with others", "Solitary reflection"] },
-  { id: 10, text: "I prefer...", pair: ["S", "N"], options: ["Practical solutions", "Creative possibilities"] },
-  { id: 11, text: "I am more...", pair: ["T", "F"], options: ["Objective and impersonal", "Subjective and personal"] },
-  { id: 12, text: "I like to...", pair: ["J", "P"], options: ["Plan my activities", "Go with the flow"] },
-  { id: 13, text: "I enjoy...", pair: ["E", "I"], options: ["Group activities and discussions", "Individual projects and hobbies"] },
-  { id: 14, text: "I trust more in...", pair: ["S", "N"], options: ["Experience and facts", "Intuition and imagination"] },
-  { id: 15, text: "I am more...", pair: ["T", "F"], options: ["Firm than gentle", "Gentle than firm"] },
-  { id: 16, text: "I prefer...", pair: ["J", "P"], options: ["Structured schedules", "Spontaneous activities"] },
-];
+type MBTIQuestion = {
+  id: number;
+  text: string;
+  pair: [string, string];
+  options: [string, string];
+};
 
 // MBTI types reference for future use
 // const MBTI_TYPES = {
@@ -42,14 +31,16 @@ const MBTI_QUESTIONS = [
 // };
 
 export default function MBTITest({ onComplete, onCancel }: MBTITestProps) {
+  const t = useTranslations("profileTests.mbtiTest");
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const questions = t.raw("questions") as MBTIQuestion[];
   const questionsPerStep = 4;
-  const totalSteps = Math.ceil(MBTI_QUESTIONS.length / questionsPerStep);
-  const currentQuestions = MBTI_QUESTIONS.slice(
+  const totalSteps = Math.ceil(questions.length / questionsPerStep);
+  const currentQuestions = questions.slice(
     currentStep * questionsPerStep,
     (currentStep + 1) * questionsPerStep
   );
@@ -74,8 +65,8 @@ export default function MBTITest({ onComplete, onCancel }: MBTITestProps) {
   };
 
   const handleSubmit = async () => {
-    if (Object.keys(answers).length !== MBTI_QUESTIONS.length) {
-      setError("Please answer all questions");
+    if (Object.keys(answers).length !== questions.length) {
+      setError(t("errors.answerAll"));
       return;
     }
 
@@ -86,13 +77,13 @@ export default function MBTITest({ onComplete, onCancel }: MBTITestProps) {
       const result = await submitMBTITest(answers);
       onComplete(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit test");
+      setError(err instanceof Error ? err.message : t("errors.submitFailed"));
     } finally {
       setLoading(false);
     }
   };
 
-  const progress = ((Object.keys(answers).length / MBTI_QUESTIONS.length) * 100).toFixed(0);
+  const progress = ((Object.keys(answers).length / questions.length) * 100).toFixed(0);
 
   return (
     <motion.div
@@ -105,7 +96,7 @@ export default function MBTITest({ onComplete, onCancel }: MBTITestProps) {
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1a24] border-b border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white">MBTI Personality Test</h2>
+            <h2 className="text-2xl font-bold text-white">{t("title")}</h2>
             <button
               onClick={onCancel}
               className="p-2 rounded-lg hover:bg-white/10 transition-colors"
@@ -119,7 +110,12 @@ export default function MBTITest({ onComplete, onCancel }: MBTITestProps) {
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-gray-400">
-              <span>Question {Object.keys(answers).length} of {MBTI_QUESTIONS.length}</span>
+              <span>
+                {t("questionProgress", {
+                  current: Object.keys(answers).length,
+                  total: questions.length,
+                })}
+              </span>
               <span>{progress}%</span>
             </div>
             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -209,7 +205,7 @@ export default function MBTITest({ onComplete, onCancel }: MBTITestProps) {
               disabled={currentStep === 0}
               className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Previous
+              {t("previous")}
             </button>
 
             {currentStep < totalSteps - 1 ? (
@@ -217,21 +213,21 @@ export default function MBTITest({ onComplete, onCancel }: MBTITestProps) {
                 onClick={handleNext}
                 className="flex-1 px-4 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
               >
-                Next
+                {t("next")}
               </button>
             ) : (
               <button
                 onClick={handleSubmit}
-                disabled={loading || Object.keys(answers).length !== MBTI_QUESTIONS.length}
+                disabled={loading || Object.keys(answers).length !== questions.length}
                 className="flex-1 px-4 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Submitting...
+                    {t("submitting")}
                   </>
                 ) : (
-                  "Submit Test"
+                  t("submit")
                 )}
               </button>
             )}

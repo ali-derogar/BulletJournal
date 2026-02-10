@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import type { SleepInfo, MoodInfo } from "@/domain";
 import { getSleep, saveSleep, getMood, saveMood } from "@/storage";
 import { calculateSleepDuration } from "@/utils/sleep";
@@ -11,6 +12,7 @@ interface DailyInputsProps {
 }
 
 export default function DailyInputs({ date, userId }: DailyInputsProps) {
+  const t = useTranslations();
   const [sleepTime, setSleepTime] = useState<string>("");
   const [wakeTime, setWakeTime] = useState<string>("");
   const [sleepQuality, setSleepQuality] = useState<number>(5);
@@ -172,11 +174,11 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
   return (
     <div className="p-4 space-y-6">
       <div className="bg-card rounded-lg p-4 shadow">
-        <h2 className="text-lg font-semibold text-card-foreground mb-4">Sleep</h2>
+        <h2 className="text-lg font-semibold text-card-foreground mb-4">{t("dailyInputs.sleepTitle")}</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-1">
-              Sleep Time
+              {t("dailyInputs.sleepTime")}
             </label>
             <input
               type="time"
@@ -188,7 +190,7 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Wake Time
+              {t("dailyInputs.wakeTime")}
             </label>
             <input
               type="time"
@@ -200,13 +202,13 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
 
           {sleepDuration > 0 && (
             <div className="text-sm text-muted-foreground">
-              Duration: {sleepDuration} hours
+              {t("dailyInputs.duration", { hours: sleepDuration })}
             </div>
           )}
 
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-1">
-              Sleep Quality: {sleepQuality}/10
+              {t("dailyInputs.sleepQuality", { score: sleepQuality })}
             </label>
             <input
               type="range"
@@ -221,11 +223,11 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
       </div>
 
       <div className="bg-card rounded-lg p-4 shadow">
-        <h2 className="text-lg font-semibold text-card-foreground mb-4">Daily Reflection</h2>
+        <h2 className="text-lg font-semibold text-card-foreground mb-4">{t("dailyInputs.dailyReflectionTitle")}</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-1">
-              Mood: {mood}/10
+              {t("dailyInputs.mood", { score: mood })}
             </label>
             <input
               type="range"
@@ -239,7 +241,7 @@ export default function DailyInputs({ date, userId }: DailyInputsProps) {
 
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-1">
-              Day Score: {dayScore}/10
+              {t("dailyInputs.dayScore", { score: dayScore })}
             </label>
             <input
               type="range"

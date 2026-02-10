@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import type { GoalType } from "@/domain";
+import { useLocale, useTranslations } from "next-intl";
 
 interface GoalCalendarProps {
   onPeriodSelect: (type: GoalType, year: number, quarter?: number, month?: number, week?: number) => void;
@@ -10,6 +11,9 @@ interface GoalCalendarProps {
 }
 
 export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+  const localeTag = locale === "fa" ? "fa-IR" : "en-US";
   const [view, setView] = useState<"year" | "month" | "week">("year");
   const [selectedYear, setSelectedYear] = useState(2024); // Initialize with a default year
 
@@ -21,10 +25,10 @@ export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarPr
     setSelectedYear(new Date().getFullYear());
   }, []);
 
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  const months = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(localeTag, { month: "long" });
+    return Array.from({ length: 12 }, (_, i) => formatter.format(new Date(2020, i, 1)));
+  }, [localeTag]);
 
   const getWeeksInYear = (year: number): number[] => {
     const weeks: number[] = [];
@@ -77,9 +81,9 @@ export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarPr
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-card-foreground">
-            {view === "year" && "Select Year"}
-            {view === "month" && `${selectedYear} - Select Period`}
-            {view === "week" && `${selectedYear} - Select Week`}
+            {view === "year" && t("goals.calendar.selectYear")}
+            {view === "month" && t("goals.calendar.selectPeriod", { year: selectedYear })}
+            {view === "week" && t("goals.calendar.selectWeek", { year: selectedYear })}
           </h2>
           <button
             onClick={onClose}
@@ -122,12 +126,12 @@ export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarPr
                 onClick={handleYearlySelect}
                 className="w-full p-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-medium hover:from-purple-600 hover:to-purple-700 transition-all"
               >
-                📅 {selectedYear} Yearly Goals
+                📅 {t("goals.calendar.yearlyGoals", { year: selectedYear })}
               </motion.button>
 
               {/* Quarterly Goals */}
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Quarterly Goals</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">{t("goals.calendar.quarterlyGoals")}</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {[1, 2, 3, 4].map((quarter) => (
                     <motion.button
@@ -137,7 +141,7 @@ export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarPr
                       onClick={() => handleQuarterSelect(quarter)}
                       className="p-3 bg-green-100 text-green-700 rounded-lg font-medium hover:bg-green-200 transition-colors"
                     >
-                      Q{quarter}
+                      {t("goals.calendar.quarter", { quarter })}
                     </motion.button>
                   ))}
                 </div>
@@ -145,7 +149,7 @@ export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarPr
 
               {/* Monthly Goals */}
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Monthly Goals</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">{t("goals.calendar.monthlyGoals")}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {months.map((month, index) => (
                     <motion.button
@@ -163,14 +167,14 @@ export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarPr
 
               {/* Weekly Goals */}
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Weekly Goals</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">{t("goals.calendar.weeklyGoals")}</h3>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setView("week")}
                   className="w-full p-3 bg-orange-100 text-orange-700 rounded-lg font-medium hover:bg-orange-200 transition-colors"
                 >
-                  📅 Select Week
+                  📅 {t("goals.calendar.selectWeekButton")}
                 </motion.button>
               </div>
 
@@ -179,7 +183,7 @@ export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarPr
                 onClick={() => setView("year")}
                 className="w-full p-2 text-sm text-muted-foreground hover:text-card-foreground transition-colors"
               >
-                ← Back to Year Selection
+                {t("goals.calendar.backToYear")}
               </button>
             </div>
           )}
@@ -204,7 +208,7 @@ export default function GoalCalendar({ onPeriodSelect, onClose }: GoalCalendarPr
                 onClick={() => setView("month")}
                 className="w-full p-2 text-sm text-muted-foreground hover:text-card-foreground transition-colors"
               >
-                ← Back to Period Selection
+                {t("goals.calendar.backToPeriod")}
               </button>
             </div>
           )}

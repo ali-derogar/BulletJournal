@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import type { Goal } from "@/domain";
 import { calculateGoalProgress, getGoalProgressEmoji } from "@/utils/goalUtils";
+import { useLocale, useTranslations } from "next-intl";
 
 interface GoalCardProps {
   goal: Goal;
@@ -13,6 +14,9 @@ interface GoalCardProps {
 }
 
 export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+  const localeTag = locale === "fa" ? "fa-IR" : "en-US";
   const [isUpdating, setIsUpdating] = useState(false);
 
   const progress = calculateGoalProgress(goal);
@@ -75,7 +79,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
               whileTap={{ scale: 0.9 }}
               onClick={() => onEdit(goal)}
               className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
-              title="Edit goal"
+              title={t("goals.editGoal")}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -86,7 +90,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
               whileTap={{ scale: 0.9 }}
               onClick={() => onDelete(goal.id)}
               className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
-              title="Delete goal"
+              title={t("goals.deleteGoal")}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -158,7 +162,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
                 : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
             }`}
           >
-            {goal.status === "active" ? "Active" : "Paused"}
+            {goal.status === "active" ? t("goals.status.active") : t("goals.status.paused")}
           </motion.button>
         </div>
       )}
@@ -171,7 +175,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-sm text-primary font-medium">
-              Linked to {goal.linkedTaskIds.length} task{goal.linkedTaskIds.length !== 1 ? "s" : ""}
+              {t("goals.linkedTasks", { count: goal.linkedTaskIds.length })}
             </span>
           </div>
         </div>
@@ -183,7 +187,7 @@ export default function GoalCard({ goal, onUpdate, onDelete, onEdit }: GoalCardP
           <div className="flex items-center gap-2">
             <span className="text-lg">🎉</span>
             <span className="text-sm text-green-700 font-medium">
-              Completed {new Date(goal.completedAt!).toLocaleDateString()}
+              {t("goals.completedOn", { date: new Date(goal.completedAt!).toLocaleDateString(localeTag) })}
             </span>
           </div>
         </div>

@@ -9,9 +9,12 @@ import Icon from "@/components/Icon";
 import { UserProfile } from "@/domain/user";
 import { getStoredToken, clearStoredToken, getCurrentUser } from "@/services/auth";
 import { getLevelColor } from "@/utils/gamification";
+import { useLocale, useTranslations } from "next-intl";
 
 export default function ProfilePage() {
     const router = useRouter();
+    const t = useTranslations("profilePage");
+    const locale = useLocale();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -39,7 +42,7 @@ export default function ProfilePage() {
                     clearStoredToken();
                     router.push("/");
                 } else {
-                    setError("Failed to load profile. Please check your connection.");
+                    setError(t("errors.loadFailed"));
                 }
             })
             .finally(() => setLoading(false));
@@ -60,13 +63,13 @@ export default function ProfilePage() {
                     <Icon className="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </Icon>
-                    <h3 className="text-xl font-bold mb-2">Connection Error</h3>
+                    <h3 className="text-xl font-bold mb-2">{t("errors.connectionTitle")}</h3>
                     <p className="text-gray-400 mb-6">{error}</p>
                     <button
                         onClick={() => router.push("/")}
                         className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
                     >
-                        Go Home
+                        {t("goHome")}
                     </button>
                 </div>
             </div>
@@ -97,16 +100,16 @@ export default function ProfilePage() {
                         </button>
                         <div>
                             <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                                Professional Identity
+                                {t("title")}
                             </h1>
-                            <p className="text-gray-400 mt-1">Manage your personal and professional profile</p>
+                            <p className="text-gray-400 mt-1">{t("subtitle")}</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <div className="px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-sm font-medium text-green-400">Profile Active</span>
+                            <span className="text-sm font-medium text-green-400">{t("profileActive")}</span>
                         </div>
                     </div>
                 </div>
@@ -121,7 +124,7 @@ export default function ProfilePage() {
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5" />
 
-                            <div className={`w-32 h-32 rounded-full p-1 bg-gradient-to-br mb-6 relative ${getLevelColor(user.level)}`}>
+                                <div className={`w-32 h-32 rounded-full p-1 bg-gradient-to-br mb-6 relative ${getLevelColor(user.level)}`}>
                                 <div className="w-full h-full rounded-full bg-[#1a1a24] flex items-center justify-center overflow-hidden border-2 border-[#1a1a24]">
                                     {user.avatar_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
@@ -130,32 +133,35 @@ export default function ProfilePage() {
                                         <span className="text-4xl font-bold text-white/20">{user.name?.charAt(0)}</span>
                                     )}
                                 </div>
-                                <div className="absolute bottom-1 right-1 w-8 h-8 bg-[#1a1a24] rounded-full flex items-center justify-center border border-white/10 group cursor-help" title={`Level: ${user.level || 'Iron'}`}>
+                                <div
+                                    className="absolute bottom-1 right-1 w-8 h-8 bg-[#1a1a24] rounded-full flex items-center justify-center border border-white/10 group cursor-help"
+                                    title={t("levelTitle", { level: user.level ? t(`levels.${user.level}`) : t("levels.Iron") })}
+                                >
                                     {/* Level Badge Icon/Text. Using first char for now or maybe an icon */}
-                                    <span className="text-xs font-bold text-white uppercase">{user.level?.charAt(0) || 'I'}</span>
+                                    <span className="text-xs font-bold text-white uppercase">{user.level?.charAt(0) || t("levels.Iron").charAt(0)}</span>
                                 </div>
                             </div>
 
                             <h2 className="text-2xl font-bold text-white mb-2">{user.name}</h2>
-                            <p className="text-indigo-400 font-medium mb-1">{user.job_title || "No Job Title"}</p>
+                            <p className="text-indigo-400 font-medium mb-1">{user.job_title || t("noJobTitle")}</p>
                             <p className="text-gray-500 text-sm flex items-center justify-center gap-1.5">
                                 <Icon className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </Icon>
-                                {user.location || "No Location"}
+                                {user.location || t("noLocation")}
                             </p>
 
                             <div className="w-full h-px bg-white/10 my-6" />
 
                             <div className="w-full grid grid-cols-2 gap-4">
                                 <div className="bg-white/5 rounded-2xl p-3 text-center">
-                                    <span className="block text-xs text-gray-400 uppercase tracking-widest mb-1">XP Points</span>
-                                    <span className="text-xl font-bold text-white">{user.xp || 0}</span>
+                                    <span className="block text-xs text-gray-400 uppercase tracking-widest mb-1">{t("stats.xp")}</span>
+                                    <span className="text-xl font-bold text-white">{(user.xp || 0).toLocaleString(locale)}</span>
                                 </div>
                                 <div className="bg-white/5 rounded-2xl p-3 text-center">
-                                    <span className="block text-xs text-gray-400 uppercase tracking-widest mb-1">Goals</span>
-                                    <span className="text-xl font-bold text-white">3/5</span>
+                                    <span className="block text-xs text-gray-400 uppercase tracking-widest mb-1">{t("stats.goals")}</span>
+                                    <span className="text-xl font-bold text-white">{t("stats.goalsValue", { current: 3, total: 5 })}</span>
                                 </div>
                             </div>
                         </motion.div>
@@ -170,10 +176,10 @@ export default function ProfilePage() {
                             >
                                 <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl group-hover:bg-purple-500/30 transition-colors" />
                                 <div className="relative">
-                                    <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">Psychology</span>
+                                    <span className="text-xs font-bold text-purple-400 uppercase tracking-widest">{t("mbti.label")}</span>
                                     <h3 className="text-3xl font-bold text-white mt-1 mb-2">{user.mbti_type}</h3>
                                     <p className="text-sm text-gray-400 leading-relaxed">
-                                        Strategic thinker with a plan for everything. Known as &quot;The Architect&quot;.
+                                        {t("mbti.description")}
                                     </p>
                                 </div>
                             </motion.div>

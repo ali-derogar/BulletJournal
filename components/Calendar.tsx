@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { formatDate, getMonthCalendarDays, isToday, isFuture, isPast } from "@/utils/date";
 
 interface CalendarProps {
@@ -14,26 +15,26 @@ export default function Calendar({
   onDateSelect,
   onClose,
 }: CalendarProps) {
+  const t = useTranslations();
+  const locale = useLocale();
+  const localeTag = locale === "fa" ? "fa-IR" : "en-US";
   const current = new Date(currentDate);
   const [viewYear, setViewYear] = useState(current.getFullYear());
   const [viewMonth, setViewMonth] = useState(current.getMonth());
 
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
+  const monthName = useMemo(() => {
+    return new Intl.DateTimeFormat(localeTag, { month: "long" }).format(
+      new Date(viewYear, viewMonth, 1)
+    );
+  }, [localeTag, viewMonth, viewYear]);
 
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayNames = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(localeTag, { weekday: "short" });
+    const base = new Date(2020, 5, 7); // Sunday
+    return Array.from({ length: 7 }, (_, i) =>
+      formatter.format(new Date(base.getFullYear(), base.getMonth(), base.getDate() + i))
+    );
+  }, [localeTag]);
 
   const days = getMonthCalendarDays(viewYear, viewMonth);
 
@@ -116,7 +117,7 @@ export default function Calendar({
             ←
           </button>
           <h2 className="text-xl font-bold text-card-foreground">
-            {monthNames[viewMonth]} {viewYear}
+            {monthName} {viewYear}
           </h2>
           <button
             onClick={handleNextMonth}
@@ -154,7 +155,7 @@ export default function Calendar({
             onClick={onClose}
             className="px-4 py-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded"
           >
-            Close
+            {t("common.close")}
           </button>
         </div>
       </div>

@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
-import { performSync, canSync, formatSyncStats } from '@/services/sync';
+import { performSync, canSync } from '@/services/sync';
 import { logout } from '@/services/auth';
 import type { SyncResult, SyncPhase } from '@/services/sync';
 import SyncStatus from './SyncStatus';
+import { useTranslations } from 'next-intl';
 
 export default function SyncButtonEnhanced() {
   const { user, isOnline, isAuthenticated } = useAuth();
@@ -13,6 +14,7 @@ export default function SyncButtonEnhanced() {
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [lastSyncError, setLastSyncError] = useState<string | null>(null);
   const [showNotification, setShowNotification] = useState(false);
+  const t = useTranslations('sync');
 
   // Check if sync is allowed
   const syncCheck = canSync(isOnline, isAuthenticated);
@@ -57,11 +59,11 @@ export default function SyncButtonEnhanced() {
       }
     } catch (error) {
       console.error('Sync error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : t('errors.unknownError');
       setLastSyncError(errorMessage);
       setSyncResult({
         success: false,
-        message: 'Sync failed',
+        message: t('errors.syncFailed'),
         error: errorMessage,
         retryable: true, // Unknown errors should be retryable
       });
@@ -77,6 +79,18 @@ export default function SyncButtonEnhanced() {
   }
 
   const isSyncing = syncPhase !== 'idle';
+  const syncReason = syncCheck.reasonKey ? t(syncCheck.reasonKey) : syncCheck.reason;
+  const formatStats = (stats?: SyncResult['stats']) => {
+    if (!stats) return '';
+    const parts: string[] = [];
+    if (stats.uploadedTasks > 0) parts.push(t('stats.tasks', { count: stats.uploadedTasks }));
+    if (stats.uploadedExpenses > 0) parts.push(t('stats.expenses', { count: stats.uploadedExpenses }));
+    if (stats.uploadedJournals > 0) parts.push(t('stats.journals', { count: stats.uploadedJournals }));
+    if (stats.uploadedGoals > 0) parts.push(t('stats.goals', { count: stats.uploadedGoals }));
+    if (stats.uploadedCalendarNotes > 0) parts.push(t('stats.notes', { count: stats.uploadedCalendarNotes }));
+    if (parts.length === 0) return t('stats.noChanges');
+    return parts.join(', ');
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -98,9 +112,9 @@ export default function SyncButtonEnhanced() {
                 : syncCheck.allowed
                 ? 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }
-          `}
-          title={syncCheck.reason || 'Sync your data with the server'}
+          }
+        `}
+          title={syncReason || t('button.title')}
         >
           {/* Sync Icon */}
           {syncPhase === 'loading' ? (
@@ -138,7 +152,7 @@ export default function SyncButtonEnhanced() {
           )}
 
           <span className="hidden sm:inline">
-            {syncPhase === 'loading' ? 'Loading...' : syncPhase === 'saving' ? 'Saving...' : 'Sync Now'}
+            {syncPhase === 'loading' ? t('button.loading') : syncPhase === 'saving' ? t('button.saving') : t('button.syncNow')}
           </span>
         </button>
 
@@ -177,14 +191,14 @@ export default function SyncButtonEnhanced() {
                 {syncResult.success && syncResult.stats && (
                   <div className="mt-2 space-y-1">
                     <p className="text-xs text-green-700">
-                      {formatSyncStats(syncResult.stats)}
+                      {formatStats(syncResult.stats)}
                     </p>
                     {syncResult.stats.conflictsResolved > 0 && (
                       <p className="text-xs text-green-600 flex items-center gap-1">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
-                        {syncResult.stats.conflictsResolved} conflict{syncResult.stats.conflictsResolved > 1 ? 's' : ''} resolved
+                        {t('conflictsResolved', { count: syncResult.stats.conflictsResolved })}
                       </p>
                     )}
                   </div>
@@ -201,7 +215,7 @@ export default function SyncButtonEnhanced() {
                 className={`flex-shrink-0 ${
                   syncResult.success ? 'text-green-400 hover:text-green-600' : 'text-red-400 hover:text-red-600'
                 } transition-colors`}
-                aria-label="Close"
+                aria-label={t('close')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

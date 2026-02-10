@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import { submitHollandTest } from "@/services/profile-tests";
+import { useTranslations } from "next-intl";
 
 interface HollandTestProps {
   onComplete: (result: { scores: Record<string, number>; dominant: string }) => void;
@@ -11,24 +12,24 @@ interface HollandTestProps {
 }
 
 const HOLLAND_QUESTIONS = [
-  { id: 1, text: "I like to work with tools and machines", code: "R" },
-  { id: 2, text: "I like to solve complex problems", code: "I" },
-  { id: 3, text: "I like to create artistic works", code: "A" },
-  { id: 4, text: "I like to help and support others", code: "S" },
-  { id: 5, text: "I like to lead and influence people", code: "E" },
-  { id: 6, text: "I like to organize and plan activities", code: "C" },
-  { id: 7, text: "I enjoy working with my hands", code: "R" },
-  { id: 8, text: "I like to analyze and research", code: "I" },
-  { id: 9, text: "I like to express myself creatively", code: "A" },
-  { id: 10, text: "I like to work in teams", code: "S" },
-  { id: 11, text: "I like to take charge of situations", code: "E" },
-  { id: 12, text: "I like to follow procedures and rules", code: "C" },
-  { id: 13, text: "I like to build and construct things", code: "R" },
-  { id: 14, text: "I like to understand how things work", code: "I" },
-  { id: 15, text: "I like to design and decorate spaces", code: "A" },
-  { id: 16, text: "I like to counsel and advise others", code: "S" },
-  { id: 17, text: "I like to motivate and inspire people", code: "E" },
-  { id: 18, text: "I like to maintain accurate records", code: "C" },
+  { id: 1, textKey: "questions.q1", code: "R" },
+  { id: 2, textKey: "questions.q2", code: "I" },
+  { id: 3, textKey: "questions.q3", code: "A" },
+  { id: 4, textKey: "questions.q4", code: "S" },
+  { id: 5, textKey: "questions.q5", code: "E" },
+  { id: 6, textKey: "questions.q6", code: "C" },
+  { id: 7, textKey: "questions.q7", code: "R" },
+  { id: 8, textKey: "questions.q8", code: "I" },
+  { id: 9, textKey: "questions.q9", code: "A" },
+  { id: 10, textKey: "questions.q10", code: "S" },
+  { id: 11, textKey: "questions.q11", code: "E" },
+  { id: 12, textKey: "questions.q12", code: "C" },
+  { id: 13, textKey: "questions.q13", code: "R" },
+  { id: 14, textKey: "questions.q14", code: "I" },
+  { id: 15, textKey: "questions.q15", code: "A" },
+  { id: 16, textKey: "questions.q16", code: "S" },
+  { id: 17, textKey: "questions.q17", code: "E" },
+  { id: 18, textKey: "questions.q18", code: "C" },
 ];
 
 // Holland codes reference for future use
@@ -42,6 +43,7 @@ const HOLLAND_QUESTIONS = [
 // };
 
 export default function HollandTest({ onComplete, onCancel }: HollandTestProps) {
+  const t = useTranslations("profile.holland");
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
@@ -75,7 +77,7 @@ export default function HollandTest({ onComplete, onCancel }: HollandTestProps) 
 
   const handleSubmit = async () => {
     if (Object.keys(answers).length !== HOLLAND_QUESTIONS.length) {
-      setError("Please answer all questions");
+      setError(t("errors.answerAll"));
       return;
     }
 
@@ -86,7 +88,7 @@ export default function HollandTest({ onComplete, onCancel }: HollandTestProps) 
       const result = await submitHollandTest(answers);
       onComplete(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit test");
+      setError(err instanceof Error ? err.message : t("errors.submitFailed"));
     } finally {
       setLoading(false);
     }
@@ -105,10 +107,11 @@ export default function HollandTest({ onComplete, onCancel }: HollandTestProps) 
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1a24] border-b border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white">Holland Career Interest Test</h2>
+            <h2 className="text-2xl font-bold text-white">{t("title")}</h2>
             <button
               onClick={onCancel}
               className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label={t("close")}
             >
               <Icon className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -119,7 +122,7 @@ export default function HollandTest({ onComplete, onCancel }: HollandTestProps) 
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-gray-400">
-              <span>Question {Object.keys(answers).length} of {HOLLAND_QUESTIONS.length}</span>
+              <span>{t("progress", { current: Object.keys(answers).length, total: HOLLAND_QUESTIONS.length })}</span>
               <span>{progress}%</span>
             </div>
             <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -150,9 +153,14 @@ export default function HollandTest({ onComplete, onCancel }: HollandTestProps) 
                 animate={{ opacity: 1, x: 0 }}
                 className="space-y-3"
               >
-                <p className="text-white font-medium">{question.text}</p>
+                <p className="text-white font-medium">{t(question.textKey)}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {["Strongly Disagree", "Disagree", "Agree", "Strongly Agree"].map((label, idx) => (
+                  {[
+                    t("answers.stronglyDisagree"),
+                    t("answers.disagree"),
+                    t("answers.agree"),
+                    t("answers.stronglyAgree"),
+                  ].map((label) => (
                     <button
                       key={label}
                       onClick={() => handleAnswer(question.id, question.code)}
@@ -193,7 +201,7 @@ export default function HollandTest({ onComplete, onCancel }: HollandTestProps) 
               disabled={currentStep === 0}
               className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Previous
+              {t("previous")}
             </button>
 
             {currentStep < totalSteps - 1 ? (
@@ -201,7 +209,7 @@ export default function HollandTest({ onComplete, onCancel }: HollandTestProps) 
                 onClick={handleNext}
                 className="flex-1 px-4 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
               >
-                Next
+                {t("next")}
               </button>
             ) : (
               <button
@@ -212,10 +220,10 @@ export default function HollandTest({ onComplete, onCancel }: HollandTestProps) 
                 {loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Submitting...
+                    {t("submitting")}
                   </>
                 ) : (
-                  "Submit Test"
+                  t("submit")
                 )}
               </button>
             )}

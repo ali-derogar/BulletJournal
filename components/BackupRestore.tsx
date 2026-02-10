@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { exportAllData, importAllData, exportUserData, importUserData, downloadBackup } from "@/utils/backup";
 import { useUser } from "@/app/context/UserContext";
 
 export default function BackupRestore() {
+  const t = useTranslations();
   const { currentUser } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,7 @@ export default function BackupRestore() {
   const handleExport = async () => {
     try {
       setLoading(true);
-      setMessage("Exporting data...");
+      setMessage(t("backup.exporting"));
 
       let data: string;
       let userId: string | undefined;
@@ -28,10 +30,10 @@ export default function BackupRestore() {
       }
 
       downloadBackup(data, userId);
-      setMessage("✓ Backup downloaded successfully");
+      setMessage(t("backup.exportSuccess"));
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
-      setMessage("✗ Export failed: " + (error as Error).message);
+      setMessage(t("backup.exportFailed", { message: (error as Error).message }));
     } finally {
       setLoading(false);
     }
@@ -43,23 +45,23 @@ export default function BackupRestore() {
 
     try {
       setLoading(true);
-      setMessage("Importing data...");
+      setMessage(t("backup.importing"));
 
       const text = await file.text();
 
       if (backupType === "user" && currentUser) {
         await importUserData(text, currentUser.id);
-        setMessage(`✓ User data restored successfully for ${currentUser.name}`);
+        setMessage(t("backup.restoreUserSuccess", { name: currentUser.name }));
         setTimeout(() => window.location.reload(), 1500);
       } else {
         await importAllData(text);
-        setMessage("✓ All data restored successfully. Reloading...");
+        setMessage(t("backup.restoreAllSuccess"));
         setTimeout(() => window.location.reload(), 1500);
       }
 
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
-      setMessage("✗ Import failed: " + (error as Error).message);
+      setMessage(t("backup.importFailed", { message: (error as Error).message }));
     } finally {
       setLoading(false);
       if (fileInputRef.current) {
@@ -72,7 +74,7 @@ export default function BackupRestore() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        aria-label="Backup and restore"
+        aria-label={t("backup.ariaOpen")}
         className="fixed bottom-4 right-4 w-12 h-12 bg-gray-800 text-white rounded-full shadow-lg hover:bg-gray-900 flex items-center justify-center z-40"
       >
         ⚙️
@@ -83,10 +85,10 @@ export default function BackupRestore() {
   return (
     <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-xl p-4 w-80 z-40 border-2 border-gray-200">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-lg">Backup & Restore</h3>
+        <h3 className="font-semibold text-lg">{t("backup.title")}</h3>
         <button
           onClick={() => setIsOpen(false)}
-          aria-label="Close"
+          aria-label={t("common.close")}
           className="text-gray-500 hover:text-gray-700 text-xl"
         >
           ×
@@ -96,7 +98,7 @@ export default function BackupRestore() {
       <div className="space-y-3">
         {/* Backup Type Selection */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Backup Type</label>
+          <label className="block text-sm font-medium text-gray-700">{t("backup.typeLabel")}</label>
           <div className="flex gap-4">
             <label className="flex items-center">
               <input
@@ -106,7 +108,7 @@ export default function BackupRestore() {
                 onChange={(e) => setBackupType(e.target.value as "user")}
                 className="mr-2"
               />
-              <span className="text-sm">Current User Only</span>
+              <span className="text-sm">{t("backup.currentUserOnly")}</span>
             </label>
             <label className="flex items-center">
               <input
@@ -116,7 +118,7 @@ export default function BackupRestore() {
                 onChange={(e) => setBackupType(e.target.value as "all")}
                 className="mr-2"
               />
-              <span className="text-sm">All Users (Admin)</span>
+              <span className="text-sm">{t("backup.allUsersAdmin")}</span>
             </label>
           </div>
         </div>
@@ -126,7 +128,7 @@ export default function BackupRestore() {
           disabled={loading}
           className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 font-medium"
         >
-          📥 Export Backup
+          {t("backup.exportButton")}
         </button>
 
         <div>
@@ -145,7 +147,7 @@ export default function BackupRestore() {
               loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            📤 Restore Backup
+            {t("backup.restoreButton")}
           </label>
         </div>
       </div>
@@ -158,8 +160,8 @@ export default function BackupRestore() {
 
       <p className="mt-4 text-xs text-gray-500">
         {backupType === "user"
-          ? `Backup includes all data for ${currentUser?.name || "current user"}. Keep your backups safe!`
-          : "Backup includes all users and their data. Keep your backups safe!"
+          ? t("backup.includesUserData", { name: currentUser?.name || t("backup.currentUserFallback") })
+          : t("backup.includesAllData")
         }
       </p>
     </div>

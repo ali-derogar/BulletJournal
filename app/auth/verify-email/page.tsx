@@ -4,12 +4,49 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { verifyEmail } from '@/services/auth';
+import enMessages from "@/messages/en.json";
+import faMessages from "@/messages/fa.json";
+
+export const dynamic = 'force-dynamic';
+
+const getLocaleFromStorage = () => {
+    if (typeof window === "undefined") return "en";
+    const preferred = window.localStorage.getItem("preferredLanguage");
+    return preferred === "fa" ? "fa" : "en";
+};
+
+const getMessage = (messages: Record<string, unknown>, key: string) => {
+    let current: unknown = messages;
+    for (const part of key.split(".")) {
+        if (current && typeof current === "object") {
+            current = (current as Record<string, unknown>)[part];
+        } else {
+            return undefined;
+        }
+    }
+    return current;
+};
+
+const formatMessage = (template: unknown, values?: Record<string, string | number>) => {
+    if (typeof template !== "string") return "";
+    if (!values) return template;
+    return template.replace(/\{(\w+)\}/g, (_, k) => (values[k] !== undefined ? String(values[k]) : `{${k}}`));
+};
 
 function VerifyEmailContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const [locale, setLocale] = useState<"en" | "fa">("en");
+    const messages = locale === "fa" ? faMessages : enMessages;
+    const t = (key: string, values?: Record<string, string | number>) =>
+        formatMessage(getMessage(messages as Record<string, unknown>, `authVerify.${key}`), values);
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-    const [message, setMessage] = useState('Verifying your email...');
+    const [message, setMessage] = useState(t('verifying'));
+
+    useEffect(() => {
+        const preferred = getLocaleFromStorage();
+        setLocale(preferred);
+    }, []);
 
     useEffect(() => {
         if (!searchParams) return;
@@ -18,7 +55,7 @@ function VerifyEmailContent() {
 
         if (!token || !email) {
             setStatus('error');
-            setMessage('Invalid verification link. Missing token or email.');
+            setMessage(t('errors.invalidLink'));
             return;
         }
 
@@ -26,19 +63,19 @@ function VerifyEmailContent() {
             try {
                 const result = await verifyEmail(token, email);
                 setStatus('success');
-                setMessage(result.message || 'Email verified successfully!');
+                setMessage(result.message || t('success'));
                 // Redirect to home after 3 seconds
                 setTimeout(() => {
                     router.push('/');
                 }, 3000);
             } catch (err) {
                 setStatus('error');
-                setMessage(err instanceof Error ? err.message : 'Failed to verify email');
+                setMessage(err instanceof Error ? err.message : t('errors.verifyFailed'));
             }
         };
 
         verify();
-    }, [searchParams, router]);
+    }, [searchParams, router, locale]);
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
@@ -68,7 +105,7 @@ function VerifyEmailContent() {
                 </div>
 
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    {status === 'loading' ? 'Verifying...' : status === 'success' ? 'Verified!' : 'Verification Failed'}
+                    {status === 'loading' ? t('states.loading') : status === 'success' ? t('states.success') : t('states.error')}
                 </h1>
 
                 <p className="text-gray-600 dark:text-gray-400 mb-8">
@@ -79,21 +116,30 @@ function VerifyEmailContent() {
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => router.push('/')}
-                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
-                    >
-                        Go to Home
-                    </motion.button>
-                )}
+                    onClick={() => router.push('/')}
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                >
+                    {t('goHome')}
+                </motion.button>
+            )}
 
-                {status === 'success' && (
-                    <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
-                        Redirecting you in a few seconds...
-                    </p>
-                )}
-            </motion.div>
-        </div>
+            {status === 'success' && (
+                <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
+                    {t('redirecting')}
+                </p>
+            )}
+        </motion.div>
+    </div>
     );
+}
+
+function ClientOnly({ children }: { children: React.ReactNode }) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+    if (!mounted) return null;
+    return <>{children}</>;
 }
 
 export default function VerifyEmailPage() {
@@ -103,7 +149,9 @@ export default function VerifyEmailPage() {
                 <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
         }>
-            <VerifyEmailContent />
+            <ClientOnly>
+                <VerifyEmailContent />
+            </ClientOnly>
         </Suspense>
     );
 }

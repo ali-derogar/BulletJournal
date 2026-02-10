@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useUser } from "@/app/context/UserContext";
+import { useTranslations } from "next-intl";
 
 export default function UserSwitcher() {
+  const t = useTranslations("userSwitcher");
   const { currentUser, allUsers, switchUser, isLoading } = useUser();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,7 +21,7 @@ export default function UserSwitcher() {
   if (isLoading) {
     return (
       <div className="px-3 py-2 bg-muted rounded text-sm text-muted-foreground">
-        Loading...
+        {t("loading")}
       </div>
     );
   }
@@ -45,9 +47,9 @@ export default function UserSwitcher() {
         </svg>
         <div className="text-left">
           <div className="text-sm font-medium text-foreground">
-            {currentUser?.name || "Select User"}
+            {currentUser?.name || t("selectUser")}
           </div>
-          <div className="text-xs text-muted-foreground">Switch user</div>
+          <div className="text-xs text-muted-foreground">{t("switchUser")}</div>
         </div>
         <svg
           className={`w-4 h-4 text-muted-foreground transition-transform ${
@@ -78,7 +80,7 @@ export default function UserSwitcher() {
           <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border z-20">
             <div className="p-3">
               <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Switch User
+                {t("switchUser")}
               </div>
               <div className="space-y-1 mt-2">
                 {allUsers.map((user) => (

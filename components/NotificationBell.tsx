@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
   getNotifications,
@@ -18,6 +19,8 @@ import {
 import { getCurrentUser } from '@/services/auth';
 
 export default function NotificationBell() {
+  const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -152,7 +155,7 @@ export default function NotificationBell() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition"
-        aria-label="Notifications"
+        aria-label={t("notifications.ariaLabel")}
       >
         {/* Bell Icon */}
         <svg
@@ -183,25 +186,25 @@ export default function NotificationBell() {
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t("notifications.title")}</h3>
               {stats.unread > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
                   className="text-sm text-blue-600 hover:text-blue-800"
                 >
-                  Mark all read
+                  {t("notifications.markAllRead")}
                 </button>
               )}
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              {stats.unread} unread of {stats.total} total
+              {t("notifications.unreadSummary", { unread: stats.unread, total: stats.total })}
             </p>
           </div>
 
           {/* Notifications List */}
           <div className="overflow-y-auto flex-1">
             {loading ? (
-              <div className="p-8 text-center text-gray-500">Loading...</div>
+              <div className="p-8 text-center text-gray-500">{t("common.loading")}</div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <svg
@@ -217,7 +220,7 @@ export default function NotificationBell() {
                     d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                   />
                 </svg>
-                <p>No notifications yet</p>
+                <p>{t("notifications.none")}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -249,7 +252,7 @@ export default function NotificationBell() {
                             {notification.message}
                           </p>
                           <p className="text-xs text-gray-400">
-                            {formatNotificationTime(notification.created_at)}
+                            {formatNotificationTime(notification.created_at, locale)}
                           </p>
                         </div>
 
@@ -260,7 +263,7 @@ export default function NotificationBell() {
                               onClick={() => handleMarkAsRead(notification.id)}
                               className="text-xs text-blue-600 hover:text-blue-800"
                             >
-                              Mark read
+                              {t("notifications.markRead")}
                             </button>
                           )}
                           {!notification.is_muted && (
@@ -268,14 +271,14 @@ export default function NotificationBell() {
                               onClick={() => handleMute(notification.id)}
                               className="text-xs text-gray-600 hover:text-gray-800"
                             >
-                              Mute
+                              {t("notifications.mute")}
                             </button>
                           )}
                           <button
                             onClick={() => handleDelete(notification.id)}
                             className="text-xs text-red-600 hover:text-red-800"
                           >
-                            Delete
+                            {t("common.delete")}
                           </button>
                         </div>
                       </div>
@@ -301,7 +304,7 @@ export default function NotificationBell() {
                 }}
                 className="text-sm text-blue-600 hover:text-blue-800 font-medium"
               >
-                View all notifications
+                {t("notifications.viewAll")}
               </button>
             </div>
           )}

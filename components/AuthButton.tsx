@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/app/context/AuthContext';
 import { hasAdminAccess } from '@/services/admin';
 import AuthModal from './AuthModal';
@@ -17,6 +18,7 @@ const LEVEL_CONFIG: Record<string, { color: string; icon: string; threshold: num
 };
 
 export default function AuthButton() {
+  const t = useTranslations();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -55,7 +57,7 @@ export default function AuthButton() {
           <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
           </Icon>
-          <span>Login</span>
+          <span>{t("common.login")}</span>
         </button>
 
         <AuthModal
@@ -135,18 +137,18 @@ export default function AuthButton() {
               </div>
               <div className="flex-1">
                 <h4 className="font-bold text-lg" style={{ color: config.color }}>{userLevel}</h4>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest">سطح فعلی</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-widest">{t("authButton.currentLevel")}</p>
               </div>
             </div>
 
             {/* Progress Section */}
             <div className="mt-4 space-y-2">
               <div className="flex justify-between text-xs font-medium">
-                <span className="text-muted-foreground">{xp} XP</span>
+                <span className="text-muted-foreground">{t("authButton.xp", { value: xp })}</span>
                 {userLevel !== 'Diamond' ? (
-                  <span className="text-card-foreground">تا سطح بعد: {xpNeededForNext - xpInCurrentLevel} XP</span>
+                  <span className="text-card-foreground">{t("authButton.nextLevel", { value: xpNeededForNext - xpInCurrentLevel })}</span>
                 ) : (
-                  <span className="text-emerald-500 font-bold">سطح نهایی ✨</span>
+                  <span className="text-emerald-500 font-bold">{t("authButton.finalLevel")}</span>
                 )}
               </div>
               <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden border border-border/50">
@@ -177,7 +179,7 @@ export default function AuthButton() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </Icon>
               </div>
-              <span className="font-medium">Profile</span>
+              <span className="font-medium">{t("common.profile")}</span>
             </button>
           </div>
 
@@ -194,9 +196,9 @@ export default function AuthButton() {
                 <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </Icon>
-                <span>Admin Panel</span>
+                <span>{t("navigation.adminPanel")}</span>
                 <span className="ml-auto text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full">
-                  {user?.role === 'SUPERUSER' ? 'Superuser' : 'Admin'}
+                  {user?.role === 'SUPERUSER' ? t("authButton.role.superuser") : t("authButton.role.admin")}
                 </span>
               </button>
             </div>
@@ -214,12 +216,12 @@ export default function AuthButton() {
               <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </Icon>
-              <span>Logout (Keep Data)</span>
+              <span>{t("authButton.logoutKeepData")}</span>
             </button>
 
             <button
               onClick={() => {
-                if (confirm('Are you sure you want to delete all your local data? You can download it from the server on next login.')) {
+                if (confirm(t("authButton.confirmClearData"))) {
                   logout(true); // Clear data
                   setShowUserMenu(false);
                 }
@@ -229,7 +231,7 @@ export default function AuthButton() {
               <Icon className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </Icon>
-              <span>Logout & Clear Data</span>
+              <span>{t("authButton.logoutClearData")}</span>
             </button>
           </div>
         </div>

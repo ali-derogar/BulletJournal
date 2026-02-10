@@ -5,9 +5,11 @@ import { useAuth } from '@/app/context/AuthContext';
 import { performSync, canSync } from '@/services/sync';
 import type { SyncResult, SyncPhase } from '@/services/sync';
 import SyncStatus from './SyncStatus';
+import { useTranslations } from 'next-intl';
 
 export default function UploadDownloadButtons() {
   const { user, isOnline, isAuthenticated } = useAuth();
+  const t = useTranslations('sync');
 
   // Debug: Log IMMEDIATELY when component is called
   console.log('🟡 UploadDownloadButtons CALLED, isAuthenticated:', isAuthenticated, 'user:', user);
@@ -27,7 +29,7 @@ export default function UploadDownloadButtons() {
     hasUser: !!user,
     userId: user?.id,
     syncCheckAllowed: syncCheck.allowed,
-    syncCheckReason: syncCheck.reason,
+    syncCheckReason: syncCheck.reasonKey || syncCheck.reason,
   });
 
   const handleUpload = useCallback(async (isSilent = false) => {
@@ -40,7 +42,7 @@ export default function UploadDownloadButtons() {
 
     if (!syncCheck.allowed || !user) {
       if (!isSilent) {
-        console.log('❌ Upload blocked:', syncCheck.reason);
+        console.log('❌ Upload blocked:', syncCheck.reasonKey);
       }
       return;
     }
@@ -55,17 +57,17 @@ export default function UploadDownloadButtons() {
       setSyncResult(result);
 
       if (!result.success) {
-        setLastSyncError(result.error || 'Upload failed');
+        setLastSyncError(result.error || t('errors.uploadFailed'));
         if (!isSilent) {
           setShowNotification(true);
         }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : t('errors.unknownError');
       console.error('Upload error:', error);
       setSyncResult({
         success: false,
-        message: 'Upload failed',
+        message: t('errors.uploadFailed'),
         error: errorMessage,
         retryable: true,
       });
@@ -141,7 +143,7 @@ export default function UploadDownloadButtons() {
                     onClick={() => handleUpload(false)}
                     className="mt-2 text-xs font-medium text-red-700 hover:text-red-800 underline"
                   >
-                    Try Again
+                    {t('tryAgain')}
                   </button>
                 )}
               </div>

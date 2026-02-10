@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/app/context/AuthContext';
+import { useTranslations } from 'next-intl';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
+  const t = useTranslations();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot-password'>(initialMode);
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -44,23 +46,23 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
 
     // Validation
     if (!isOnline) {
-      setLocalError('You must be online to authenticate');
+      setLocalError(t('auth.mustBeOnline'));
       return;
     }
 
     if (mode === 'register') {
       if (!name.trim()) {
-        setLocalError('Name is required');
+        setLocalError(t('auth.nameRequired'));
         return;
       }
 
       if (!username.trim()) {
-        setLocalError('Username is required');
+        setLocalError(t('auth.usernameRequired'));
         return;
       }
 
       if (password !== confirmPassword) {
-        setLocalError('Passwords do not match');
+        setLocalError(t('auth.passwordsDoNotMatch'));
         return;
       }
 
@@ -88,7 +90,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         setSuccessMessage(result.message);
         setMode('login');
       } catch (err) {
-        setLocalError(err instanceof Error ? err.message : 'Failed to send reset link');
+        setLocalError(err instanceof Error ? err.message : t('auth.resetLinkFailed'));
       }
     }
   };
@@ -117,16 +119,16 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         <div className="flex items-center justify-between p-6 pb-4">
           <div>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              {mode === 'login' ? 'Welcome Back' : mode === 'register' ? 'Join Us' : 'Reset Password'}
+              {mode === 'login' ? t('auth.welcomeBack') : mode === 'register' ? t('auth.joinUs') : t('auth.resetPassword')}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {mode === 'login' ? 'Sign in to your account' : mode === 'register' ? 'Create your new account' : 'Enter your email to reset password'}
+              {mode === 'login' ? t('auth.signInToAccount') : mode === 'register' ? t('auth.createNewAccount') : t('auth.enterEmailToReset')}
             </p>
           </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2"
-            aria-label="Close"
+            aria-label={t('common.close')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -141,9 +143,9 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div>
-              <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">You&apos;re offline</p>
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">{t('auth.youreOffline')}</p>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                Connect to the internet to login or register
+                {t('auth.connectToInternet')}
               </p>
             </div>
           </div>
@@ -175,7 +177,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           {mode === 'register' && (
             <div>
               <label htmlFor="name" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Full Name
+                {t('auth.fullNameLabel')}
               </label>
               <input
                 type="text"
@@ -183,7 +185,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-                placeholder="Enter your full name"
+                placeholder={t('auth.fullNamePlaceholder')}
                 required
                 disabled={isLoading || !isOnline}
               />
@@ -194,7 +196,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           {mode === 'register' && (
             <div>
               <label htmlFor="username" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Username
+                {t('auth.usernameLabel')}
               </label>
               <input
                 type="text"
@@ -202,7 +204,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-                placeholder="Choose a unique username"
+                placeholder={t('auth.usernamePlaceholder')}
                 required
                 disabled={isLoading || !isOnline}
               />
@@ -212,7 +214,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           {/* Email field */}
           <div>
             <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Email Address
+              {t('auth.emailLabel')}
             </label>
             <input
               type="email"
@@ -220,7 +222,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-              placeholder="Enter your email address"
+              placeholder={t('auth.emailPlaceholder')}
               required
               disabled={isLoading || !isOnline}
             />
@@ -229,8 +231,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           {/* Password field */}
           {mode !== 'forgot-password' && (
             <div>
-              <label htmlFor="password" title="Password" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Password
+              <label htmlFor="password" title={t('auth.passwordLabel')} className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                {t('auth.passwordLabel')}
               </label>
               <input
                 type="password"
@@ -238,13 +240,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-                placeholder="Enter your password"
+                placeholder={t('auth.passwordPlaceholder')}
                 required
                 disabled={isLoading || !isOnline}
                 minLength={8}
               />
               {mode === 'register' && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Minimum 8 characters required</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('auth.minimumCharacters')}</p>
               )}
               {mode === 'login' && (
                 <div className="flex justify-end mt-2">
@@ -253,7 +255,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                     onClick={() => setMode('forgot-password')}
                     className="text-xs font-semibold text-blue-600 hover:text-purple-600 dark:text-blue-400 dark:hover:text-purple-400 transition-colors"
                   >
-                    Forgot Password?
+                    {t('auth.forgotPassword')}
                   </button>
                 </div>
               )}
@@ -264,7 +266,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
           {mode === 'register' && (
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Confirm Password
+                {t('auth.confirmPasswordLabel')}
               </label>
               <input
                 type="password"
@@ -272,7 +274,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-                placeholder="Confirm your password"
+                placeholder={t('auth.confirmPasswordPlaceholder')}
                 required
                 disabled={isLoading || !isOnline}
                 minLength={8}
@@ -292,10 +294,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>{mode === 'login' ? 'Signing in...' : mode === 'register' ? 'Creating account...' : 'Sending...'}</span>
+                <span>{mode === 'login' ? t('auth.signingIn') : mode === 'register' ? t('auth.creatingAccount') : t('auth.sending')}</span>
               </>
             ) : (
-              <span>{mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Send Reset Link'}</span>
+              <span>{mode === 'login' ? t('auth.signIn') : mode === 'register' ? t('auth.createAccount') : t('auth.sendResetLink')}</span>
             )}
           </button>
         </form>
@@ -303,7 +305,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
         {/* Mode Toggle */}
         <div className="px-6 pb-6 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {mode === 'login' ? "Don't have an account?" : mode === 'register' ? 'Already have an account?' : 'Remember your password?'}
+            {mode === 'login' ? t('auth.dontHaveAccount') : mode === 'register' ? t('auth.alreadyHaveAccount') : t('auth.rememberPassword')}
             {' '}
             <button
               type="button"
@@ -311,7 +313,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
               className="text-blue-600 hover:text-purple-600 dark:text-blue-400 dark:hover:text-purple-400 font-semibold transition-colors duration-200"
               disabled={isLoading}
             >
-              {mode === 'login' ? 'Create one' : 'Sign in'}
+              {mode === 'login' ? t('auth.createOne') : t('auth.signInHere')}
             </button>
           </p>
         </div>

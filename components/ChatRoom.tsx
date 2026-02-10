@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthContext';
 import { sendChatMessage, getChatMessages, createChatroomWebSocket, type ChatMessage as ApiChatMessage } from '@/services/chatroom';
+import { useLocale, useTranslations } from 'next-intl';
 
 // Types
 interface User {
@@ -33,28 +34,21 @@ const generateUserColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
-const formatTime = (timestamp: number) => {
-  return new Date(timestamp).toLocaleTimeString('fa-IR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
-
-const getUserInitial = (name: string) => name ? name.charAt(0).toUpperCase() : 'U';
-
 const LEVELS = ["Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond"];
 
-const LEVEL_CONFIG: Record<string, { color: string; icon: string; label: string }> = {
-  Iron: { color: "#94a3b8", icon: "⚙️", label: "آهن" },
-  Bronze: { color: "#cd7f32", icon: "🥉", label: "برنز" },
-  Silver: { color: "#c0c0c0", icon: "🥈", label: "نقره" },
-  Gold: { color: "#ffd700", icon: "🥇", label: "طلا" },
-  Platinum: { color: "#e5e4e2", icon: "💍", label: "پلاتین" },
-  Diamond: { color: "#b9f2ff", icon: "💎", label: "الماس" }
+const LEVEL_CONFIG: Record<string, { color: string; icon: string; labelKey: string }> = {
+  Iron: { color: "#94a3b8", icon: "⚙️", labelKey: "levels.Iron" },
+  Bronze: { color: "#cd7f32", icon: "🥉", labelKey: "levels.Bronze" },
+  Silver: { color: "#c0c0c0", icon: "🥈", labelKey: "levels.Silver" },
+  Gold: { color: "#ffd700", icon: "🥇", labelKey: "levels.Gold" },
+  Platinum: { color: "#e5e4e2", icon: "💍", labelKey: "levels.Platinum" },
+  Diamond: { color: "#b9f2ff", icon: "💎", labelKey: "levels.Diamond" }
 };
 
 export default function ChatRoom() {
   const { user: authUser } = useAuth();
+  const t = useTranslations('chatRoom');
+  const locale = useLocale();
 
   // State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -70,6 +64,13 @@ export default function ChatRoom() {
   const websocketRef = useRef<WebSocket | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesLoadedRef = useRef(false);
+  const timeFormatter = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
+
+  const formatTime = (timestamp: number) => {
+    return timeFormatter.format(new Date(timestamp));
+  };
+
+  const getUserInitial = (name: string) => name ? name.charAt(0).toUpperCase() : t('defaultInitial');
 
   // Initialize user from auth
   useEffect(() => {
@@ -183,7 +184,7 @@ export default function ChatRoom() {
     const targetIdx = LEVELS.indexOf(targetLevel);
 
     if (userIdx < targetIdx) {
-      setErrorMsg(`باید سطح خودتو رشد بدی تا بتونی وارد چت‌روم ${LEVEL_CONFIG[targetLevel].label} بشی! 🌱`);
+      setErrorMsg(t('errors.levelLocked', { level: t(LEVEL_CONFIG[targetLevel].labelKey) }));
       setTimeout(() => setErrorMsg(null), 3000);
       return;
     }
@@ -222,9 +223,14 @@ export default function ChatRoom() {
         <div className="max-w-4xl mx-auto w-full">
           <header className="mb-10 text-center">
             <h1 className="text-4xl font-extrabold mb-4 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              انتخاب چت‌روم بر اساس سطح
+              {t('selectionTitle')}
             </h1>
-            <p className="text-slate-400">سطح فعلی شما: <span className="text-indigo-400 font-bold">{LEVEL_CONFIG[userLevel]?.label || userLevel}</span></p>
+            <p className="text-slate-400">
+              {t('currentLevel')}{' '}
+              <span className="text-indigo-400 font-bold">
+                {LEVEL_CONFIG[userLevel]?.labelKey ? t(LEVEL_CONFIG[userLevel].labelKey) : userLevel}
+              </span>
+            </p>
           </header>
 
           <AnimatePresence>
@@ -265,25 +271,25 @@ export default function ChatRoom() {
                   </div>
 
                   <div>
-                    <h3 className="text-2xl font-bold mb-1" style={{ color: config.color }}>{config.label}</h3>
-                    <p className="text-xs text-slate-400 uppercase tracking-widest">{level}</p>
+                    <h3 className="text-2xl font-bold mb-1" style={{ color: config.color }}>{t(config.labelKey)}</h3>
+                    <p className="text-xs text-slate-400 uppercase tracking-widest">{t(config.labelKey)}</p>
                   </div>
 
                   {isLocked && (
                     <div className="mt-2 py-1 px-3 bg-red-500/20 rounded-full text-[10px] text-red-400 font-bold border border-red-500/30">
-                      🔒 قفل شده
+                      {t('locked')}
                     </div>
                   )}
 
                   {!isLocked && isHigher && (
                     <div className="mt-2 py-1 px-4 bg-indigo-500/20 rounded-full text-[10px] text-indigo-300 font-bold border border-indigo-500/30">
-                      ✨ سطح بالا هستی، اما بیا!
+                      {t('higherLevelHint')}
                     </div>
                   )}
 
                   {!isLocked && !isHigher && (
                     <div className="mt-2 py-1 px-4 bg-emerald-500/20 rounded-full text-[10px] text-emerald-400 font-bold border border-emerald-500/30 animate-pulse">
-                      🏠 خانه تو
+                      {t('homeLevel')}
                     </div>
                   )}
                 </motion.button>
@@ -319,19 +325,21 @@ export default function ChatRoom() {
             onClick={() => setCurrentRoom(null)}
             className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400"
           >
-            ← بازگشت
+            {t('back')}
           </button>
           <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse"></div>
           <h1 className="text-xl font-bold flex items-center gap-2">
             <span>{roomConfig.icon}</span>
-            <span style={{ color: roomConfig.color }}>چت‌روم {roomConfig.label}</span>
+            <span style={{ color: roomConfig.color }}>
+              {t('roomTitle', { room: t(roomConfig.labelKey) })}
+            </span>
           </h1>
         </div>
 
         <div className="flex items-center gap-2">
           {userIdx > currentIdx && (
             <div className="hidden sm:block text-[10px] bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30">
-              تو سطح بالایی داری و بهتره تو سطح خودت باشی ✨
+              {t('higherLevelNotice')}
             </div>
           )}
           <button
@@ -354,8 +362,10 @@ export default function ChatRoom() {
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-500">
                 <div className="text-6xl mb-4 animate-bounce">{roomConfig.icon}</div>
-                <h2 className="text-xl font-semibold mb-2">به چت‌روم {roomConfig.label} خوش آمدید!</h2>
-                <p>اولین نفری باش که پیام میده...</p>
+                <h2 className="text-xl font-semibold mb-2">
+                  {t('welcome', { room: t(roomConfig.labelKey) })}
+                </h2>
+                <p>{t('beFirst')}</p>
               </div>
             ) : (
               messages.map((msg) => {
@@ -410,7 +420,7 @@ export default function ChatRoom() {
             value={inputText}
             onChange={handleTextareaInput}
             onKeyDown={handleKeyDown}
-            placeholder="پیام خود را بنویسید..."
+            placeholder={t('placeholder')}
             rows={1}
             className="flex-1 bg-[#141937] border border-slate-700 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-indigo-500 resize-none max-h-32 custom-scrollbar"
           />

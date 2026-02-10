@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 interface FloatingChatButtonProps {
   onClick: () => void;
@@ -9,6 +10,7 @@ interface FloatingChatButtonProps {
 }
 
 export default function FloatingChatButton({ onClick, isOpen }: FloatingChatButtonProps) {
+  const t = useTranslations('aiChat');
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -114,7 +116,7 @@ export default function FloatingChatButton({ onClick, isOpen }: FloatingChatButt
             >
               <div className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-2xl text-sm font-semibold shadow-[0_10px_30px_rgba(0,0,0,0.3)] flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                AI Assistant Online
+                {t('floatingTooltip')}
               </div>
             </motion.div>
           )}

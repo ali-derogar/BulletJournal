@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import type { MoodInfo } from "@/domain";
 import { getMood, saveMood } from "@/storage";
 
@@ -10,6 +11,7 @@ interface ReflectionProps {
 }
 
 export default function Reflection({ date, userId }: ReflectionProps) {
+  const t = useTranslations();
   const [notes, setNotes] = useState("");
   const [waterIntake, setWaterIntake] = useState(0);
   const [studyMinutes, setStudyMinutes] = useState(0);
@@ -111,11 +113,11 @@ export default function Reflection({ date, userId }: ReflectionProps) {
   return (
     <div className="space-y-4">
       <div className="bg-card rounded-lg p-4 shadow">
-        <h2 className="text-lg font-semibold text-card-foreground mb-4">Habits</h2>
+        <h2 className="text-lg font-semibold text-card-foreground mb-4">{t("reflection.habitsTitle")}</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-card-foreground mb-2">
-              Water Intake (glasses)
+              {t("reflection.waterIntakeLabel")}
             </label>
             <input
               type="number"
@@ -127,13 +129,15 @@ export default function Reflection({ date, userId }: ReflectionProps) {
               className="w-full px-3 py-2 border rounded"
             />
             <div className="mt-2 text-sm text-gray-600">
-              {waterIntake >= 8 ? "✓ Goal reached!" : `${8 - waterIntake} more to reach goal`}
+              {waterIntake >= 8
+                ? t("reflection.goalReached")
+                : t("reflection.moreToGoal", { count: 8 - waterIntake })}
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Study Time (minutes)
+              {t("reflection.studyTimeLabel")}
             </label>
             <input
               type="number"
@@ -146,23 +150,23 @@ export default function Reflection({ date, userId }: ReflectionProps) {
             />
             <div className="mt-2 text-sm text-gray-600">
               {studyMinutes >= 60
-                ? "✓ Goal reached!"
-                : `${60 - studyMinutes} more to reach goal`}
+                ? t("reflection.goalReached")
+                : t("reflection.moreToGoal", { count: 60 - studyMinutes })}
             </div>
           </div>
         </div>
       </div>
 
       <div className="bg-card rounded-lg p-4 shadow">
-        <h2 className="text-lg font-semibold text-card-foreground mb-4">Daily Reflection</h2>
+        <h2 className="text-lg font-semibold text-card-foreground mb-4">{t("reflection.dailyReflectionTitle")}</h2>
         <textarea
           value={notes}
           onChange={(e) => handleNotesChange(e.target.value)}
-          placeholder="Write your thoughts for the day..."
+          placeholder={t("reflection.thoughtsPlaceholder")}
           className="w-full px-3 py-2 border border-input rounded min-h-[200px] resize-y focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
         />
         <div className="mt-2 text-sm text-muted-foreground">
-          {notes.length} characters
+          {t("reflection.charactersCount", { count: notes.length })}
         </div>
       </div>
     </div>

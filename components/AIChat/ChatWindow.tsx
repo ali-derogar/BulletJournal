@@ -15,6 +15,7 @@ import {
 const generateId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
 import Icon from '@/components/Icon';
 import { performDownload } from '@/services/sync';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ isOpen, userId, isFullScreen = false }: ChatWindowProps) {
+  const t = useTranslations('aiChat');
+  const locale = useLocale();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessions, setSessions] = useState<AISession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -45,14 +48,14 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
     const newSession: AISession = {
       id: generateId(),
       userId,
-      title: "New Chat",
+      title: t("newChatTitle"),
       updatedAt: new Date().toISOString(),
     };
     await saveAISession(newSession);
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
     setMessages([]);
-  }, [userId]);
+  }, [userId, t]);
 
   // Load sessions on mount
   useEffect(() => {
@@ -74,7 +77,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this chat?')) {
+    if (confirm(t('confirmDelete'))) {
       await deleteAISession(sessionId);
       const updatedSessions = sessions.filter(s => s.id !== sessionId);
       setSessions(updatedSessions);
@@ -132,7 +135,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
 
     try {
       // Single Stage: Call the unified backend AI Agent
-      setStatusMessage('Consulting agent...');
+      setStatusMessage(t('status.consulting'));
       const { callAgent } = await import('@/services/ai-intent');
       const actionResult = await callAgent(userMessage.content, messages);
 
@@ -160,7 +163,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
 
         // Auto-sync after successful processing (in case an action was taken)
         console.log('[ChatWindow] Agent success, triggering auto-sync...');
-        setStatusMessage('Syncing changes...');
+        setStatusMessage(t('status.syncing'));
         try {
           await performDownload(userId);
           console.log('[ChatWindow] Auto-sync completed');
@@ -178,7 +181,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
       console.error('[ChatWindow] Error in agent communication:', error);
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: 'Sorry, I encountered an error communicating with the agent. Please try again.',
+        content: t('errors.agentCommunication'),
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -217,7 +220,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                 <button
                   onClick={() => setShowSessions(!showSessions)}
                   className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all border border-white/20"
-                  title="History"
+                  title={t('header.history')}
                 >
                   <Icon className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -238,10 +241,10 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-indigo-600 rounded-full" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white tracking-tight">AI Assistant</h3>
+                  <h3 className="text-xl font-black text-white tracking-tight">{t('header.title')}</h3>
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse" />
-                    <p className="text-xs text-indigo-100 font-medium opacity-80 uppercase tracking-widest leading-none">Intelligence Engine</p>
+                    <p className="text-xs text-indigo-100 font-medium opacity-80 uppercase tracking-widest leading-none">{t('header.subtitle')}</p>
                   </div>
                 </div>
               </div>
@@ -251,7 +254,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                   onClick={() => window.location.href = '/profile'}
                   className="rounded-lg bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white border border-white/10 transition-colors"
                 >
-                  Profile
+                  {t('header.profile')}
                 </button>
                 <button className="text-white/60 hover:text-white transition-colors">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,7 +275,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                   className="absolute inset-y-0 left-0 w-80 bg-gray-900/95 backdrop-blur-2xl z-50 border-r border-white/10 shadow-2xl flex flex-col"
                 >
                   <div className="p-5 border-b border-white/10 flex items-center justify-between">
-                    <h4 className="text-white font-bold text-lg">Recent Chats</h4>
+                    <h4 className="text-white font-bold text-lg">{t('sessions.title')}</h4>
                     <button onClick={() => setShowSessions(false)} className="text-white/60 hover:text-white p-1">
                       <Icon className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -288,7 +291,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                       <Icon className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </Icon>
-                      New Conversation
+                      {t('sessions.newConversation')}
                     </button>
 
                     <div className="space-y-1">
@@ -304,7 +307,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                           <div className="pr-10">
                             <p className="text-sm font-semibold truncate">{session.title}</p>
                             <p className="text-[10px] uppercase tracking-widest font-bold opacity-30 mt-1">
-                              {new Date(session.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              {new Date(session.updatedAt).toLocaleDateString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
                           <button
@@ -333,10 +336,10 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                 >
                   <div className="grid grid-cols-2 gap-3 w-full">
                     {[
-                      { icon: '💡', title: 'Task Tips', color: 'bg-blue-500/10 text-blue-400' },
-                      { icon: '🎯', title: 'Goal Advice', color: 'bg-purple-500/10 text-purple-400' },
-                      { icon: '⚡', title: 'Focus Boost', color: 'bg-amber-500/10 text-amber-400' },
-                      { icon: '📊', title: 'Daily Review', color: 'bg-emerald-500/10 text-emerald-400' }
+                      { icon: '💡', title: t('features.taskTips'), color: 'bg-blue-500/10 text-blue-400' },
+                      { icon: '🎯', title: t('features.goalAdvice'), color: 'bg-purple-500/10 text-purple-400' },
+                      { icon: '⚡', title: t('features.focusBoost'), color: 'bg-amber-500/10 text-amber-400' },
+                      { icon: '📊', title: t('features.dailyReview'), color: 'bg-emerald-500/10 text-emerald-400' }
                     ].map((feature, i) => (
                       <motion.div
                         key={i}
@@ -349,9 +352,9 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                     ))}
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-gray-900 dark:text-white font-extrabold text-xl">Power up your day</h4>
+                    <h4 className="text-gray-900 dark:text-white font-extrabold text-xl">{t('empty.title')}</h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-[240px]">
-                      Your intelligent productivity partner is ready. How can we optimize your flow today?
+                      {t('empty.subtitle')}
                     </p>
                   </div>
                 </motion.div>
@@ -404,7 +407,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                       />
                     </div>
                     <span className="text-xs font-bold text-gray-500 dark:text-indigo-300 uppercase tracking-widest">
-                      {statusMessage || 'Processing'}
+                      {statusMessage || t('status.processing')}
                     </span>
                   </div>
                 </motion.div>
@@ -421,7 +424,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask your assistant anything... | از دستیار خود بپرسید..."
+                  placeholder={t('inputPlaceholder')}
                   disabled={isLoading}
                   className="flex-1 bg-transparent text-gray-900 dark:text-white px-5 py-4 text-sm font-semibold focus:outline-none disabled:opacity-50 placeholder:text-gray-400"
                 />
@@ -447,7 +450,7 @@ export default function ChatWindow({ isOpen, userId, isFullScreen = false }: Cha
                 </div>
               </div>
               <p className="mt-3 text-[10px] text-center text-gray-400 font-bold uppercase tracking-tighter opacity-50">
-                Secured by Advanced AI Architecture
+                {t('footer')}
               </p>
             </div>
           </div>

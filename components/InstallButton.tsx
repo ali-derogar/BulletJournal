@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 export default function InstallButton() {
+  const t = useTranslations();
   const { isInstalled, isStandalone, isIOS, canInstall, handleInstall } = usePWAInstall();
   const [showGuide, setShowGuide] = useState(false);
 
@@ -25,7 +27,7 @@ export default function InstallButton() {
       <button
         onClick={handleClick}
         className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full text-xs font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
-        title="Install app"
+        title={t("installButton.installTitle")}
       >
         <svg
           className="w-3.5 h-3.5"
@@ -40,7 +42,7 @@ export default function InstallButton() {
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
           />
         </svg>
-        <span>App</span>
+        <span>{t("installButton.app")}</span>
       </button>
 
       {showGuide && (
@@ -53,11 +55,11 @@ export default function InstallButton() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">App</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t("installButton.app")}</h3>
               <button
                 onClick={() => setShowGuide(false)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                aria-label="Close"
+                aria-label={t("common.close")}
               >
                 <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -73,8 +75,12 @@ export default function InstallButton() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Step 1</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Tap the <span className="text-blue-500 font-bold">Share</span> button in Safari&apos;s bottom menu.</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("installButton.step1Title")}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t.rich("installButton.step1Text", {
+                      share: (chunks) => <span className="text-blue-500 font-bold">{chunks}</span>,
+                    })}
+                  </p>
                 </div>
               </div>
 
@@ -85,8 +91,12 @@ export default function InstallButton() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Step 2</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Scroll down and select <span className="text-emerald-500 font-bold">&quot;Add to Home Screen&quot;</span>.</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{t("installButton.step2Title")}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t.rich("installButton.step2Text", {
+                      addToHome: (chunks) => <span className="text-emerald-500 font-bold">{chunks}</span>,
+                    })}
+                  </p>
                 </div>
               </div>
 
@@ -94,7 +104,7 @@ export default function InstallButton() {
                 onClick={() => setShowGuide(false)}
                 className="w-full mt-2 py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold transition-all active:scale-[0.98] shadow-lg"
               >
-                Got it
+                {t("installButton.gotIt")}
               </button>
             </div>
           </div>

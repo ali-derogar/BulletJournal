@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 export default function OfflineIndicator() {
+  const t = useTranslations();
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function OfflineIndicator() {
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-yellow-900 px-4 py-2 text-center text-sm font-medium z-50">
-      📡 You are offline. All changes are saved locally.
+      {t("common.offlineBanner")}
     </div>
   );
 }
