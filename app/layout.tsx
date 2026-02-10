@@ -1,6 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { setRequestLocale } from "next-intl/server";
-import { i18n } from "@/i18n/config";
 import "./globals.css";
 import { DateProvider } from "./context/DateContext";
 import { UserProvider } from "./context/UserContext";
@@ -35,7 +33,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  setRequestLocale(i18n.defaultLocale);
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
