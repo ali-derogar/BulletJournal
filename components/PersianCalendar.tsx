@@ -7,7 +7,7 @@ import { getCalendarNotes, saveCalendarNote, deleteCalendarNote } from "@/storag
 import type { CalendarNote } from "@/domain";
 import type { CalendarEvent } from "@/domain/calendar-events";
 import { getCalendarEvents } from "@/services/calendar-api";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 
 interface PersianCalendarProps {
