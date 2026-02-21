@@ -7,7 +7,7 @@ import { getCalendarNotes, saveCalendarNote, deleteCalendarNote } from "@/storag
 import type { CalendarNote } from "@/domain";
 import type { CalendarEvent } from "@/domain/calendar-events";
 import { getCalendarEvents } from "@/services/calendar-api";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 
 interface PersianCalendarProps {
@@ -31,7 +31,6 @@ interface HolidayData {
 
 export default function PersianCalendar({ userId }: PersianCalendarProps) {
   const t = useTranslations();
-  const locale = useLocale();
   const now = new Date();
   const jNow = toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
   console.log('[PersianCalendar] Current date:', now.toISOString(), 'Jalali:', jNow);

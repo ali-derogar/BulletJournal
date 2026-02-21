@@ -18,7 +18,6 @@ export default function LanguageSwitcher() {
   ];
 
   const handleLanguageChange = (newLocale: string) => {
-    // Remove current locale from pathname if it exists
     const currentPath = pathname || '/';
     const localePattern = new RegExp(`^/(${i18n.locales.join('|')})(?=/|$)`);
     const pathWithoutLocale = currentPath.replace(localePattern, '') || '/';
@@ -31,8 +30,8 @@ export default function LanguageSwitcher() {
       document.documentElement.dir = newLocale === 'fa' ? 'rtl' : 'ltr';
     }
 
-    // Navigate to new locale
     const nextPath = pathWithoutLocale === '/' ? `/${newLocale}` : `/${newLocale}${pathWithoutLocale}`;
+
     router.push(nextPath);
     router.refresh();
     setIsOpen(false);

@@ -197,6 +197,22 @@
   },
   "backup": {
     "title": "Backup & Restore",
+    "ariaOpen": "Open backup and restore",
+    "typeLabel": "Backup type",
+    "currentUserOnly": "Current user",
+    "allUsersAdmin": "All users (admin)",
+    "exportButton": "Export backup",
+    "restoreButton": "Restore backup",
+    "exporting": "Exporting backup...",
+    "importing": "Importing backup...",
+    "exportSuccess": "Backup exported successfully",
+    "restoreUserSuccess": "User data restored for {name}",
+    "restoreAllSuccess": "All data restored successfully",
+    "importFailed": "Import failed: {message}",
+    "exportFailed": "Export failed: {message}",
+    "includesUserData": "Includes only data for {name}",
+    "currentUserFallback": "current user",
+    "includesAllData": "Includes data for all users",
     "backup": "Backup",
     "restore": "Restore",
     "export": "Export Data",
@@ -1868,5 +1884,9 @@
     },
     "footerQuestion": "Want to take these tests yourself?",
     "footerCta": "Go to Bullet Journal"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist."
   }
 }

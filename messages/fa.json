@@ -197,6 +197,22 @@
   },
   "backup": {
     "title": "پشتیبان‌گیری و بازیابی",
+    "ariaOpen": "باز کردن پشتیبان‌گیری و بازیابی",
+    "typeLabel": "نوع پشتیبان",
+    "currentUserOnly": "کاربر فعلی",
+    "allUsersAdmin": "همه کاربران (ادمین)",
+    "exportButton": "خروجی پشتیبان",
+    "restoreButton": "بازیابی پشتیبان",
+    "exporting": "در حال خروجی گرفتن از پشتیبان...",
+    "importing": "در حال وارد کردن پشتیبان...",
+    "exportSuccess": "پشتیبان با موفقیت خروجی گرفته شد",
+    "restoreUserSuccess": "داده‌های کاربر {name} بازیابی شد",
+    "restoreAllSuccess": "همه داده‌ها با موفقیت بازیابی شدند",
+    "importFailed": "بازیابی ناموفق بود: {message}",
+    "exportFailed": "خروجی‌گیری ناموفق بود: {message}",
+    "includesUserData": "فقط داده‌های {name} را شامل می‌شود",
+    "currentUserFallback": "کاربر فعلی",
+    "includesAllData": "داده‌های همه کاربران را شامل می‌شود",
     "backup": "پشتیبان‌گیری",
     "restore": "بازیابی",
     "export": "صادرات داده‌ها",
@@ -574,6 +590,7 @@
     "nextButton": "بعدی",
     "totalTime": "زمان کل",
     "avgPerDay": "میانگین {time} در روز",
+    "tasksCompletedLabel": "وظایف تکمیل‌شده",
     "completionRate": "{rate}% نرخ تکمیل",
     "activeDays": "روزهای فعال",
     "totalDays": "از {total} روز",
@@ -1867,5 +1884,9 @@
     },
     "footerQuestion": "می‌خواهید خودتان این آزمون‌ها را انجام دهید؟",
     "footerCta": "رفتن به بولت ژورنال"
+  },
+  "notFound": {
+    "title": "صفحه پیدا نشد",
+    "description": "صفحه‌ای که دنبالش هستید وجود ندارد."
   }
 }

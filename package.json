@@ -8,7 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:i18n:keys": "node scripts/check-i18n-keys.mjs",
+    "test:i18n:routing": "node scripts/test-i18n-routing.mjs",
+    "test:i18n": "npm run test:i18n:keys && npm run test:i18n:routing"
   },
   "dependencies": {
     "framer-motion": "^12.23.26",

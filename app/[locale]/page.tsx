@@ -484,7 +484,7 @@ export default function Home() {
                       {hasAdminAccess(currentUser?.role) && (
                         <motion.button
                           onClick={() => {
-                            router.push('/admin');
+                            router.push(`/${locale}/admin`);
                             setShowMenuDropdown(false);
                           }}
                           whileHover={{ scale: 1.02, backgroundColor: 'rgba(168, 85, 247, 0.1)' }}
