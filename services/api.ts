@@ -167,6 +167,26 @@ export async function patch<T>(
 }
 
 /**
+ * PUT request
+ */
+export async function put<T>(
+  endpoint: string,
+  data?: any,
+  token?: string
+): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return apiRequest<T>(endpoint, {
+    method: 'PUT',
+    headers,
+    body: data ? JSON.stringify(data) : undefined,
+  });
+}
+
+/**
  * DELETE request
  */
 export async function del<T>(

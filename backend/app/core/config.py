@@ -33,5 +33,16 @@ class Settings:
     WS_HEARTBEAT_INTERVAL: int = int(os.getenv("WS_HEARTBEAT_INTERVAL", "30"))
     WS_MESSAGE_QUEUE_SIZE: int = int(os.getenv("WS_MESSAGE_QUEUE_SIZE", "100"))
 
+    # AI coach scheduler settings
+    AI_DIGEST_SCHEDULER_ENABLED: bool = os.getenv("AI_DIGEST_SCHEDULER_ENABLED", "true").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    AI_DIGEST_SCHEDULER_INTERVAL_SECONDS: int = int(
+        os.getenv("AI_DIGEST_SCHEDULER_INTERVAL_SECONDS", "60")
+    )
+
 
 settings = Settings()

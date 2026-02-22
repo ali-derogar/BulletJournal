@@ -17,6 +17,8 @@ from app.routers.notifications import router as notifications_router
 from app.routers.chatroom import router as chatroom_router
 from app.db.session import engine, is_sqlite
 from app.db.session import Base
+from app.core.config import settings
+from app.services.scheduler_service import ai_digest_scheduler
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -102,15 +104,50 @@ async def startup_event():
     """Run on application startup"""
     try:
         # Import all models to ensure they are registered in Base.metadata
-        from app.models import User, Task, DailyJournal, Goal, Report, Expense, SleepInfo, MoodInfo, Reflection, SystemConfig, Notification, CalendarNote, ProfileTest, SharedTestResult
+        from app.models import (
+            User,
+            Task,
+            DailyJournal,
+            Goal,
+            Report,
+            Expense,
+            SleepInfo,
+            MoodInfo,
+            Reflection,
+            SystemConfig,
+            Notification,
+            CalendarNote,
+            ProfileTest,
+            SharedTestResult,
+            AICoachPreference,
+            AIMemoryItem,
+            AIDailySnapshot,
+            AIDigestReport,
+        )
         from app.db.session import engine, Base
         
         # Create all tables if they don't exist
         # create_all is idempotent - it won't delete existing tables
         Base.metadata.create_all(bind=engine)
         logger.info("✓ Database tables verified/created successfully!")
+
+        if settings.AI_DIGEST_SCHEDULER_ENABLED:
+            ai_digest_scheduler.interval_seconds = settings.AI_DIGEST_SCHEDULER_INTERVAL_SECONDS
+            ai_digest_scheduler.start()
+        else:
+            logger.info("AI Digest Scheduler is disabled by configuration")
     except Exception as e:
         logger.error(f"❌ Database initialization failed: {str(e)}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Run on application shutdown"""
+    try:
+        if settings.AI_DIGEST_SCHEDULER_ENABLED:
+            await ai_digest_scheduler.stop()
+    except Exception as e:
+        logger.warning(f"AI Digest Scheduler shutdown failed: {e}")
 
 @app.get("/api/health")
 @app.get("/health")

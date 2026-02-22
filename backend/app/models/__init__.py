@@ -12,6 +12,7 @@ from .goal import Goal
 from .calendar_note import CalendarNote
 from .report import Report
 from .profile_test import ProfileTest, SharedTestResult
+from .ai_coach import AICoachPreference, AIMemoryItem, AIDailySnapshot, AIDigestReport
 
 __all__ = [
     "User", 
@@ -28,5 +29,9 @@ __all__ = [
     "CalendarNote",
     "Report",
     "ProfileTest",
-    "SharedTestResult"
+    "SharedTestResult",
+    "AICoachPreference",
+    "AIMemoryItem",
+    "AIDailySnapshot",
+    "AIDigestReport",
 ]

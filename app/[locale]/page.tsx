@@ -20,6 +20,7 @@ import UploadDownloadButtons from "@/components/UploadDownloadButtons";
 import ThemeToggle from "@/components/ThemeToggle";
 import LoginPage from "@/components/LoginPage";
 import AIChat from "@/components/AIChat";
+import AICoachPanel from "@/components/AICoachPanel";
 import InstallButton from "@/components/InstallButton";
 import NotificationBell from "@/components/NotificationBell";
 import ChatRoom from "@/components/ChatRoom";
@@ -175,7 +176,10 @@ export default function Home() {
             transition={{ duration: 0.3 }}
           >
             {currentUser ? (
-              <AIChat userId={userId} isFullScreen={true} />
+              <>
+                <AICoachPanel />
+                <AIChat userId={userId} isFullScreen={true} />
+              </>
             ) : (
               <div className="max-w-4xl mx-auto p-8 text-center">
                 <motion.div
