@@ -3,14 +3,12 @@ from app.auth.dependencies import get_current_active_user
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
-from openai import AsyncOpenAI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, List, Literal
 from sqlalchemy.orm import Session
 import uuid
 from datetime import datetime, timezone
 import logging
-import os
 
 from app.db.session import get_db
 from app.models.task import Task
@@ -38,6 +36,14 @@ class AIChatRequest(BaseModel):
     history: Optional[List[ChatMessage]] = None
 
 
+class AICompletionRequest(BaseModel):
+    messages: List[ChatMessage]
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    temperature: Optional[float] = 0.7
+    maxTokens: Optional[int] = 1000
+
+
 
 class AgentDependencies:
     def __init__(self, db: Session, user: User, current_date: str):
@@ -47,7 +53,7 @@ class AgentDependencies:
 
 # Configure default model (will be overridden during rotation)
 # Use the first available key, or a placeholder
-first_key = settings.NEXT_PUBLIC_OPENROUTER_API_KEYS[0] if settings.NEXT_PUBLIC_OPENROUTER_API_KEYS else "no-key"
+first_key = settings.OPENROUTER_API_KEYS[0] if settings.OPENROUTER_API_KEYS else "no-key"
 default_provider = OpenAIProvider(
     api_key=first_key,
     base_url='https://openrouter.ai/api/v1'
@@ -94,6 +100,12 @@ agent: Agent[AgentDependencies, str] = Agent(
     default_model,
     deps_type=AgentDependencies,
     system_prompt="You are a helpful assistant for the BulletJournal app."
+)
+
+completion_agent: Agent[dict, str] = Agent(
+    default_model,
+    deps_type=dict,
+    system_prompt="You are a helpful assistant.",
 )
 
 @agent.tool
@@ -381,10 +393,10 @@ async def chat_with_agent(
 ):
     deps = AgentDependencies(db=db, user=current_user, current_date=request.currentDate)
     
-    if not settings.NEXT_PUBLIC_OPENROUTER_API_KEYS:
+    if not settings.OPENROUTER_API_KEYS:
         return {
             "success": False,
-            "message": "AI API Key is not configured on the server. (NEXT_PUBLIC_OPENROUTER_API_KEYS is empty)",
+            "message": "AI API Key is not configured on the server.",
             "data": {}
         }
 
@@ -420,3 +432,42 @@ async def chat_with_agent(
         "data": {}
     }
 
+
+@router.post("/completions")
+async def chat_completion(
+    request: AICompletionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    if not settings.OPENROUTER_API_KEYS:
+        raise HTTPException(status_code=503, detail="AI provider is not configured.")
+
+    if not request.messages:
+        raise HTTPException(status_code=400, detail="messages is required")
+
+    system_instructions = "\n".join([m.content for m in request.messages if m.role == "system"]).strip() or None
+    conversation = [m for m in request.messages if m.role in {"user", "assistant"}]
+    if not conversation:
+        raise HTTPException(status_code=400, detail="No user/assistant messages found")
+
+    user_index = -1
+    for idx in range(len(conversation) - 1, -1, -1):
+        if conversation[idx].role == "user":
+            user_index = idx
+            break
+
+    if user_index == -1:
+        raise HTTPException(status_code=400, detail="At least one user message is required")
+
+    prompt = conversation[user_index].content
+    history = [{"role": m.role, "content": m.content} for m in conversation[:user_index]]
+
+    output = await ai_service.execute_agent(
+        completion_agent,
+        prompt,
+        deps={"user_id": current_user.id},
+        history=history,
+        instructions=system_instructions,
+    )
+
+    return {"message": output}

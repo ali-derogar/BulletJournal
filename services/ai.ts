@@ -1,13 +1,10 @@
 import {
   AI_PROVIDERS,
-  getNextAPIKey,
-  getCurrentKeyIndex,
-  markKeyAsRateLimited,
-  markKeyAsFailed,
-  markKeyAsSuccess,
   DEFAULT_PROVIDER,
   DEFAULT_MODEL
 } from '@/config/ai-providers';
+import { post } from '@/services/api';
+import { getToken } from '@/services/auth';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -38,150 +35,41 @@ export async function sendChatMessage(
   const temperature = options.temperature ?? 0.7;
   const maxTokens = options.maxTokens ?? 1000;
 
-  // Get provider config
-  const providerConfig = AI_PROVIDERS[provider];
-  if (!providerConfig) {
-    return { message: '', error: `Provider ${provider} not found` };
-  }
-
-  // Try up to 3 different API keys if rate limited
-  const maxRetries = 3;
-  let lastError = '';
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    // Get API key (rotates through available keys)
-    const apiKey = getNextAPIKey(provider);
-    if (!apiKey) {
-      return { message: '', error: `No API key configured for ${provider}` };
+  try {
+    const token = getToken();
+    if (!token) {
+      return { message: '', error: 'Authentication required' };
     }
 
-    const keyIndex = getCurrentKeyIndex();
-    console.log(`[AI Service] Attempt ${attempt + 1}/${maxRetries} with key ${keyIndex + 1}`);
+    // Get provider config
+    const providerConfig = AI_PROVIDERS[provider];
+    if (!providerConfig) {
+      return { message: '', error: `Provider ${provider} not found` };
+    }
 
-    const result = await sendChatMessageWithKey(
-      messages,
-      provider,
-      model,
-      temperature,
-      maxTokens,
-      apiKey,
-      keyIndex,
-      providerConfig.endpoint
+    const endpoint = providerConfig.endpoint.startsWith('/api/')
+      ? providerConfig.endpoint.slice(4)
+      : providerConfig.endpoint;
+
+    const result = await post<{ message: string }>(
+      endpoint,
+      {
+        messages,
+        provider,
+        model,
+        temperature,
+        maxTokens,
+      },
+      token
     );
 
-    // Success!
-    if (!result.error) {
-      return result;
-    }
-
-    // If it's a rate limit error, try next key
-    if (result.error.includes('Rate limit')) {
-      console.log(`[AI Service] Rate limited, trying next key...`);
-      lastError = result.error;
-      continue;
-    }
-
-    // Other error, return immediately
-    return result;
-  }
-
-  // All retries failed
-  return {
-    message: '',
-    error: lastError || 'All API keys are rate limited. Please try again later.',
-  };
-}
-
-/**
- * Internal function to send message with a specific API key
- */
-async function sendChatMessageWithKey(
-  messages: ChatMessage[],
-  provider: string,
-  model: string,
-  temperature: number,
-  maxTokens: number,
-  apiKey: string,
-  keyIndex: number,
-  endpoint: string
-): Promise<ChatResponse> {
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'BulletJournal AI Assistant',
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature,
-        max_tokens: maxTokens,
-      }),
-    });
-
-    // Check for rate limit
-    if (response.status === 429) {
-      const retryAfter = response.headers.get('retry-after');
-      const retrySeconds = retryAfter ? parseInt(retryAfter) : 60;
-
-      console.warn(`[AI Service] Rate limited! Retry after ${retrySeconds}s`);
-      markKeyAsRateLimited(provider, keyIndex, retrySeconds);
-
-      return {
-        message: '',
-        error: `Rate limit reached. Trying next API key...`,
-      };
-    }
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[AI Service] API Error Response:', errorText);
-
-      // Mark as failed
-      markKeyAsFailed(provider, keyIndex);
-
-      try {
-        const errorData = JSON.parse(errorText);
-        const errorMessage = errorData.error?.message || `HTTP error ${response.status}`;
-
-        // Check if it's a rate limit error in the message
-        if (errorMessage.toLowerCase().includes('rate limit') ||
-          errorMessage.toLowerCase().includes('too many requests')) {
-          markKeyAsRateLimited(provider, keyIndex, 60);
-        }
-
-        return {
-          message: '',
-          error: errorMessage,
-        };
-      } catch {
-        return {
-          message: '',
-          error: `HTTP error ${response.status}: ${errorText}`,
-        };
-      }
-    }
-
-    const data = await response.json();
-    const message = data.choices?.[0]?.message?.content || '';
-
-    // Mark as success
-    markKeyAsSuccess(provider, keyIndex);
-
-    return { message };
+    return { message: result.message || '' };
   } catch (error) {
-    console.error('AI service error:', error);
-
-    // Mark as failed
-    markKeyAsFailed(provider, keyIndex);
+    console.error('AI proxy service error:', error);
 
     return {
       message: '',
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      error: error instanceof Error ? error.message : 'AI service unavailable',
     };
   }
 }

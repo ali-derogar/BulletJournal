@@ -25,7 +25,7 @@ class AIOperationService:
     ]
 
     def __init__(self):
-        self.api_keys = settings.NEXT_PUBLIC_OPENROUTER_API_KEYS
+        self.api_keys = settings.OPENROUTER_API_KEYS
         if not self.api_keys:
             logger.warning("No AI API Keys configured!")
 

@@ -2,42 +2,37 @@ from datetime import datetime, timedelta
 from typing import Optional
 import uuid
 import os
+import logging
+import secrets
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.schemas.auth import UserCreate, UserLogin, TokenData
+from app.schemas.auth import UserCreate, TokenData
 from app.auth.token_manager import token_manager
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+logger = logging.getLogger(__name__)
 
 # JWT settings
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")  # In production, use environment variable
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    # Avoid insecure static defaults. Ephemeral key is safer than hardcoded fallback.
+    SECRET_KEY = secrets.token_urlsafe(64)
+    logger.warning("SECRET_KEY is not set. Using ephemeral key; tokens will be invalid after restart.")
+
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    try:
-        return pwd_context.verify(plain_password, hashed_password)
-    except Exception:
-        # Fallback to simple verification if bcrypt fails
-        import hashlib
-        return hashed_password == hashlib.sha256(plain_password.encode()).hexdigest()
-
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
     """Hash a password"""
-    try:
-        return pwd_context.hash(password)
-    except Exception:
-        # Fallback to simple hashing if bcrypt fails
-        import hashlib
-        return hashlib.sha256(password.encode()).hexdigest()
+    return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create a JWT access token"""
@@ -149,7 +144,7 @@ def initiate_password_reset(db: Session, user: User) -> tuple[str, str, bool]:
     # Check rate limiting - allow one reset request per hour
     if user.last_password_reset_request:
         time_since_last_request = datetime.utcnow() - user.last_password_reset_request
-        if time_since_last_request.total_seconds() < 1:  # 1 hour
+        if time_since_last_request.total_seconds() < 3600:  # 1 hour
             return "", "Please wait before requesting another password reset.", False
     
     # Generate new reset token

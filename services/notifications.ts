@@ -416,9 +416,19 @@ class NotificationWebSocket {
       return;
     }
 
+    // This is an explicit connect call, so re-enable auto-reconnect.
+    this.shouldReconnect = true;
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     // Close existing connection
     if (this.ws) {
-      this.disconnect();
+      this.stopPing();
+      this.ws.close();
+      this.ws = null;
     }
 
     try {

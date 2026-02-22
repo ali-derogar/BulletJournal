@@ -252,6 +252,8 @@ async def websocket_endpoint(
 @router.get("/vapid-public-key")
 async def get_vapid_public_key():
     """Get VAPID public key for push notifications"""
+    if not settings.VAPID_PUBLIC_KEY:
+        raise HTTPException(status_code=503, detail="Push notifications are not configured")
     return {"publicKey": settings.VAPID_PUBLIC_KEY}
 
 
