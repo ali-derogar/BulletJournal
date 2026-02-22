@@ -173,6 +173,45 @@ type AIParsedReport = {
   [key: string]: unknown;
 };
 
+function normalizeAIParsedReportKeys(input: unknown): AIParsedReport | null {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+
+  const source = input as Record<string, unknown>;
+  const mapped: AIParsedReport = {
+    summary: (source.summary ?? source['خلاصه']) as string | undefined,
+    strengths: (source.strengths ?? source['نقاط_قوت'] ?? source['نقاط قوت']) as unknown[] | undefined,
+    critiques: (source.critiques ?? source['نقدها'] ?? source['نقاط_ضعف'] ?? source['نقاط ضعف']) as unknown[] | undefined,
+    root_causes: (
+      source.root_causes ??
+      source.rootCauses ??
+      source['دلایل_ریشه‌ای'] ??
+      source['دلایل ریشه‌ای']
+    ) as unknown[] | undefined,
+    recommendations: (source.recommendations ?? source['پیشنهادها']) as unknown[] | undefined,
+    goal_alignment: (
+      source.goal_alignment ??
+      source.goalAlignment ??
+      source['هم‌راستایی_هدف'] ??
+      source['هم‌راستایی هدف']
+    ) as unknown,
+    plan_7_days: (
+      source.plan_7_days ??
+      source.plan7Days ??
+      source['برنامه_۷_روز'] ??
+      source['برنامه ۷ روز']
+    ) as unknown,
+    plan_30_days: (
+      source.plan_30_days ??
+      source.plan30Days ??
+      source['برنامه_۳۰_روز'] ??
+      source['برنامه ۳۰ روز']
+    ) as unknown,
+    questions: (source.questions ?? source['سوالات']) as unknown[] | undefined,
+  };
+
+  return { ...source, ...mapped };
+}
+
 export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: AnalyticsDashboardProps) {
   const t = useTranslations();
   const locale = useLocale();
@@ -613,18 +652,24 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
             };
 
             const tryParseJson = (raw: string): AIParsedReport | null => {
+              const cleanedRaw = raw
+                .replace(/^```(?:json)?/i, '')
+                .replace(/```$/i, '')
+                .trim();
               try {
-                const maybe = JSON.parse(raw) as unknown;
-                if (maybe && typeof maybe === 'object') return maybe as AIParsedReport;
+                const maybe = JSON.parse(cleanedRaw) as unknown;
+                const normalized = normalizeAIParsedReportKeys(maybe);
+                if (normalized) return normalized;
                 return null;
               } catch {
-                const first = raw.indexOf('{');
-                const last = raw.lastIndexOf('}');
+                const first = cleanedRaw.indexOf('{');
+                const last = cleanedRaw.lastIndexOf('}');
                 if (first >= 0 && last > first) {
-                  const slice = raw.slice(first, last + 1);
+                  const slice = cleanedRaw.slice(first, last + 1);
                   try {
                     const maybe = JSON.parse(slice) as unknown;
-                    if (maybe && typeof maybe === 'object') return maybe as AIParsedReport;
+                    const normalized = normalizeAIParsedReportKeys(maybe);
+                    if (normalized) return normalized;
                   } catch {
                     return null;
                   }
@@ -687,7 +732,7 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
 
             const parsed: AIParsedReport | null = (() => {
               if (aiReport?.parsed && typeof aiReport.parsed === 'object') {
-                return aiReport.parsed as AIParsedReport;
+                return normalizeAIParsedReportKeys(aiReport.parsed);
               }
 
               if (aiReport?.raw) {
@@ -725,8 +770,17 @@ export default function AnalyticsDashboard({ initialPeriodType = 'weekly' }: Ana
             ];
 
             const hasAnySection = sections.some((s) => (s.text && s.text.trim().length > 0) || (s.items && s.items.length > 0));
+            const rawFallbackText = (aiReport?.raw || '').trim();
 
             if (!hasAnySection) {
+              if (rawFallbackText.length > 0) {
+                return (
+                  <div className="rounded-2xl border border-border/60 bg-background/40 p-3 sm:p-4">
+                    <h4 className="text-sm font-bold text-muted-foreground mb-2">{t('analytics.report.summary')}</h4>
+                    <p className="text-foreground font-medium whitespace-pre-wrap">{rawFallbackText}</p>
+                  </div>
+                );
+              }
               return (
                 <div className="bg-muted/30 rounded-lg p-3 border border-border">
                   <p className="text-sm text-muted-foreground font-medium">

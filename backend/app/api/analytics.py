@@ -472,6 +472,37 @@ async def ai_review(
             except Exception:
                 parsed = None
 
+        if isinstance(parsed, dict):
+            # Normalize common variant keys so frontend always gets the expected schema.
+            parsed = {
+                **parsed,
+                "root_causes": parsed.get("root_causes") or parsed.get("rootCauses") or parsed.get("دلایل ریشه‌ای") or parsed.get("دلایل_ریشه‌ای") or [],
+                "goal_alignment": parsed.get("goal_alignment") or parsed.get("goalAlignment") or parsed.get("هم‌راستایی هدف") or parsed.get("هم‌راستایی_هدف") or "",
+                "plan_7_days": parsed.get("plan_7_days") or parsed.get("plan7Days") or parsed.get("برنامه ۷ روز") or parsed.get("برنامه_۷_روز") or [],
+                "plan_30_days": parsed.get("plan_30_days") or parsed.get("plan30Days") or parsed.get("برنامه ۳۰ روز") or parsed.get("برنامه_۳۰_روز") or [],
+                "summary": parsed.get("summary") or parsed.get("خلاصه") or "",
+                "strengths": parsed.get("strengths") or parsed.get("نقاط قوت") or parsed.get("نقاط_قوت") or [],
+                "critiques": parsed.get("critiques") or parsed.get("نقدها") or parsed.get("نقاط ضعف") or parsed.get("نقاط_ضعف") or [],
+                "recommendations": parsed.get("recommendations") or parsed.get("پیشنهادها") or [],
+                "questions": parsed.get("questions") or parsed.get("سوالات") or [],
+            }
+        else:
+            # Always provide a fallback parsed structure so UI can display something meaningful.
+            fallback_summary = (raw or "").strip()
+            if len(fallback_summary) > 1200:
+                fallback_summary = fallback_summary[:1200] + "..."
+            parsed = {
+                "summary": fallback_summary,
+                "strengths": [],
+                "critiques": [],
+                "root_causes": [],
+                "recommendations": [],
+                "goal_alignment": "",
+                "plan_7_days": [],
+                "plan_30_days": [],
+                "questions": [],
+            }
+
         return AIReviewResponse(raw=raw, parsed=parsed)
 
     except ValueError as e:
