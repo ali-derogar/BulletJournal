@@ -4,7 +4,11 @@ import uuid
 import os
 import logging
 import secrets
+import hashlib
+import hmac
+import re
 from passlib.context import CryptContext
+from passlib.exc import UnknownHashError
 from jose import JWTError, jwt
 
 from sqlalchemy.orm import Session
@@ -25,10 +29,17 @@ if not SECRET_KEY:
 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+LEGACY_SHA256_HEX_RE = re.compile(r"^[a-fA-F0-9]{64}$")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except UnknownHashError:
+        return False
+    except Exception as exc:
+        logger.warning("Password verification failed unexpectedly: %s", exc)
+        return False
 
 def get_password_hash(password: str) -> str:
     """Hash a password"""
@@ -50,9 +61,28 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     user = db.query(User).filter(User.email == email).first()
     if not user:
         return None
-    if not verify_password(password, user.password_hash):
-        return None
-    return user
+
+    # Primary verification path (bcrypt and other configured schemes)
+    if verify_password(password, user.password_hash):
+        return user
+
+    # Legacy migration path: old builds stored plain SHA256 hex digests.
+    # We accept them only for migration, then rehash immediately with bcrypt.
+    stored_hash = (user.password_hash or "").strip()
+    if LEGACY_SHA256_HEX_RE.fullmatch(stored_hash):
+        candidate = hashlib.sha256(password.encode("utf-8")).hexdigest()
+        if hmac.compare_digest(candidate, stored_hash.lower()):
+            try:
+                user.password_hash = get_password_hash(password)
+                db.commit()
+                db.refresh(user)
+                logger.info("Upgraded legacy password hash to bcrypt for user %s", user.id)
+            except Exception as exc:
+                db.rollback()
+                logger.warning("Failed to upgrade legacy password hash for user %s: %s", user.id, exc)
+            return user
+
+    return None
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     """Get user by email"""
